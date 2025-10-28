@@ -30,7 +30,7 @@ El error 404 ocurre cuando Apache no puede procesar las reglas de reescritura de
 #### Para XAMPP (Windows)
 
 1. **Verificar que mod_rewrite esté habilitado:**
-   - Abrir: `C:\xampp\apache\conf\httpd.conf`
+   - Abrir: `C:\xampp\apache\conf\httpd.conf` (o la ruta de instalación de XAMPP)
    - Buscar la línea: `#LoadModule rewrite_module modules/mod_rewrite.so`
    - Quitar el `#` al inicio para descomentarla
    - Guardar el archivo
@@ -38,7 +38,7 @@ El error 404 ocurre cuando Apache no puede procesar las reglas de reescritura de
 2. **Habilitar AllowOverride:**
    - En el mismo archivo `httpd.conf`, buscar:
    ```apache
-   <Directory "C:/xampp/htdocs">
+   <Directory "C:/xampp/htdocs">  <!-- Ajustar según su ruta de instalación -->
        ...
        AllowOverride None
        ...
@@ -82,9 +82,9 @@ El error 404 ocurre cuando Apache no puede procesar las reglas de reescritura de
    sudo nano /etc/apache2/sites-available/000-default.conf
    ```
    
-   Agregar dentro de `<VirtualHost>`:
+   Agregar dentro de `<VirtualHost>` (ajustar la ruta según su directorio web):
    ```apache
-   <Directory /var/www/html>
+   <Directory /var/www/html>  <!-- Cambiar según su directorio raíz web -->
        Options Indexes FollowSymLinks
        AllowOverride All
        Require all granted
@@ -126,7 +126,7 @@ Después de aplicar la solución:
 
 2. **Probar con el servidor PHP integrado (solo para pruebas):**
    ```bash
-   cd /ruta/al/proyecto
+   cd /path/to/dunas  # Reemplazar con la ruta real de su proyecto
    php -S localhost:8000 -t public/
    ```
    Luego acceder a: `http://localhost:8000/login`
@@ -164,7 +164,7 @@ Después de aplicar la solución:
    mysql -u root -p
    CREATE DATABASE dunas_access_control CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    USE dunas_access_control;
-   SOURCE /ruta/al/proyecto/config/database.sql;
+   SOURCE /path/to/dunas/config/database.sql;  # Reemplazar con la ruta real
    EXIT;
    ```
 
@@ -242,7 +242,7 @@ Los directorios necesarios ya están incluidos en el repositorio desde la versi�
    **Ubicación php.ini:**
    - XAMPP Windows: `C:\xampp\php\php.ini`
    - XAMPP Linux: `/opt/lampp/etc/php.ini`
-   - Linux: `/etc/php/7.4/apache2/php.ini`
+   - Linux: `/etc/php/X.X/apache2/php.ini` (reemplazar X.X con su versión de PHP, ej: 7.4, 8.0, 8.1)
 
 3. **Reiniciar Apache después de cambios**
 
