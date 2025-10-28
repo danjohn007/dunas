@@ -154,44 +154,70 @@
 
 <script>
 // Gráfica de ingresos por día
-const revenueData = <?php echo json_encode($revenueByDay); ?>;
-const dates = revenueData.map(item => {
-    const date = new Date(item.date);
-    return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-});
-const revenues = revenueData.map(item => parseFloat(item.revenue));
-
-const ctx = document.getElementById('revenueChart').getContext('2d');
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: dates,
-        datasets: [{
-            label: 'Ingresos ($)',
-            data: revenues,
-            backgroundColor: 'rgba(59, 130, 246, 0.5)',
-            borderColor: 'rgb(59, 130, 246)',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Verificar que Chart.js esté cargado
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está cargado');
+            return;
+        }
+        
+        const revenueData = <?php echo json_encode($revenueByDay); ?>;
+        
+        // Validar que hay datos
+        if (!revenueData || revenueData.length === 0) {
+            console.warn('No hay datos de ingresos por día para mostrar');
+            document.getElementById('revenueChart').parentElement.innerHTML = 
+                '<p class="text-gray-500 text-center py-8">No hay datos disponibles para el período seleccionado</p>';
+            return;
+        }
+        
+        const dates = revenueData.map(item => {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+        });
+        const revenues = revenueData.map(item => parseFloat(item.revenue));
+        
+        const ctx = document.getElementById('revenueChart');
+        if (!ctx) {
+            console.error('No se encontró el elemento canvas para la gráfica');
+            return;
+        }
+        
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Ingresos ($)',
+                    data: revenues,
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
+    } catch (error) {
+        console.error('Error al crear la gráfica:', error);
     }
 });
 </script>
