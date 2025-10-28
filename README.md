@@ -1,2 +1,356 @@
-# dunas
-Sistema de control de acceso con IoT
+# Sistema de Control de Acceso con IoT - DUNAS
+
+Sistema integral para gestionar el acceso de pipas de agua a tomas autorizadas, controlando clientes, unidades, conductores, transacciones y generando informes detallados con integración IoT (Shelly Relay SHELLPRO4PM).
+
+## 🚀 Características Principales
+
+- ✅ **Gestión de Usuarios** con 4 niveles de acceso (Admin, Supervisor, Operador, Cliente)
+- ✅ **Módulo de Clientes** con tipos (Residencial/Comercial/Industrial)
+- ✅ **Gestión de Unidades (Pipas)** con historial de mantenimiento
+- ✅ **Gestión de Choferes** con control de licencias
+- ✅ **Control de Acceso** con tickets QR y códigos de barras
+- ✅ **Integración IoT** con Shelly Relay SHELLPRO4PM para control de barreras vehiculares
+- ✅ **Transacciones y Pagos** (Efectivo, Vales, Transferencias)
+- ✅ **Reportes** con exportación a Excel y PDF
+- ✅ **Dashboard** con estadísticas en tiempo real y gráficas
+- ✅ **Diseño Responsivo** con Tailwind CSS
+
+## 📋 Requisitos del Sistema
+
+- **Servidor Web:** Apache 2.4+
+- **PHP:** 7.4 o superior
+- **MySQL:** 5.7 o superior
+- **Extensiones PHP requeridas:**
+  - PDO
+  - PDO_MySQL
+  - curl
+  - gd (para manejo de imágenes)
+  - mbstring
+
+## 🔧 Instalación
+
+### 1. Clonar o descargar el repositorio
+
+```bash
+git clone https://github.com/danjohn007/dunas.git
+cd dunas
+```
+
+### 2. Configurar el servidor Apache
+
+#### Opción A: Instalación en directorio raíz
+
+Copie el contenido de la carpeta `public` a su directorio raíz de Apache (ej: `/var/www/html` o `htdocs`).
+
+```bash
+# Linux
+sudo cp -r public/* /var/www/html/
+sudo cp -r app /var/www/
+sudo cp -r config /var/www/
+
+# Windows (XAMPP)
+# Copiar archivos a C:\xampp\htdocs\
+```
+
+#### Opción B: Instalación en subdirectorio
+
+Si desea instalar en un subdirectorio (ej: `http://localhost/dunas`):
+
+1. Copie toda la carpeta del proyecto al directorio deseado
+2. Configure el archivo `.htaccess` en la carpeta `public`:
+
+```apache
+RewriteEngine On
+RewriteBase /dunas/  # Cambiar según su subdirectorio
+```
+
+3. El sistema detectará automáticamente la URL base
+
+### 3. Configurar la base de datos
+
+#### Crear la base de datos
+
+Importe el archivo SQL ubicado en `config/database.sql`:
+
+```bash
+mysql -u root -p < config/database.sql
+```
+
+O desde phpMyAdmin:
+1. Crear una nueva base de datos llamada `dunas_access_control`
+2. Importar el archivo `config/database.sql`
+
+#### Configurar credenciales
+
+Edite el archivo `config/config.php` con sus credenciales de base de datos:
+
+```php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'dunas_access_control');
+define('DB_USER', 'root');           // Cambiar según su configuración
+define('DB_PASS', '');               // Cambiar según su configuración
+```
+
+### 4. Configurar permisos de directorios
+
+Los siguientes directorios deben tener permisos de escritura:
+
+```bash
+# Linux
+sudo chmod -R 755 public/uploads
+sudo chmod -R 755 logs
+sudo chown -R www-data:www-data public/uploads
+sudo chown -R www-data:www-data logs
+
+# Windows: Asegurar que el usuario del servidor web tenga permisos de escritura
+```
+
+### 5. Configurar Shelly Relay (Opcional)
+
+Si desea utilizar la integración con Shelly Relay para control de barreras:
+
+Edite el archivo `config/config.php`:
+
+```php
+define('SHELLY_API_URL', 'http://192.168.1.100'); // IP de su dispositivo Shelly
+define('SHELLY_RELAY_OPEN', 0);   // Canal para abrir barrera
+define('SHELLY_RELAY_CLOSE', 1);  // Canal para cerrar barrera
+```
+
+### 6. Verificar instalación
+
+Acceda al archivo de prueba de conexión:
+
+```
+http://localhost/test-connection.php
+```
+
+o 
+
+```
+http://localhost/dunas/test-connection.php
+```
+
+Este archivo verificará:
+- ✅ Conexión a la base de datos
+- ✅ Detección de URL base
+- ✅ Permisos de directorios
+- ✅ Configuración del sistema
+
+## 👥 Usuarios de Prueba
+
+El sistema incluye usuarios de ejemplo con las siguientes credenciales:
+
+| Usuario    | Contraseña | Rol        |
+|-----------|------------|------------|
+| admin     | admin123   | Administrador |
+| supervisor| admin123   | Supervisor |
+| operator  | admin123   | Operador   |
+| cliente1  | admin123   | Cliente    |
+
+**⚠️ IMPORTANTE:** Cambie estas contraseñas en producción.
+
+## 🗂️ Estructura del Proyecto
+
+```
+dunas/
+├── app/
+│   ├── controllers/      # Controladores MVC
+│   ├── models/          # Modelos de datos
+│   ├── views/           # Vistas (HTML/PHP)
+│   │   ├── layouts/     # Layouts principales
+│   │   ├── home/        # Vistas de home
+│   │   ├── auth/        # Vistas de autenticación
+│   │   ├── dashboard/   # Dashboard
+│   │   ├── users/       # Gestión de usuarios
+│   │   ├── clients/     # Gestión de clientes
+│   │   ├── units/       # Gestión de unidades
+│   │   ├── drivers/     # Gestión de choferes
+│   │   ├── access/      # Control de acceso
+│   │   ├── transactions/# Transacciones
+│   │   └── reports/     # Reportes
+│   └── helpers/         # Clases auxiliares
+├── config/
+│   ├── config.php       # Configuración principal
+│   └── database.sql     # Script de base de datos
+├── public/
+│   ├── index.php        # Punto de entrada
+│   ├── .htaccess        # Configuración Apache
+│   ├── test-connection.php # Test de conexión
+│   ├── css/             # Estilos personalizados
+│   ├── js/              # Scripts JavaScript
+│   ├── images/          # Imágenes del sistema
+│   └── uploads/         # Archivos subidos
+│       ├── units/       # Fotos de unidades
+│       └── drivers/     # Fotos de choferes
+├── logs/                # Logs del sistema
+└── README.md            # Este archivo
+```
+
+## 🔐 Seguridad
+
+El sistema implementa las siguientes medidas de seguridad:
+
+- ✅ Contraseñas encriptadas con `password_hash()` (bcrypt)
+- ✅ Sesiones seguras con timeout automático
+- ✅ Validación de datos de entrada
+- ✅ Protección contra SQL Injection (PDO prepared statements)
+- ✅ Control de acceso basado en roles (RBAC)
+- ✅ Validación de tipos de archivo en uploads
+- ✅ Protección de archivos sensibles vía `.htaccess`
+
+## 📱 Módulos del Sistema
+
+### 1. Dashboard
+- Estadísticas en tiempo real
+- Gráficas de ingresos mensuales
+- Accesos recientes
+- Indicadores clave de rendimiento (KPI)
+
+### 2. Gestión de Usuarios
+- CRUD completo de usuarios
+- 4 roles: Admin, Supervisor, Operador, Cliente
+- Control de permisos por rol
+
+### 3. Gestión de Clientes
+- Registro de clientes (Residencial/Comercial/Industrial)
+- Historial de transacciones por cliente
+- Gestión de información de contacto
+
+### 4. Gestión de Unidades (Pipas)
+- Registro de unidades con fotos
+- Control de capacidad en litros
+- Historial de mantenimientos
+- Estados: Activo/Mantenimiento/Inactivo
+
+### 5. Gestión de Choferes
+- Registro de choferes con fotos
+- Control de licencias y vigencias
+- Asignación de unidades
+- Alertas de vencimiento de licencias
+
+### 6. Control de Acceso
+- Registro de entradas/salidas
+- Generación de tickets con QR y códigos de barras
+- Control de barreras con Shelly Relay
+- Validación de accesos autorizados
+
+### 7. Transacciones y Pagos
+- Registro de transacciones
+- Múltiples métodos de pago (Efectivo, Vales, Transferencia)
+- Control de estados (Pagado/Pendiente/Cancelado)
+- Cálculo automático de montos
+
+### 8. Reportes
+- Reportes de acceso por período
+- Reportes financieros
+- Reportes operativos
+- Exportación a Excel y PDF
+
+## 🌐 URLs del Sistema
+
+El sistema utiliza URLs amigables:
+
+```
+/                      → Página de inicio
+/login                 → Inicio de sesión
+/dashboard             → Dashboard principal
+/users                 → Gestión de usuarios
+/clients               → Gestión de clientes
+/units                 → Gestión de unidades
+/drivers               → Gestión de choferes
+/access                → Control de acceso
+/transactions          → Transacciones
+/reports               → Reportes
+/logout                → Cerrar sesión
+```
+
+## 🔌 API Shelly Relay
+
+El sistema se integra con Shelly Relay SHELLPRO4PM para control automatizado de barreras vehiculares.
+
+### Configuración
+
+```php
+// En config/config.php
+define('SHELLY_API_URL', 'http://IP_DEL_DISPOSITIVO');
+define('SHELLY_RELAY_OPEN', 0);   // Canal para abrir
+define('SHELLY_RELAY_CLOSE', 1);  // Canal para cerrar
+```
+
+### Funciones disponibles
+
+```php
+ShellyAPI::openBarrier();   // Abrir barrera
+ShellyAPI::closeBarrier();  // Cerrar barrera
+ShellyAPI::getStatus();     // Obtener estado del dispositivo
+```
+
+## 🛠️ Tecnologías Utilizadas
+
+- **Backend:** PHP puro (sin frameworks)
+- **Base de datos:** MySQL 5.7+
+- **Frontend:** HTML5, CSS3, JavaScript
+- **Estilos:** Tailwind CSS
+- **Gráficas:** Chart.js
+- **Iconos:** Font Awesome
+- **Arquitectura:** MVC (Model-View-Controller)
+- **IoT:** Shelly Relay API
+
+## 📊 Exportación de Reportes
+
+El sistema soporta exportación de reportes en los siguientes formatos:
+
+- **Excel (.xlsx)** - Para análisis de datos
+- **PDF** - Para impresión y archivo
+
+## 🐛 Troubleshooting
+
+### Error: No se puede conectar a la base de datos
+
+Verifique:
+1. Que MySQL esté ejecutándose
+2. Las credenciales en `config/config.php`
+3. Que la base de datos exista y esté importada
+
+### Error: URL base incorrecta
+
+El sistema detecta automáticamente la URL base. Si hay problemas:
+1. Verifique el archivo `.htaccess` esté configurado
+2. Verifique que `mod_rewrite` esté habilitado en Apache
+3. Ajuste `RewriteBase` en `.htaccess` si está en subdirectorio
+
+### Error: No se pueden subir archivos
+
+Verifique:
+1. Permisos de escritura en `public/uploads`
+2. Configuración de `upload_max_filesize` en PHP
+3. Configuración de `post_max_size` en PHP
+
+### Error: Sesión expirada constantemente
+
+Ajuste el timeout en `config/config.php`:
+
+```php
+define('SESSION_TIMEOUT', 7200); // 2 horas
+```
+
+## 📞 Soporte
+
+Para problemas, preguntas o sugerencias, puede:
+
+- Abrir un issue en GitHub
+- Contactar al equipo de desarrollo
+
+## 📝 Licencia
+
+Este proyecto está desarrollado como sistema privado. Todos los derechos reservados.
+
+## ✨ Contribuciones
+
+Desarrollado por el equipo DUNAS para la gestión eficiente de control de acceso con IoT.
+
+---
+
+**Versión:** 1.0.0  
+**Última actualización:** Octubre 2024

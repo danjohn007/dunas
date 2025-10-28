@@ -1,0 +1,36 @@
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Uploads
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/units/.gitkeep
+!public/uploads/drivers/.gitkeep
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Configuración local
+config/config.local.php
+
+# Archivos temporales
+*.tmp
+*.swp
+*.swo
+*~
+
+# Dependencias (si se usan)
+vendor/
+node_modules/
+
+# Cache
+cache/
+*.cache
