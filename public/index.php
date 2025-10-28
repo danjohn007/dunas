@@ -43,6 +43,10 @@ $controllerMap = [
 if ($controller === 'logout') {
     $controllerClass = 'AuthController';
     $action = 'logout';
+} elseif ($controller === 'login') {
+    $controllerClass = 'AuthController';
+    // For login route: use 'login' action for POST, 'index' for GET
+    $action = ($_SERVER['REQUEST_METHOD'] === 'POST') ? 'login' : 'index';
 } elseif (isset($controllerMap[$controller])) {
     $controllerClass = $controllerMap[$controller];
 } else {
