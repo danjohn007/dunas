@@ -306,6 +306,17 @@ El sistema soporta exportación de reportes en los siguientes formatos:
 
 ## 🐛 Troubleshooting
 
+**Para soluciones detalladas, consulte [TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
+
+### Error: 404 - Página No Encontrada
+
+Si al acceder a `/login` u otras páginas aparece error 404:
+1. Verifique que `mod_rewrite` esté habilitado en Apache
+2. Verifique que el archivo `.htaccess` exista en `public/`
+3. Verifique que `AllowOverride All` esté configurado
+
+**Ver [TROUBLESHOOTING.md](TROUBLESHOOTING.md#error-404---página-no-encontrada) para instrucciones detalladas**
+
 ### Error: No se puede conectar a la base de datos
 
 Verifique:
@@ -334,6 +345,10 @@ Ajuste el timeout en `config/config.php`:
 ```php
 define('SESSION_TIMEOUT', 7200); // 2 horas
 ```
+
+### Más Soluciones
+
+Para problemas adicionales y soluciones detalladas, consulte **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
 
 ## 📞 Soporte
 
