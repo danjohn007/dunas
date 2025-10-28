@@ -37,6 +37,13 @@ class ProfileController extends BaseController {
             try {
                 $user = $this->userModel->getById($userId);
                 
+                // Validar email
+                if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+                    $this->setFlash('error', 'El formato del correo electrónico no es válido.');
+                    $this->redirect('/profile');
+                    return;
+                }
+                
                 $updateData = [
                     'full_name' => $_POST['full_name'],
                     'email' => $_POST['email'],
@@ -44,7 +51,10 @@ class ProfileController extends BaseController {
                     'status' => $user['status'] // Mantener estado actual
                 ];
                 
-                // Solo actualizar contraseña si se proporcionó
+                // Actualizar información principal primero
+                $this->userModel->update($userId, $updateData);
+                
+                // Solo actualizar contraseña si se proporcionó y después de actualizar el resto
                 if (!empty($_POST['new_password'])) {
                     // Verificar contraseña actual
                     if (!password_verify($_POST['current_password'], $user['password'])) {
@@ -60,11 +70,9 @@ class ProfileController extends BaseController {
                         return;
                     }
                     
-                    // Actualizar contraseña
+                    // Actualizar contraseña después de actualizar otros datos
                     $this->userModel->updatePassword($userId, $_POST['new_password']);
                 }
-                
-                $this->userModel->update($userId, $updateData);
                 
                 // Actualizar sesión
                 $_SESSION['user']['full_name'] = $_POST['full_name'];
