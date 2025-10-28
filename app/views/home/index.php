@@ -6,7 +6,7 @@
                 Sistema de Control de Acceso
             </h2>
             <p class="mt-2 text-sm text-gray-600">
-                Gestión integral de pipas de agua con IoT
+                Gestión integral con IoT
             </p>
         </div>
         
