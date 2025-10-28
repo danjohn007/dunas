@@ -36,6 +36,8 @@ $controllerMap = [
     'access' => 'AccessController',
     'transactions' => 'TransactionController',
     'reports' => 'ReportController',
+    'profile' => 'ProfileController',
+    'settings' => 'SettingsController',
     'access-denied' => 'HomeController',
 ];
 

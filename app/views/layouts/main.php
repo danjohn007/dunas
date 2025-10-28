@@ -63,13 +63,34 @@
                 </div>
                 
                 <div class="flex items-center">
-                    <div class="text-white mr-4">
-                        <span class="text-sm"><?php echo Auth::user()['full_name']; ?></span>
-                        <span class="text-xs bg-blue-800 px-2 py-1 rounded ml-2"><?php echo strtoupper(Auth::user()['role']); ?></span>
+                    <div class="relative">
+                        <button id="userMenuButton" type="button" 
+                                class="flex items-center text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium focus:outline-none"
+                                onclick="toggleUserMenu()">
+                            <span class="mr-2"><?php echo Auth::user()['full_name']; ?></span>
+                            <span class="text-xs bg-blue-800 px-2 py-1 rounded mr-2"><?php echo strtoupper(Auth::user()['role']); ?></span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <a href="<?php echo BASE_URL; ?>/profile" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Perfil
+                            </a>
+                            <?php if (Auth::hasRole(['admin'])): ?>
+                            <a href="<?php echo BASE_URL; ?>/settings" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i>Configuraciones
+                            </a>
+                            <?php endif; ?>
+                            <div class="border-t border-gray-100"></div>
+                            <a href="<?php echo BASE_URL; ?>/logout" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Salir
+                            </a>
+                        </div>
                     </div>
-                    <a href="<?php echo BASE_URL; ?>/logout" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
-                        <i class="fas fa-sign-out-alt mr-1"></i> Salir
-                    </a>
                 </div>
             </div>
         </div>
@@ -140,6 +161,21 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
+        
+        // Toggle user menu dropdown
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userMenuDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const button = document.getElementById('userMenuButton');
+            const dropdown = document.getElementById('userMenuDropdown');
+            if (button && dropdown && !button.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
