@@ -61,14 +61,45 @@ LEFT JOIN drivers d ON al.driver_id = d.id
 WHERE d.id IS NULL;
 
 -- Agregar índices adicionales para mejorar el rendimiento de reportes
-CREATE INDEX IF NOT EXISTS idx_transaction_date_status 
-ON transactions(transaction_date, payment_status);
+-- Nota: MySQL no soporta "CREATE INDEX IF NOT EXISTS", por eso comprobamos antes en information_schema.statistics
+-- Índice: idx_transaction_date_status en transactions(transaction_date, payment_status)
+SET @idx_exists := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'transactions' AND index_name = 'idx_transaction_date_status'
+);
+SET @sql := IF(@idx_exists = 0,
+    'CREATE INDEX idx_transaction_date_status ON transactions(transaction_date, payment_status);',
+    'SELECT \"idx_transaction_date_status already exists\";'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-CREATE INDEX IF NOT EXISTS idx_access_entry_status 
-ON access_logs(entry_datetime, status);
+-- Índice: idx_access_entry_status en access_logs(entry_datetime, status)
+SET @idx_exists := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'access_logs' AND index_name = 'idx_access_entry_status'
+);
+SET @sql := IF(@idx_exists = 0,
+    'CREATE INDEX idx_access_entry_status ON access_logs(entry_datetime, status);',
+    'SELECT \"idx_access_entry_status already exists\";'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-CREATE INDEX IF NOT EXISTS idx_client_type_status 
-ON clients(client_type, status);
+-- Índice: idx_client_type_status en clients(client_type, status)
+SET @idx_exists := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'clients' AND index_name = 'idx_client_type_status'
+);
+SET @sql := IF(@idx_exists = 0,
+    'CREATE INDEX idx_client_type_status ON clients(client_type, status);',
+    'SELECT \"idx_client_type_status already exists\";'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Mensaje final
 SELECT 'Actualización de base de datos completada exitosamente.' as mensaje;
