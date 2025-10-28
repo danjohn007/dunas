@@ -35,15 +35,18 @@ class ProfileController extends BaseController {
             $userId = Auth::user()['id'];
             
             try {
+                $user = $this->userModel->getById($userId);
+                
                 $updateData = [
                     'full_name' => $_POST['full_name'],
-                    'email' => $_POST['email']
+                    'email' => $_POST['email'],
+                    'role' => $user['role'], // Mantener rol actual
+                    'status' => $user['status'] // Mantener estado actual
                 ];
                 
                 // Solo actualizar contraseña si se proporcionó
                 if (!empty($_POST['new_password'])) {
                     // Verificar contraseña actual
-                    $user = $this->userModel->getById($userId);
                     if (!password_verify($_POST['current_password'], $user['password'])) {
                         $this->setFlash('error', 'La contraseña actual es incorrecta.');
                         $this->redirect('/profile');
@@ -57,7 +60,8 @@ class ProfileController extends BaseController {
                         return;
                     }
                     
-                    $updateData['password'] = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
+                    // Actualizar contraseña
+                    $this->userModel->updatePassword($userId, $_POST['new_password']);
                 }
                 
                 $this->userModel->update($userId, $updateData);
