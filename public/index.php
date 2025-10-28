@@ -43,8 +43,12 @@ $controllerMap = [
 if ($controller === 'logout') {
     $controllerClass = 'AuthController';
     $action = 'logout';
+} elseif (isset($controllerMap[$controller])) {
+    $controllerClass = $controllerMap[$controller];
 } else {
-    $controllerClass = $controllerMap[$controller] ?? 'HomeController';
+    // Controller not found in map - show 404
+    $controllerClass = 'HomeController';
+    $action = 'notFound';
 }
 
 $controllerFile = APP_PATH . '/controllers/' . $controllerClass . '.php';
@@ -60,8 +64,19 @@ require_once $controllerFile;
 // Instanciar y ejecutar controlador
 $controllerInstance = new $controllerClass();
 
+// If the requested action doesn't exist and we're not already showing 404, show 404
 if (!method_exists($controllerInstance, $action)) {
-    $action = 'index';
+    if ($action !== 'notFound') {
+        $controllerClass = 'HomeController';
+        $action = 'notFound';
+        if (!($controllerInstance instanceof HomeController)) {
+            require_once APP_PATH . '/controllers/HomeController.php';
+            $controllerInstance = new HomeController();
+        }
+    } else {
+        // Fallback to index if notFound doesn't exist (shouldn't happen)
+        $action = 'index';
+    }
 }
 
 call_user_func_array([$controllerInstance, $action], $params);
