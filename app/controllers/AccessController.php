@@ -45,7 +45,7 @@ class AccessController extends BaseController {
         $this->view('access/index', $data);
     }
     
-    public function view($id) {
+    public function detail($id) {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
         $access = $this->accessModel->getById($id);
@@ -88,7 +88,7 @@ class AccessController extends BaseController {
                         $this->setFlash('success', 'Acceso registrado y barrera abierta exitosamente.');
                     }
                     
-                    $this->redirect('/access/view/' . $accessId);
+                    $this->redirect('/access/detail/' . $accessId);
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al registrar el acceso: ' . $e->getMessage());
                 }
@@ -147,7 +147,7 @@ class AccessController extends BaseController {
                         $this->setFlash('success', 'Salida registrada y barrera cerrada exitosamente.');
                     }
                     
-                    $this->redirect('/access/view/' . $id);
+                    $this->redirect('/access/detail/' . $id);
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al registrar la salida: ' . $e->getMessage());
                 }

@@ -32,7 +32,7 @@ class UnitController extends BaseController {
         $this->view('units/index', $data);
     }
     
-    public function view($id) {
+    public function detail($id) {
         Auth::requireLogin();
         
         $unit = $this->unitModel->getById($id);
@@ -184,10 +184,10 @@ class UnitController extends BaseController {
                 $_POST['unit_id'] = $id;
                 $this->unitModel->addMaintenance($_POST);
                 $this->setFlash('success', 'Mantenimiento registrado exitosamente.');
-                $this->redirect('/units/view/' . $id);
+                $this->redirect('/units/detail/' . $id);
             } catch (Exception $e) {
                 $this->setFlash('error', 'Error al registrar el mantenimiento: ' . $e->getMessage());
-                $this->redirect('/units/view/' . $id);
+                $this->redirect('/units/detail/' . $id);
             }
         }
     }

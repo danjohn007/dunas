@@ -36,7 +36,7 @@ class DriverController extends BaseController {
         $this->view('drivers/index', $data);
     }
     
-    public function view($id) {
+    public function detail($id) {
         Auth::requireLogin();
         
         $driver = $this->driverModel->getById($id);
@@ -188,6 +188,6 @@ class DriverController extends BaseController {
             }
         }
         
-        $this->redirect('/drivers/view/' . $id);
+        $this->redirect('/drivers/detail/' . $id);
     }
 }
