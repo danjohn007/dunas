@@ -33,7 +33,7 @@ class ClientController extends BaseController {
         $this->view('clients/index', $data);
     }
     
-    public function view($id) {
+    public function detail($id) {
         Auth::requireLogin();
         
         $client = $this->clientModel->getById($id);

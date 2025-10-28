@@ -41,7 +41,7 @@ class TransactionController extends BaseController {
         $this->view('transactions/index', $data);
     }
     
-    public function view($id) {
+    public function detail($id) {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
         $transaction = $this->transactionModel->getById($id);
@@ -79,7 +79,7 @@ class TransactionController extends BaseController {
             $existing = $this->transactionModel->getByAccessLog($accessId);
             if ($existing) {
                 $this->setFlash('error', 'Ya existe una transacción para este acceso.');
-                $this->redirect('/transactions/view/' . $existing['id']);
+                $this->redirect('/transactions/detail/' . $existing['id']);
             }
         }
         
@@ -100,7 +100,7 @@ class TransactionController extends BaseController {
                     
                     $transactionId = $this->transactionModel->create($data);
                     $this->setFlash('success', 'Transacción registrada exitosamente.');
-                    $this->redirect('/transactions/view/' . $transactionId);
+                    $this->redirect('/transactions/detail/' . $transactionId);
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al registrar la transacción: ' . $e->getMessage());
                 }
@@ -143,7 +143,7 @@ class TransactionController extends BaseController {
                 try {
                     $this->transactionModel->update($id, $_POST);
                     $this->setFlash('success', 'Transacción actualizada exitosamente.');
-                    $this->redirect('/transactions/view/' . $id);
+                    $this->redirect('/transactions/detail/' . $id);
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al actualizar la transacción: ' . $e->getMessage());
                 }
@@ -173,6 +173,6 @@ class TransactionController extends BaseController {
             }
         }
         
-        $this->redirect('/transactions/view/' . $id);
+        $this->redirect('/transactions/detail/' . $id);
     }
 }

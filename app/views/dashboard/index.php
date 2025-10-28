@@ -173,46 +173,70 @@
 
 <script>
 // Gráfica de ingresos mensuales
-const monthlyData = <?php echo json_encode($monthlyData); ?>;
-const labels = monthlyData.map(item => {
-    const date = new Date(item.month + '-01');
-    return date.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
-});
-const revenues = monthlyData.map(item => parseFloat(item.revenue));
-
-const ctx = document.getElementById('revenueChart').getContext('2d');
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Ingresos ($)',
-            data: revenues,
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Verificar que Chart.js esté cargado
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está cargado');
+            return;
+        }
+        
+        const monthlyData = <?php echo json_encode($monthlyData); ?>;
+        
+        // Validar que hay datos
+        if (!monthlyData || monthlyData.length === 0) {
+            console.warn('No hay datos mensuales para mostrar');
+            return;
+        }
+        
+        const labels = monthlyData.map(item => {
+            const date = new Date(item.month + '-01');
+            return date.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+        });
+        const revenues = monthlyData.map(item => parseFloat(item.revenue));
+        
+        const ctx = document.getElementById('revenueChart');
+        if (!ctx) {
+            console.error('No se encontró el elemento canvas para la gráfica');
+            return;
+        }
+        
+        new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ingresos ($)',
+                    data: revenues,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
+    } catch (error) {
+        console.error('Error al crear la gráfica:', error);
     }
 });
 </script>

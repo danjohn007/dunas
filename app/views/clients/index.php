@@ -105,7 +105,7 @@
                                 <?php endif; ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="<?php echo BASE_URL; ?>/clients/view/<?php echo $client['id']; ?>" class="text-blue-600 hover:text-blue-900 mr-3">
+                                <a href="<?php echo BASE_URL; ?>/clients/detail/<?php echo $client['id']; ?>" class="text-blue-600 hover:text-blue-900 mr-3">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
