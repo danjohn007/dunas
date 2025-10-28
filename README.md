@@ -57,12 +57,7 @@ sudo cp -r config /var/www/
 Si desea instalar en un subdirectorio (ej: `http://localhost/dunas`):
 
 1. Copie toda la carpeta del proyecto al directorio deseado
-2. Configure el archivo `.htaccess` en la carpeta `public`:
-
-```apache
-RewriteEngine On
-RewriteBase /dunas/  # Cambiar según su subdirectorio
-```
+2. El archivo `.htaccess` en la carpeta `public` ya está configurado y funciona automáticamente en cualquier ruta (raíz o subdirectorio)
 
 3. El sistema detectará automáticamente la URL base
 
@@ -329,7 +324,7 @@ Verifique:
 El sistema detecta automáticamente la URL base. Si hay problemas:
 1. Verifique el archivo `.htaccess` esté configurado
 2. Verifique que `mod_rewrite` esté habilitado en Apache
-3. Ajuste `RewriteBase` en `.htaccess` si está en subdirectorio
+3. El `.htaccess` está configurado para funcionar automáticamente en cualquier ruta (raíz o subdirectorio)
 
 ### Error: No se pueden subir archivos
 

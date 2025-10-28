@@ -59,7 +59,6 @@ El error 404 ocurre cuando Apache no puede procesar las reglas de reescritura de
    ```apache
    <IfModule mod_rewrite.c>
        RewriteEngine On
-       RewriteBase /
        
        # Si el archivo o directorio existe, servir directamente
        RewriteCond %{REQUEST_FILENAME} !-f
@@ -69,6 +68,8 @@ El error 404 ocurre cuando Apache no puede procesar las reglas de reescritura de
        RewriteRule ^(.*)$ index.php [QSA,L]
    </IfModule>
    ```
+   
+   **Nota:** No es necesario especificar `RewriteBase` ya que Apache lo detecta automáticamente. Esto permite que el sistema funcione correctamente tanto en el directorio raíz como en subdirectorios.
 
 #### Para Linux (Ubuntu/Debian)
 

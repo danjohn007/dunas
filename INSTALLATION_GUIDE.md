@@ -442,11 +442,9 @@ sudo chown -R www-data:www-data public/uploads
 ### Problema: URL incorrecta / estilos no cargan
 
 **Solución:**
-1. Verificar que `BASE_URL` se detecte correctamente
-2. Si está en subdirectorio, editar `public/.htaccess`:
-```apache
-RewriteBase /dunas/  # Cambiar según su instalación
-```
+1. Verificar que `BASE_URL` se detecte correctamente en el archivo de prueba `test-connection.php`
+2. El archivo `.htaccess` ya está configurado para funcionar automáticamente en cualquier subdirectorio sin necesidad de ajustes adicionales
+3. Si los estilos no cargan, verificar que las rutas de los recursos sean relativas a `BASE_URL`
 
 ### Problema: Error 500 en páginas
 

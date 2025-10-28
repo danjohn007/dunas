@@ -1,6 +1,5 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
     
     # Redireccionar www a no-www (opcional)
     # RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
