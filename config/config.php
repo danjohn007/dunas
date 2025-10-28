@@ -13,9 +13,9 @@ ini_set('display_errors', 1);
 
 // Configuración de base de datos
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'dunas_access_control');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'fix360_dunas');
+define('DB_USER', 'fix360_dunas');
+define('DB_PASS', 'Danjohn007!');
 define('DB_CHARSET', 'utf8mb4');
 
 // Configuración de la aplicación
