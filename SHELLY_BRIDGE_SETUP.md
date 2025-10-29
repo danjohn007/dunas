@@ -666,5 +666,5 @@ Si estos comandos funcionan, DUNAS podrá controlar la barrera sin problemas.
 ---
 
 **Versión:** 1.0  
-**Fecha:** Octubre 2024  
+**Fecha:** Octubre 2025  
 **Sistema:** DUNAS - Control de Acceso con IoT
