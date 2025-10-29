@@ -58,9 +58,11 @@
                     <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
                         Teléfono <span class="text-red-500">*</span>
                     </label>
-                    <input type="tel" id="phone" name="phone" required
+                    <input type="tel" id="phone" name="phone" required maxlength="10"
+                           pattern="[0-9]{10}"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Ingrese teléfono">
+                           placeholder="10 dígitos">
+                    <p class="mt-1 text-xs text-gray-500">Ingrese 10 dígitos sin espacios ni guiones</p>
                 </div>
                 
                 <!-- Email -->

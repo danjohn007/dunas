@@ -85,7 +85,11 @@ class AccessController extends BaseController {
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
                         $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
-                        $this->setFlash('warning', 'Acceso registrado pero no se pudo abrir la barrera automáticamente. Error: ' . $errorDetails . $errorUrl);
+                        $message = 'Acceso registrado pero no se pudo abrir la barrera automáticamente. ';
+                        $message .= 'Error: ' . $errorDetails . $errorUrl;
+                        $message .= '. Por favor, verifique que el dispositivo Shelly esté encendido y conectado a la red, ';
+                        $message .= 'y que la URL configurada sea correcta en Configuraciones del Sistema.';
+                        $this->setFlash('warning', $message);
                     } else {
                         $this->setFlash('success', 'Acceso registrado y barrera abierta exitosamente.');
                     }
@@ -146,7 +150,11 @@ class AccessController extends BaseController {
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
                         $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
-                        $this->setFlash('warning', 'Salida registrada pero no se pudo cerrar la barrera automáticamente. Error: ' . $errorDetails . $errorUrl);
+                        $message = 'Salida registrada pero no se pudo cerrar la barrera automáticamente. ';
+                        $message .= 'Error: ' . $errorDetails . $errorUrl;
+                        $message .= '. Por favor, verifique que el dispositivo Shelly esté encendido y conectado a la red, ';
+                        $message .= 'y que la URL configurada sea correcta en Configuraciones del Sistema.';
+                        $this->setFlash('warning', $message);
                     } else {
                         $this->setFlash('success', 'Salida registrada y barrera cerrada exitosamente.');
                     }

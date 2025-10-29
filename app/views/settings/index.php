@@ -28,7 +28,7 @@
                     </label>
                     <?php if (!empty($settings['site_logo'])): ?>
                     <div class="mb-2">
-                        <img src="<?php echo BASE_URL . '/' . $settings['site_logo']; ?>" 
+                        <img src="<?php echo BASE_URL . $settings['site_logo']; ?>" 
                              alt="Logo actual" class="h-16">
                     </div>
                     <?php endif; ?>
@@ -36,6 +36,70 @@
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <p class="mt-1 text-xs text-gray-500">Formatos aceptados: JPG, PNG. Tamaño máximo: 5MB</p>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Personalización del Tema -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-palette text-purple-600 mr-2"></i>Personalización del Tema
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Color Primario (Navegación)
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <input type="color" name="theme_primary_color" 
+                                   value="<?php echo htmlspecialchars($settings['theme_primary_color'] ?? '#2563eb'); ?>"
+                                   class="h-10 w-20 rounded border-gray-300">
+                            <input type="text" name="theme_primary_color_hex" 
+                                   value="<?php echo htmlspecialchars($settings['theme_primary_color'] ?? '#2563eb'); ?>"
+                                   placeholder="#2563eb"
+                                   class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                   onchange="document.querySelector('input[name=theme_primary_color]').value = this.value">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Color Secundario (Hover)
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <input type="color" name="theme_secondary_color" 
+                                   value="<?php echo htmlspecialchars($settings['theme_secondary_color'] ?? '#1e40af'); ?>"
+                                   class="h-10 w-20 rounded border-gray-300">
+                            <input type="text" name="theme_secondary_color_hex" 
+                                   value="<?php echo htmlspecialchars($settings['theme_secondary_color'] ?? '#1e40af'); ?>"
+                                   placeholder="#1e40af"
+                                   class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                   onchange="document.querySelector('input[name=theme_secondary_color]').value = this.value">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Color de Acento
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <input type="color" name="theme_accent_color" 
+                                   value="<?php echo htmlspecialchars($settings['theme_accent_color'] ?? '#3b82f6'); ?>"
+                                   class="h-10 w-20 rounded border-gray-300">
+                            <input type="text" name="theme_accent_color_hex" 
+                                   value="<?php echo htmlspecialchars($settings['theme_accent_color'] ?? '#3b82f6'); ?>"
+                                   placeholder="#3b82f6"
+                                   class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                   onchange="document.querySelector('input[name=theme_accent_color]').value = this.value">
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Los colores se aplicarán a la navegación y elementos principales del sistema. 
+                    Se recomienda usar colores con buen contraste para mantener la legibilidad.
+                </p>
             </div>
         </div>
         
