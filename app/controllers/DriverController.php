@@ -67,7 +67,7 @@ class DriverController extends BaseController {
                 'full_name' => 'required',
                 'license_number' => 'required|unique:drivers,license_number',
                 'license_expiry' => 'required|date',
-                'phone' => 'required'
+                'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
@@ -117,7 +117,7 @@ class DriverController extends BaseController {
                 'full_name' => 'required',
                 'license_number' => 'required',
                 'license_expiry' => 'required|date',
-                'phone' => 'required'
+                'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {

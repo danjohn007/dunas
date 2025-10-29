@@ -5,6 +5,14 @@
 class BaseController {
     
     protected function view($viewPath, $data = []) {
+        // Cargar configuraciones del sistema
+        require_once APP_PATH . '/models/Settings.php';
+        $settingsModel = new Settings();
+        $settings = $settingsModel->getAll();
+        
+        // Agregar settings a los datos
+        $data['systemSettings'] = $settings;
+        
         extract($data);
         
         // Incluir layout

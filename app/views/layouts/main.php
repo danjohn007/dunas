@@ -7,55 +7,80 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <?php
+    // Obtener colores del tema (valores por defecto si no están configurados)
+    $primaryColor = $systemSettings['theme_primary_color'] ?? '#2563eb';
+    $secondaryColor = $systemSettings['theme_secondary_color'] ?? '#1e40af';
+    $accentColor = $systemSettings['theme_accent_color'] ?? '#3b82f6';
+    ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        :root {
+            --color-primary: <?php echo $primaryColor; ?>;
+            --color-secondary: <?php echo $secondaryColor; ?>;
+            --color-accent: <?php echo $accentColor; ?>;
+        }
+        .bg-primary { background-color: var(--color-primary) !important; }
+        .bg-secondary { background-color: var(--color-secondary) !important; }
+        .bg-accent { background-color: var(--color-accent) !important; }
+        .text-primary { color: var(--color-primary) !important; }
+        .text-secondary { color: var(--color-secondary) !important; }
+        .text-accent { color: var(--color-accent) !important; }
+        .border-primary { border-color: var(--color-primary) !important; }
+        .hover\:bg-primary:hover { background-color: var(--color-secondary) !important; }
     </style>
 </head>
 <body class="bg-gray-50">
     
     <?php if (isset($showNav) && $showNav): ?>
     <!-- Navegación -->
-    <nav class="bg-blue-600 shadow-lg">
+    <nav class="bg-primary shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="<?php echo BASE_URL; ?>/dashboard" class="flex items-center">
-                        <i class="fas fa-water text-white text-2xl mr-2"></i>
-                        <span class="text-white font-bold text-xl">DUNAS</span>
+                        <?php if (!empty($systemSettings['site_logo'])): ?>
+                            <img src="<?php echo BASE_URL . $systemSettings['site_logo']; ?>" 
+                                 alt="<?php echo $systemSettings['site_name'] ?? APP_NAME; ?>" 
+                                 class="h-10 mr-2">
+                        <?php else: ?>
+                            <i class="fas fa-water text-white text-2xl mr-2"></i>
+                        <?php endif; ?>
+                        <span class="text-white font-bold text-xl"><?php echo $systemSettings['site_name'] ?? 'DUNAS'; ?></span>
                     </a>
                     
                     <div class="hidden md:flex ml-10 space-x-4">
-                        <a href="<?php echo BASE_URL; ?>/dashboard" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/dashboard" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-home mr-1"></i> Dashboard
                         </a>
                         
                         <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
-                        <a href="<?php echo BASE_URL; ?>/clients" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/clients" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-users mr-1"></i> Clientes
                         </a>
-                        <a href="<?php echo BASE_URL; ?>/units" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/units" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-truck mr-1"></i> Unidades
                         </a>
-                        <a href="<?php echo BASE_URL; ?>/drivers" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/drivers" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-id-card mr-1"></i> Choferes
                         </a>
-                        <a href="<?php echo BASE_URL; ?>/access" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/access" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-door-open mr-1"></i> Accesos
                         </a>
-                        <a href="<?php echo BASE_URL; ?>/transactions" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/transactions" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-dollar-sign mr-1"></i> Transacciones
                         </a>
                         <?php endif; ?>
                         
                         <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
-                        <a href="<?php echo BASE_URL; ?>/reports" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/reports" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-chart-bar mr-1"></i> Reportes
                         </a>
                         <?php endif; ?>
                         
                         <?php if (Auth::hasRole(['admin'])): ?>
-                        <a href="<?php echo BASE_URL; ?>/users" class="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="<?php echo BASE_URL; ?>/users" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-user-cog mr-1"></i> Usuarios
                         </a>
                         <?php endif; ?>
@@ -65,10 +90,10 @@
                 <div class="flex items-center">
                     <div class="relative">
                         <button id="userMenuButton" type="button" 
-                                class="flex items-center text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium focus:outline-none"
+                                class="flex items-center text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium focus:outline-none"
                                 onclick="toggleUserMenu()">
                             <span class="mr-2"><?php echo Auth::user()['full_name']; ?></span>
-                            <span class="text-xs bg-blue-800 px-2 py-1 rounded mr-2"><?php echo strtoupper(Auth::user()['role']); ?></span>
+                            <span class="text-xs bg-secondary px-2 py-1 rounded mr-2"><?php echo strtoupper(Auth::user()['role']); ?></span>
                             <i class="fas fa-chevron-down text-xs"></i>
                         </button>
                         

@@ -184,6 +184,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Destruir instancia previa del gráfico si existe
+        const existingChart = Chart.getChart(ctx);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
         new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {

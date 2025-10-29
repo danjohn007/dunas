@@ -64,7 +64,7 @@ class ClientController extends BaseController {
                 'business_name' => 'required',
                 'rfc_curp' => 'required',
                 'address' => 'required',
-                'phone' => 'required',
+                'phone' => 'required|phone',
                 'email' => 'required|email',
                 'client_type' => 'required'
             ];
@@ -106,7 +106,7 @@ class ClientController extends BaseController {
                 'business_name' => 'required',
                 'rfc_curp' => 'required',
                 'address' => 'required',
-                'phone' => 'required',
+                'phone' => 'required|phone',
                 'email' => 'required|email',
                 'client_type' => 'required'
             ];

@@ -84,6 +84,16 @@ class Validator {
                     $this->errors[$field][] = "Debe ser una fecha válida.";
                 }
                 break;
+                
+            case 'phone':
+                if (!empty($value)) {
+                    // Remove any non-digit characters
+                    $cleaned = preg_replace('/\D/', '', $value);
+                    if (strlen($cleaned) !== 10) {
+                        $this->errors[$field][] = "El número telefónico debe tener exactamente 10 dígitos.";
+                    }
+                }
+                break;
         }
     }
     

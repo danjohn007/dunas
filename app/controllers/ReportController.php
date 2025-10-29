@@ -210,18 +210,139 @@ class ReportController extends BaseController {
     public function exportExcel($type) {
         Auth::requireRole(['admin', 'supervisor']);
         
-        // Aquí se implementaría la exportación a Excel
-        // Por ahora, redirigir con mensaje
-        $this->setFlash('info', 'Funcionalidad de exportación a Excel en desarrollo.');
-        $this->redirect('/reports/' . $type);
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        // Obtener los datos según el tipo de reporte
+        $data = [];
+        $filename = '';
+        
+        switch($type) {
+            case 'financial':
+                $filters = [
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo,
+                    'payment_status' => 'paid'
+                ];
+                $data = $this->transactionModel->getAll($filters);
+                $filename = "reporte_financiero_{$dateFrom}_{$dateTo}.csv";
+                $headers = ['Fecha', 'Cliente', 'Litros', 'Método de Pago', 'Monto'];
+                break;
+            case 'access':
+                $filters = [
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo
+                ];
+                $data = $this->accessModel->getAll($filters);
+                $filename = "reporte_acceso_{$dateFrom}_{$dateTo}.csv";
+                $headers = ['Fecha Entrada', 'Fecha Salida', 'Unidad', 'Chofer', 'Cliente', 'Litros', 'Estado'];
+                break;
+            default:
+                $this->setFlash('error', 'Tipo de reporte no válido.');
+                $this->redirect('/reports');
+                return;
+        }
+        
+        // Generar archivo CSV
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $output = fopen('php://output', 'w');
+        
+        // Escribir BOM para UTF-8
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+        
+        // Escribir encabezados
+        fputcsv($output, $headers);
+        
+        // Escribir datos
+        if ($type === 'financial') {
+            foreach ($data as $row) {
+                $methodLabels = [
+                    'cash' => 'Efectivo',
+                    'voucher' => 'Vales',
+                    'bank_transfer' => 'Transferencia'
+                ];
+                fputcsv($output, [
+                    date('d/m/Y H:i', strtotime($row['transaction_date'])),
+                    $row['client_name'],
+                    number_format($row['liters_supplied']),
+                    $methodLabels[$row['payment_method']],
+                    '$' . number_format($row['total_amount'], 2)
+                ]);
+            }
+        } elseif ($type === 'access') {
+            foreach ($data as $row) {
+                $statusLabels = [
+                    'in_progress' => 'En Progreso',
+                    'completed' => 'Completado',
+                    'cancelled' => 'Cancelado'
+                ];
+                fputcsv($output, [
+                    date('d/m/Y H:i', strtotime($row['entry_datetime'])),
+                    $row['exit_datetime'] ? date('d/m/Y H:i', strtotime($row['exit_datetime'])) : '-',
+                    $row['plate_number'],
+                    $row['driver_name'],
+                    $row['client_name'],
+                    $row['liters_supplied'] ? number_format($row['liters_supplied']) : '-',
+                    $statusLabels[$row['status']]
+                ]);
+            }
+        }
+        
+        fclose($output);
+        exit;
     }
     
     public function exportPdf($type) {
         Auth::requireRole(['admin', 'supervisor']);
         
-        // Aquí se implementaría la exportación a PDF
-        // Por ahora, redirigir con mensaje
-        $this->setFlash('info', 'Funcionalidad de exportación a PDF en desarrollo.');
-        $this->redirect('/reports/' . $type);
+        // Para PDF, usaremos una simple impresión HTML que el navegador puede convertir a PDF
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        // Reutilizar la misma vista con un parámetro para indicar modo de impresión
+        if ($type === 'financial') {
+            $filters = [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'payment_status' => 'paid'
+            ];
+            
+            $transactions = $this->transactionModel->getAll($filters);
+            
+            // Calcular estadísticas
+            $stats = [
+                'total_transactions' => count($transactions),
+                'total_revenue' => 0,
+                'total_liters' => 0,
+                'by_method' => [
+                    'cash' => 0,
+                    'voucher' => 0,
+                    'bank_transfer' => 0
+                ]
+            ];
+            
+            foreach ($transactions as $trans) {
+                $stats['total_revenue'] += $trans['total_amount'];
+                $stats['total_liters'] += $trans['liters_supplied'];
+                $stats['by_method'][$trans['payment_method']] += $trans['total_amount'];
+            }
+            
+            $data = [
+                'title' => 'Reporte Financiero - Impresión',
+                'transactions' => $transactions,
+                'stats' => $stats,
+                'dateFrom' => $dateFrom,
+                'dateTo' => $dateTo,
+                'showNav' => false,
+                'printMode' => true
+            ];
+            
+            $this->view('reports/financial_print', $data);
+        } else {
+            $this->setFlash('error', 'Exportación PDF disponible solo para reporte financiero.');
+            $this->redirect('/reports/' . $type);
+        }
     }
 }

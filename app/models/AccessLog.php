@@ -24,6 +24,11 @@ class AccessLog {
             $params[] = $filters['status'];
         }
         
+        if (!empty($filters['unit_id'])) {
+            $sql .= " AND al.unit_id = ?";
+            $params[] = $filters['unit_id'];
+        }
+        
         if (!empty($filters['date_from'])) {
             $sql .= " AND DATE(al.entry_datetime) >= ?";
             $params[] = $filters['date_from'];

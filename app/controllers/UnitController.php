@@ -4,6 +4,7 @@
  */
 require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Unit.php';
+require_once APP_PATH . '/models/AccessLog.php';
 
 class UnitController extends BaseController {
     
@@ -161,6 +162,22 @@ class UnitController extends BaseController {
         
         try {
             $unit = $this->unitModel->getById($id);
+            
+            if (!$unit) {
+                $this->setFlash('error', 'Unidad no encontrada.');
+                $this->redirect('/units');
+                return;
+            }
+            
+            // Verificar si la unidad tiene registros de acceso
+            $accessModel = new AccessLog();
+            $accessLogs = $accessModel->getAll(['unit_id' => $id]);
+            
+            if (!empty($accessLogs)) {
+                $this->setFlash('error', 'No se puede eliminar la unidad porque tiene registros de acceso asociados. En su lugar, puede cambiar el estado a "inactivo".');
+                $this->redirect('/units');
+                return;
+            }
             
             // Eliminar foto si existe
             if (!empty($unit['photo'])) {
