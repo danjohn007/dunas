@@ -44,11 +44,46 @@ ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', 0); // Cambiar a 1 si se usa HTTPS
 
-// Configuración de Shelly Relay API
-define('SHELLY_API_URL', 'http://192.168.1.100'); // IP del dispositivo Shelly
-define('SHELLY_API_TIMEOUT', 5);
-define('SHELLY_RELAY_OPEN', 0);  // Canal para abrir barrera
-define('SHELLY_RELAY_CLOSE', 1); // Canal para cerrar barrera
+// Configuración de Shelly Relay API con Port Forwarding
+// IMPORTANTE: Asegúrate de que tu router tenga port forwarding configurado:
+// Puerto público 80 -> IP local 192.168.1.95:80
+function getShellyPublicIP() {
+    // Lista de servicios para obtener IP pública
+    $services = [
+        'https://api.ipify.org',
+        'https://icanhazip.com',
+        'https://ipecho.net/plain'
+    ];
+    
+    foreach ($services as $service) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $service);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'ShellyAPI/1.0');
+        
+        $ip = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+        
+        if (!$error && $ip && filter_var(trim($ip), FILTER_VALIDATE_IP)) {
+            return trim($ip);
+        }
+    }
+    
+    // Fallback a IP local si no se puede obtener IP pública
+    return '192.168.1.95';
+}
+
+$SHELLY_PUBLIC_IP = getShellyPublicIP();
+
+define('SHELLY_API_URL', "http://$SHELLY_PUBLIC_IP/"); // IP pública con port forwarding
+define('SHELLY_API_TIMEOUT', 15); // Timeout aumentado para conexión externa
+define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera
+define('SHELLY_ENABLED', true); // Habilitado con port forwarding
+// URLs completas para las acciones
+define('SHELLY_OPEN_URL', "http://$SHELLY_PUBLIC_IP/rpc/Switch.Set?id=0&on=false");  // Abrir
+define('SHELLY_CLOSE_URL', "http://$SHELLY_PUBLIC_IP/rpc/Switch.Set?id=0&on=true");  // Cerrar
 
 // Configuración de archivos
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
