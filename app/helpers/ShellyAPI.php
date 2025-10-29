@@ -6,6 +6,12 @@ require_once APP_PATH . '/models/Settings.php';
 
 class ShellyAPI {
     
+    // Timeouts extendidos para manejar latencia de red
+    const TIMEOUT_EXTENDED = 15;
+    const CONNECT_TIMEOUT = 10;
+    const RETRY_DELAY_MICROSECONDS = 500000; // 0.5 segundos
+    const MAX_RETRIES = 2;
+    
     private static function getSettings() {
         static $settings = null;
         if ($settings === null) {
@@ -28,8 +34,8 @@ class ShellyAPI {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Aumentado de 5 a 15 segundos
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Aumentado de 5 a 10 segundos
+        curl_setopt($ch, CURLOPT_TIMEOUT, self::TIMEOUT_EXTENDED);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
         
@@ -60,10 +66,9 @@ class ShellyAPI {
     public static function openBarrier() {
         $settings = self::getSettings();
         // Activar relay para abrir barrera con reintento
-        $maxRetries = 2;
         $result = null;
         
-        for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+        for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
             $result = self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=on', 'GET');
             
             if ($result['success']) {
@@ -74,8 +79,8 @@ class ShellyAPI {
             }
             
             // Si falla y aún quedan intentos, esperar un poco antes de reintentar
-            if ($attempt < $maxRetries) {
-                usleep(500000); // Esperar 0.5 segundos antes de reintentar
+            if ($attempt < self::MAX_RETRIES) {
+                usleep(self::RETRY_DELAY_MICROSECONDS);
             }
         }
         
@@ -85,10 +90,9 @@ class ShellyAPI {
     public static function closeBarrier() {
         $settings = self::getSettings();
         // Activar relay para cerrar barrera con reintento
-        $maxRetries = 2;
         $result = null;
         
-        for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+        for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
             $result = self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=on', 'GET');
             
             if ($result['success']) {
@@ -99,8 +103,8 @@ class ShellyAPI {
             }
             
             // Si falla y aún quedan intentos, esperar un poco antes de reintentar
-            if ($attempt < $maxRetries) {
-                usleep(500000); // Esperar 0.5 segundos antes de reintentar
+            if ($attempt < self::MAX_RETRIES) {
+                usleep(self::RETRY_DELAY_MICROSECONDS);
             }
         }
         
