@@ -108,7 +108,8 @@ class AccessLog {
         $maxAttempts = 100;
         
         do {
-            $code = str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            // rand(1000, 9999) ya genera 4 dígitos, no necesita str_pad
+            $code = (string)rand(1000, 9999);
             // Verificar si el código ya existe hoy
             $sql = "SELECT COUNT(*) as count FROM access_logs 
                     WHERE ticket_code = ? AND DATE(entry_datetime) = CURDATE()";
@@ -121,8 +122,8 @@ class AccessLog {
             $attempts++;
         } while ($attempts < $maxAttempts);
         
-        // Si no se encontró código único en 100 intentos, usar timestamp
-        return date('His') . rand(10, 99);
+        // Si no se encontró código único en 100 intentos, usar fallback que garantiza 4 dígitos
+        return substr(date('His'), -2) . str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
     }
     
     private function generateCodes($id, $ticketCode) {

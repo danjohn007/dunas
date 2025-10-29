@@ -149,7 +149,8 @@ private function generateTicketCode() {
     $maxAttempts = 100;
     
     do {
-        $code = str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        // rand(1000, 9999) ya genera 4 dígitos
+        $code = (string)rand(1000, 9999);
         // Verificar si el código ya existe hoy
         $sql = "SELECT COUNT(*) as count FROM access_logs 
                 WHERE ticket_code = ? AND DATE(entry_datetime) = CURDATE()";
@@ -162,8 +163,8 @@ private function generateTicketCode() {
         $attempts++;
     } while ($attempts < $maxAttempts);
     
-    // Fallback: usar timestamp
-    return date('His') . rand(10, 99);
+    // Fallback: usar últimos 2 dígitos de hora + 2 dígitos aleatorios (garantiza 4 dígitos)
+    return substr(date('His'), -2) . str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
 }
 ```
 
