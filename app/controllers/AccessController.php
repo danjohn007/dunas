@@ -83,7 +83,9 @@ class AccessController extends BaseController {
                     $shellyResult = ShellyAPI::openBarrier();
                     
                     if (!$shellyResult['success']) {
-                        $this->setFlash('warning', 'Acceso registrado pero no se pudo abrir la barrera automáticamente.');
+                        $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
+                        $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
+                        $this->setFlash('warning', 'Acceso registrado pero no se pudo abrir la barrera automáticamente. Error: ' . $errorDetails . $errorUrl);
                     } else {
                         $this->setFlash('success', 'Acceso registrado y barrera abierta exitosamente.');
                     }
@@ -142,7 +144,9 @@ class AccessController extends BaseController {
                     $shellyResult = ShellyAPI::closeBarrier();
                     
                     if (!$shellyResult['success']) {
-                        $this->setFlash('warning', 'Salida registrada pero no se pudo cerrar la barrera automáticamente.');
+                        $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
+                        $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
+                        $this->setFlash('warning', 'Salida registrada pero no se pudo cerrar la barrera automáticamente. Error: ' . $errorDetails . $errorUrl);
                     } else {
                         $this->setFlash('success', 'Salida registrada y barrera cerrada exitosamente.');
                     }

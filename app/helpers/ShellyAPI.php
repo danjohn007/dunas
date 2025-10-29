@@ -11,6 +11,7 @@ class ShellyAPI {
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, SHELLY_API_TIMEOUT);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, SHELLY_API_TIMEOUT);
         
         if ($method === 'POST' && $data) {
             curl_setopt($ch, CURLOPT_POST, true);
@@ -23,13 +24,13 @@ class ShellyAPI {
         curl_close($ch);
         
         if ($error) {
-            error_log("Shelly API Error: " . $error);
-            return ['success' => false, 'error' => $error];
+            error_log("Shelly API Error: " . $error . " (URL: " . $url . ")");
+            return ['success' => false, 'error' => $error, 'url' => $url];
         }
         
         if ($httpCode !== 200) {
-            error_log("Shelly API HTTP Error: " . $httpCode);
-            return ['success' => false, 'error' => 'HTTP ' . $httpCode];
+            error_log("Shelly API HTTP Error: " . $httpCode . " (URL: " . $url . ")");
+            return ['success' => false, 'error' => 'HTTP ' . $httpCode, 'url' => $url];
         }
         
         $decoded = json_decode($response, true);

@@ -34,10 +34,12 @@ class SettingsController extends BaseController {
             try {
                 // Procesar logo si se subió
                 if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] === UPLOAD_ERR_OK) {
-                    $upload = new FileUpload();
-                    $logoPath = $upload->uploadImage($_FILES['site_logo'], 'logos');
-                    if ($logoPath) {
-                        $_POST['site_logo'] = $logoPath;
+                    $uploadDir = UPLOAD_PATH . '/logos';
+                    $result = FileUpload::upload($_FILES['site_logo'], $uploadDir);
+                    if ($result['success']) {
+                        $_POST['site_logo'] = '/uploads/logos/' . $result['filename'];
+                    } else {
+                        throw new Exception($result['error']);
                     }
                 }
                 
