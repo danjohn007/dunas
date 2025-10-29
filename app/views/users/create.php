@@ -61,6 +61,7 @@
                         <option value="supervisor">Supervisor</option>
                         <option value="operator">Operador</option>
                         <option value="viewer">Visualizador</option>
+                        <option value="client">Cliente</option>
                     </select>
                 </div>
                 

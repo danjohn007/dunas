@@ -23,6 +23,7 @@
                     <option value="supervisor" <?php echo ($filters['role'] ?? '') === 'supervisor' ? 'selected' : ''; ?>>Supervisor</option>
                     <option value="operator" <?php echo ($filters['role'] ?? '') === 'operator' ? 'selected' : ''; ?>>Operador</option>
                     <option value="viewer" <?php echo ($filters['role'] ?? '') === 'viewer' ? 'selected' : ''; ?>>Visualizador</option>
+                    <option value="client" <?php echo ($filters['role'] ?? '') === 'client' ? 'selected' : ''; ?>>Cliente</option>
                 </select>
             </div>
             <div>

@@ -78,6 +78,16 @@ class Unit {
         return $this->db->execute($sql, [$id]);
     }
     
+    public function findByPlateNumber($plateNumber) {
+        $sql = "SELECT * FROM units WHERE plate_number = ?";
+        return $this->db->fetchOne($sql, [$plateNumber]);
+    }
+    
+    public function searchByPlateNumber($search) {
+        $sql = "SELECT * FROM units WHERE plate_number LIKE ? ORDER BY plate_number ASC LIMIT 10";
+        return $this->db->fetchAll($sql, ['%' . $search . '%']);
+    }
+    
     public function getMaintenanceHistory($unitId, $limit = 10) {
         $sql = "SELECT * FROM maintenance_history 
                 WHERE unit_id = ? 

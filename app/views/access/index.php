@@ -5,9 +5,20 @@
             <p class="text-gray-600">Gestión de accesos de unidades</p>
         </div>
         <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
-        <a href="<?php echo BASE_URL; ?>/access/create" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
-            <i class="fas fa-plus mr-2"></i>Registrar Entrada
-        </a>
+        <div class="flex gap-2">
+            <a href="<?php echo BASE_URL; ?>/access/quickRegistration" 
+               class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-bolt mr-2"></i>Registro Rápido
+            </a>
+            <a href="<?php echo BASE_URL; ?>/access/scanExit" 
+               class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-barcode mr-2"></i>Escanear Salida
+            </a>
+            <a href="<?php echo BASE_URL; ?>/access/create" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-plus mr-2"></i>Registrar Entrada
+            </a>
+        </div>
         <?php endif; ?>
     </div>
     

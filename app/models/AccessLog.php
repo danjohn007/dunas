@@ -103,7 +103,27 @@ class AccessLog {
     }
     
     private function generateTicketCode() {
-        return 'TKT' . date('Ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        // Generar código de 4 dígitos único
+        $attempts = 0;
+        $maxAttempts = 100;
+        
+        do {
+            // rand(1000, 9999) ya genera 4 dígitos, no necesita str_pad
+            $code = (string)rand(1000, 9999);
+            // Verificar si el código ya existe hoy
+            $sql = "SELECT COUNT(*) as count FROM access_logs 
+                    WHERE ticket_code = ? AND DATE(entry_datetime) = CURDATE()";
+            $result = $this->db->fetchOne($sql, [$code]);
+            
+            if ($result['count'] == 0) {
+                return $code;
+            }
+            
+            $attempts++;
+        } while ($attempts < $maxAttempts);
+        
+        // Si no se encontró código único en 100 intentos, usar fallback que garantiza 4 dígitos
+        return substr(date('His'), -2) . str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
     }
     
     private function generateCodes($id, $ticketCode) {
