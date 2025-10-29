@@ -173,6 +173,9 @@
             <p class="text-center text-gray-500 text-sm">
                 © <?php echo date('Y'); ?> <?php echo APP_NAME; ?>. Versión <?php echo APP_VERSION; ?>. Todos los derechos reservados.
             </p>
+            <p class="text-center text-gray-400 text-xs mt-2">
+                Sistema desarrollado por ID Industrial <a href="https://www.idindustrial.com.mx" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700">www.idindustrial.com.mx</a>
+            </p>
         </div>
     </footer>
     

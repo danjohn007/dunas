@@ -6,6 +6,12 @@ require_once APP_PATH . '/models/Settings.php';
 
 class ShellyAPI {
     
+    // Timeouts extendidos para manejar latencia de red
+    const TIMEOUT_EXTENDED = 15;
+    const CONNECT_TIMEOUT = 10;
+    const RETRY_DELAY_MICROSECONDS = 500000; // 0.5 segundos
+    const MAX_RETRIES = 2;
+    
     private static function getSettings() {
         static $settings = null;
         if ($settings === null) {
@@ -28,8 +34,10 @@ class ShellyAPI {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, SHELLY_API_TIMEOUT);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, SHELLY_API_TIMEOUT);
+        curl_setopt($ch, CURLOPT_TIMEOUT, self::TIMEOUT_EXTENDED);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
         
         if ($method === 'POST' && $data) {
             curl_setopt($ch, CURLOPT_POST, true);
@@ -57,13 +65,23 @@ class ShellyAPI {
     
     public static function openBarrier() {
         $settings = self::getSettings();
-        // Activar relay para abrir barrera
-        $result = self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=on', 'GET');
+        // Activar relay para abrir barrera con reintento
+        $result = null;
         
-        if ($result['success']) {
-            // Apagar después de 2 segundos
-            sleep(2);
-            self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=off', 'GET');
+        for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
+            $result = self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=on', 'GET');
+            
+            if ($result['success']) {
+                // Apagar después de 2 segundos
+                sleep(2);
+                self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=off', 'GET');
+                break;
+            }
+            
+            // Si falla y aún quedan intentos, esperar un poco antes de reintentar
+            if ($attempt < self::MAX_RETRIES) {
+                usleep(self::RETRY_DELAY_MICROSECONDS);
+            }
         }
         
         return $result;
@@ -71,13 +89,23 @@ class ShellyAPI {
     
     public static function closeBarrier() {
         $settings = self::getSettings();
-        // Activar relay para cerrar barrera
-        $result = self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=on', 'GET');
+        // Activar relay para cerrar barrera con reintento
+        $result = null;
         
-        if ($result['success']) {
-            // Apagar después de 2 segundos
-            sleep(2);
-            self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=off', 'GET');
+        for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
+            $result = self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=on', 'GET');
+            
+            if ($result['success']) {
+                // Apagar después de 2 segundos
+                sleep(2);
+                self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=off', 'GET');
+                break;
+            }
+            
+            // Si falla y aún quedan intentos, esperar un poco antes de reintentar
+            if ($attempt < self::MAX_RETRIES) {
+                usleep(self::RETRY_DELAY_MICROSECONDS);
+            }
         }
         
         return $result;
