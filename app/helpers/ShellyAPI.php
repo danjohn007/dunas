@@ -4,8 +4,25 @@
  */
 class ShellyAPI {
     
+    private static function getSettings() {
+        static $settings = null;
+        if ($settings === null) {
+            require_once APP_PATH . '/models/Settings.php';
+            $settingsModel = new Settings();
+            $allSettings = $settingsModel->getAll();
+            
+            $settings = [
+                'api_url' => $allSettings['shelly_api_url'] ?? SHELLY_API_URL,
+                'relay_open' => $allSettings['shelly_relay_open'] ?? SHELLY_RELAY_OPEN,
+                'relay_close' => $allSettings['shelly_relay_close'] ?? SHELLY_RELAY_CLOSE,
+            ];
+        }
+        return $settings;
+    }
+    
     private static function makeRequest($endpoint, $method = 'GET', $data = null) {
-        $url = SHELLY_API_URL . $endpoint;
+        $settings = self::getSettings();
+        $url = rtrim($settings['api_url'], '/') . $endpoint;
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -38,26 +55,28 @@ class ShellyAPI {
     }
     
     public static function openBarrier() {
+        $settings = self::getSettings();
         // Activar relay para abrir barrera
-        $result = self::makeRequest('/relay/' . SHELLY_RELAY_OPEN . '?turn=on', 'GET');
+        $result = self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=on', 'GET');
         
         if ($result['success']) {
             // Apagar después de 2 segundos
             sleep(2);
-            self::makeRequest('/relay/' . SHELLY_RELAY_OPEN . '?turn=off', 'GET');
+            self::makeRequest('/relay/' . $settings['relay_open'] . '?turn=off', 'GET');
         }
         
         return $result;
     }
     
     public static function closeBarrier() {
+        $settings = self::getSettings();
         // Activar relay para cerrar barrera
-        $result = self::makeRequest('/relay/' . SHELLY_RELAY_CLOSE . '?turn=on', 'GET');
+        $result = self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=on', 'GET');
         
         if ($result['success']) {
             // Apagar después de 2 segundos
             sleep(2);
-            self::makeRequest('/relay/' . SHELLY_RELAY_CLOSE . '?turn=off', 'GET');
+            self::makeRequest('/relay/' . $settings['relay_close'] . '?turn=off', 'GET');
         }
         
         return $result;
