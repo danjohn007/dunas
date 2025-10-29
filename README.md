@@ -4,15 +4,17 @@ Sistema integral para gestionar el acceso de pipas de agua a tomas autorizadas, 
 
 ## 🚀 Características Principales
 
-- ✅ **Gestión de Usuarios** con 4 niveles de acceso (Admin, Supervisor, Operador, Cliente)
+- ✅ **Gestión de Usuarios** con 5 niveles de acceso (Admin, Supervisor, Operador, Visualizador, Cliente)
 - ✅ **Módulo de Clientes** con tipos (Residencial/Comercial/Industrial)
 - ✅ **Gestión de Unidades (Pipas)** con historial de mantenimiento
 - ✅ **Gestión de Choferes** con control de licencias
 - ✅ **Control de Acceso** con tickets QR y códigos de barras
+- ✅ **Registro Rápido** con búsqueda de unidad y creación automática de registros
+- ✅ **Escaneo de Código de Barras** para salida automática con capacidad máxima
 - ✅ **Integración IoT** con Shelly Relay SHELLPRO4PM para control de barreras vehiculares
 - ✅ **Transacciones y Pagos** (Efectivo, Vales, Transferencias)
 - ✅ **Reportes** con exportación a Excel y PDF
-- ✅ **Dashboard** con estadísticas en tiempo real y gráficas
+- ✅ **Dashboard** con estadísticas en tiempo real y gráficas optimizadas
 - ✅ **Diseño Responsivo** con Tailwind CSS
 
 ## 📋 Requisitos del Sistema
@@ -345,6 +347,31 @@ define('SESSION_TIMEOUT', 7200); // 2 horas
 
 Para problemas adicionales y soluciones detalladas, consulte **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
 
+## 📚 Documentación Adicional
+
+### Guías Especializadas
+
+- **[QUICK_REGISTRATION_GUIDE.md](QUICK_REGISTRATION_GUIDE.md)** - Guía completa del sistema de registro rápido con códigos de barras
+- **[SHELLY_BRIDGE_SETUP.md](SHELLY_BRIDGE_SETUP.md)** - Configuración de bridge para control remoto de Shelly Relay
+- **[SHELLY_API.md](SHELLY_API.md)** - Documentación de la API de Shelly Relay
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solución de problemas comunes
+
+### Características Nuevas (v1.2.0)
+
+#### Sistema de Registro Rápido
+- **Búsqueda inteligente** de unidades por número de placa
+- **Creación automática** de unidades, clientes y choferes sobre la marcha
+- **Generación de tickets** con código de barras de 4 dígitos
+- **Impresión de tickets** optimizada para impresoras térmicas de 80mm
+
+#### Escaneo de Salida Automatizado
+- **Escaneo de código de barras** para registro rápido de salida
+- **Registro automático** con capacidad máxima de la unidad
+- **Control de barrera** automático al completar salida
+- **Historial en tiempo real** de salidas recientes
+
+Ver [QUICK_REGISTRATION_GUIDE.md](QUICK_REGISTRATION_GUIDE.md) para instrucciones detalladas.
+
 ## 📞 Soporte
 
 Para problemas, preguntas o sugerencias, puede:
@@ -362,5 +389,5 @@ Desarrollado por el equipo DUNAS para la gestión eficiente de control de acceso
 
 ---
 
-**Versión:** 1.0.0  
+**Versión:** 1.2.0  
 **Última actualización:** Octubre 2024
