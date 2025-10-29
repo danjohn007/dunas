@@ -107,7 +107,7 @@
             <h2 class="text-xl font-semibold text-gray-900">
                 <i class="fas fa-wrench text-blue-600 mr-2"></i>Historial de Mantenimiento
             </h2>
-            <button onclick="document.getElementById('maintenanceForm').classList.toggle('hidden')"
+            <button id="addMaintenanceBtn"
                     class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg text-sm">
                 <i class="fas fa-plus mr-2"></i>Agregar Mantenimiento
             </button>
@@ -142,7 +142,7 @@
                                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"></textarea>
                     </div>
                     <div class="md:col-span-3 flex justify-end space-x-2">
-                        <button type="button" onclick="document.getElementById('maintenanceForm').classList.add('hidden')"
+                        <button type="button" id="cancelMaintenanceBtn"
                                 class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
                             Cancelar
                         </button>
@@ -193,3 +193,24 @@
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+// Toggle maintenance form visibility
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('addMaintenanceBtn');
+    const cancelBtn = document.getElementById('cancelMaintenanceBtn');
+    const form = document.getElementById('maintenanceForm');
+    
+    if (addBtn && form) {
+        addBtn.addEventListener('click', function() {
+            form.classList.toggle('hidden');
+        });
+    }
+    
+    if (cancelBtn && form) {
+        cancelBtn.addEventListener('click', function() {
+            form.classList.add('hidden');
+        });
+    }
+});
+</script>

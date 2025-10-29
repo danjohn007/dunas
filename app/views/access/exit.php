@@ -87,7 +87,7 @@
 </div>
 
 <script>
-// Auto-focus en el campo de litros
+// Auto-focus on the liters field
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('liters_supplied').focus();
 });
