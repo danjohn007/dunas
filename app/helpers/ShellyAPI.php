@@ -2,12 +2,13 @@
 /**
  * Clase ShellyAPI - Integración con Shelly Relay SHELLPRO4PM
  */
+require_once APP_PATH . '/models/Settings.php';
+
 class ShellyAPI {
     
     private static function getSettings() {
         static $settings = null;
         if ($settings === null) {
-            require_once APP_PATH . '/models/Settings.php';
             $settingsModel = new Settings();
             $allSettings = $settingsModel->getAll();
             
