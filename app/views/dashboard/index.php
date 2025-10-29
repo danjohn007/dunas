@@ -139,7 +139,14 @@
             <h2 class="text-xl font-bold text-gray-900 mb-4">
                 <i class="fas fa-chart-bar text-blue-600 mr-2"></i>Ingresos Mensuales
             </h2>
-            <canvas id="revenueChart" height="250"></canvas>
+            <div id="chartContainer">
+                <canvas id="revenueChart" height="250"></canvas>
+            </div>
+            <div id="noDataMessage" class="hidden text-center py-12 text-gray-500">
+                <i class="fas fa-chart-line text-5xl mb-3 opacity-30"></i>
+                <p class="text-lg">No hay datos de ingresos disponibles</p>
+                <p class="text-sm mt-2">Los datos aparecerán cuando haya transacciones registradas en los últimos 6 meses</p>
+            </div>
         </div>
     </div>
     
@@ -175,25 +182,33 @@
 // Gráfica de ingresos mensuales
 document.addEventListener('DOMContentLoaded', function() {
     try {
-        // Verificar que Chart.js esté cargado
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js no está cargado');
-            return;
-        }
-        
         const monthlyData = <?php echo json_encode($monthlyData); ?>;
         
         // Validar que hay datos
         if (!monthlyData || monthlyData.length === 0) {
-            console.warn('No hay datos mensuales para mostrar');
+            console.warn('No hay datos mensuales para mostrar en la gráfica');
+            document.getElementById('chartContainer').classList.add('hidden');
+            document.getElementById('noDataMessage').classList.remove('hidden');
+            return;
+        }
+        
+        // Verificar que Chart.js esté cargado
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está cargado. Asegúrese de que la librería esté incluida correctamente.');
+            document.getElementById('chartContainer').innerHTML = '<div class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-5xl mb-3"></i><p>Error: Chart.js no está cargado</p></div>';
             return;
         }
         
         const labels = monthlyData.map(item => {
-            const date = new Date(item.month + '-01');
-            return date.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+            try {
+                const date = new Date(item.month + '-01');
+                return date.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+            } catch(e) {
+                console.error('Error formateando fecha:', item.month, e);
+                return item.month;
+            }
         });
-        const revenues = monthlyData.map(item => parseFloat(item.revenue));
+        const revenues = monthlyData.map(item => parseFloat(item.revenue) || 0);
         
         const ctx = document.getElementById('revenueChart');
         if (!ctx) {
@@ -221,6 +236,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Ingresos: $' + context.parsed.y.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -228,15 +250,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                return '$' + value.toLocaleString('es-MX');
                             }
                         }
                     }
                 }
             }
         });
+        
+        console.log('Gráfica de ingresos mensuales creada exitosamente con', monthlyData.length, 'puntos de datos');
     } catch (error) {
         console.error('Error al crear la gráfica:', error);
+        const container = document.getElementById('chartContainer');
+        if (container) {
+            container.innerHTML = '<div class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-5xl mb-3"></i><p>Error al cargar la gráfica</p><p class="text-sm mt-2">' + error.message + '</p></div>';
+        }
     }
 });
 </script>
