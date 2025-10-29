@@ -12,7 +12,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    role ENUM('admin', 'supervisor', 'operator', 'client') NOT NULL DEFAULT 'operator',
+    role ENUM('admin', 'supervisor', 'operator', 'viewer', 'client') NOT NULL DEFAULT 'operator',
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

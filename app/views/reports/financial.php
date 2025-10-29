@@ -91,7 +91,9 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4">
                 <i class="fas fa-chart-bar text-blue-600 mr-2"></i>Ingresos en el Período Seleccionado
             </h3>
-            <canvas id="revenueChart" height="200"></canvas>
+            <div style="height: 300px; position: relative;">
+                <canvas id="revenueChart"></canvas>
+            </div>
         </div>
     </div>
     

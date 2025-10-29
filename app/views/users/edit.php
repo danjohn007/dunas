@@ -53,6 +53,7 @@
                         <option value="supervisor" <?php echo $user['role'] === 'supervisor' ? 'selected' : ''; ?>>Supervisor</option>
                         <option value="operator" <?php echo $user['role'] === 'operator' ? 'selected' : ''; ?>>Operador</option>
                         <option value="viewer" <?php echo $user['role'] === 'viewer' ? 'selected' : ''; ?>>Visualizador</option>
+                        <option value="client" <?php echo $user['role'] === 'client' ? 'selected' : ''; ?>>Cliente</option>
                     </select>
                 </div>
                 
