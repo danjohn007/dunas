@@ -89,7 +89,7 @@
         <!-- Gráfica de Ingresos por Día -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-chart-line text-blue-600 mr-2"></i>Ingresos por Día
+                <i class="fas fa-chart-bar text-blue-600 mr-2"></i>Ingresos en el Período Seleccionado
             </h3>
             <canvas id="revenueChart" height="200"></canvas>
         </div>
@@ -153,7 +153,7 @@
 </div>
 
 <script>
-// Gráfica de ingresos por día
+// Gráfica de ingresos en el período seleccionado
 document.addEventListener('DOMContentLoaded', function() {
     try {
         // Verificar que Chart.js esté cargado
@@ -199,7 +199,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     data: revenues,
                     backgroundColor: 'rgba(59, 130, 246, 0.5)',
                     borderColor: 'rgb(59, 130, 246)',
-                    borderWidth: 2
+                    borderWidth: 2,
+                    maxBarThickness: 50
                 }]
             },
             options: {
@@ -208,14 +209,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Ingresos: $' + context.parsed.y.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
                     }
                 },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                return '$' + value.toLocaleString('es-MX');
                             }
                         }
                     }

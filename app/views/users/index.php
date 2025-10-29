@@ -82,17 +82,19 @@
                                     'admin' => 'bg-red-100 text-red-800',
                                     'supervisor' => 'bg-blue-100 text-blue-800',
                                     'operator' => 'bg-green-100 text-green-800',
-                                    'viewer' => 'bg-gray-100 text-gray-800'
+                                    'viewer' => 'bg-gray-100 text-gray-800',
+                                    'client' => 'bg-purple-100 text-purple-800'
                                 ];
                                 $roleLabels = [
                                     'admin' => 'Administrador',
                                     'supervisor' => 'Supervisor',
                                     'operator' => 'Operador',
-                                    'viewer' => 'Visualizador'
+                                    'viewer' => 'Visualizador',
+                                    'client' => 'Cliente'
                                 ];
                                 ?>
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $roleColors[$user['role']]; ?>">
-                                    <?php echo $roleLabels[$user['role']]; ?>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $roleColors[$user['role']] ?? 'bg-gray-100 text-gray-800'; ?>">
+                                    <?php echo $roleLabels[$user['role']] ?? ucfirst($user['role']); ?>
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
