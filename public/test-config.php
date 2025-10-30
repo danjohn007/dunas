@@ -54,18 +54,31 @@ try {
 // Simular lo que hace ShellyAPI::getSettings()
 echo "<h2>Configuraciones que usará ShellyAPI:</h2>";
 try {
-    $settings = new Settings();
-    $allSettings = $settings->getAll();
+    require_once __DIR__ . '/../app/helpers/ShellyAPI.php';
     
-    $finalSettings = [
-        'api_url' => $allSettings['shelly_api_url'] ?? (defined('SHELLY_API_URL') ? SHELLY_API_URL : 'NO DEFINIDA'),
-        'open_url' => $allSettings['shelly_open_url'] ?? (defined('SHELLY_OPEN_URL') ? SHELLY_OPEN_URL : 'NO DEFINIDA'),
-        'close_url' => $allSettings['shelly_close_url'] ?? (defined('SHELLY_CLOSE_URL') ? SHELLY_CLOSE_URL : 'NO DEFINIDA'),
-    ];
+    // Usar reflection para acceder al método privado getSettings
+    $reflection = new ReflectionClass('ShellyAPI');
+    $method = $reflection->getMethod('getSettings');
+    $method->setAccessible(true);
+    $finalSettings = $method->invoke(null);
     
     echo "<pre>";
     print_r($finalSettings);
     echo "</pre>";
+    
+    // Verificar que las URLs contengan la IP correcta
+    echo "<h2>Verificación de URLs:</h2>";
+    if (strpos($finalSettings['open_url'], '192.168.1.95') !== false) {
+        echo "<div style='color: green; font-weight: bold;'>✓ open_url contiene IP local 192.168.1.95</div>";
+    } else {
+        echo "<div style='color: orange; font-weight: bold;'>⚠ open_url NO contiene IP local 192.168.1.95</div>";
+    }
+    
+    if (strpos($finalSettings['close_url'], '192.168.1.95') !== false) {
+        echo "<div style='color: green; font-weight: bold;'>✓ close_url contiene IP local 192.168.1.95</div>";
+    } else {
+        echo "<div style='color: orange; font-weight: bold;'>⚠ close_url NO contiene IP local 192.168.1.95</div>";
+    }
     
 } catch (Exception $e) {
     echo "<strong style='color: red;'>Error:</strong> " . $e->getMessage();

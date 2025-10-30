@@ -44,14 +44,14 @@ ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', 0); // Cambiar a 1 si se usa HTTPS
 
-// Configuración de Shelly Relay API con Port Forwarding
-define('SHELLY_API_URL', 'http://162.215.121.70/'); // IP pública con port forwarding
+// Configuración de Shelly Relay API - IP Local LAN
+define('SHELLY_API_URL', 'http://192.168.1.95/'); // IP local del Shelly en la red
 define('SHELLY_API_TIMEOUT', 15); // Timeout aumentado para conexión externa
 define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera
-define('SHELLY_ENABLED', true); // Habilitado con port forwarding
+define('SHELLY_ENABLED', true); // Habilitado
 // URLs completas para las acciones
-define('SHELLY_OPEN_URL', 'http://162.215.121.70/rpc/Switch.Set?id=0&on=false');  // Abrir
-define('SHELLY_CLOSE_URL', 'http://162.215.121.70/rpc/Switch.Set?id=0&on=true');  // Cerrar  // Cerrar
+define('SHELLY_OPEN_URL', 'http://192.168.1.95/rpc/Switch.Set?id=0&on=false');  // Abrir (OFF)
+define('SHELLY_CLOSE_URL', 'http://192.168.1.95/rpc/Switch.Set?id=0&on=true');  // Cerrar (ON)
 
 // Configuración de archivos
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB

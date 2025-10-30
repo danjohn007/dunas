@@ -18,10 +18,32 @@ class ShellyAPI {
             $settingsModel = new Settings();
             $allSettings = $settingsModel->getAll();
             
+            // Obtener valores base con fallback a constantes
+            $apiUrl   = $allSettings['shelly_api_url']   ?? (defined('SHELLY_API_URL')   ? SHELLY_API_URL   : null);
+            $openUrl  = $allSettings['shelly_open_url']  ?? (defined('SHELLY_OPEN_URL')  ? SHELLY_OPEN_URL  : null);
+            $closeUrl = $allSettings['shelly_close_url'] ?? (defined('SHELLY_CLOSE_URL') ? SHELLY_CLOSE_URL : null);
+            
+            // Si no hay URLs completas en BD, construirlas con URL base + canal
+            if (!$openUrl || !$closeUrl) {
+                $relayOpen  = isset($allSettings['shelly_relay_open'])  ? (int)$allSettings['shelly_relay_open']  : 0;
+                $relayClose = isset($allSettings['shelly_relay_close']) ? (int)$allSettings['shelly_relay_close'] : 1;
+                
+                // Normalizar base
+                if ($apiUrl) {
+                    $base = rtrim($apiUrl, '/');
+                    // Convención por cableado típico: abrir = OFF, cerrar = ON.
+                    $openUrl  = $openUrl  ?: ($base . "/rpc/Switch.Set?id={$relayOpen}&on=false");
+                    $closeUrl = $closeUrl ?: ($base . "/rpc/Switch.Set?id={$relayClose}&on=true");
+                }
+            }
+            
             $settings = [
-                'api_url' => $allSettings['shelly_api_url'] ?? SHELLY_API_URL,
-                'open_url' => $allSettings['shelly_open_url'] ?? SHELLY_OPEN_URL,
-                'close_url' => $allSettings['shelly_close_url'] ?? SHELLY_CLOSE_URL,
+                'api_url'   => $apiUrl,
+                'open_url'  => $openUrl,
+                'close_url' => $closeUrl,
+                // Exponer credenciales si existieran en BD
+                'username'  => $allSettings['shelly_username'] ?? null,
+                'password'  => $allSettings['shelly_password'] ?? null,
             ];
         }
         return $settings;
@@ -42,6 +64,13 @@ class ShellyAPI {
         curl_setopt($ch, CURLOPT_TCP_KEEPALIVE, 1);
         curl_setopt($ch, CURLOPT_TCP_KEEPIDLE, 120);
         curl_setopt($ch, CURLOPT_TCP_KEEPINTVL, 60);
+        
+        // Basic Auth opcional si está configurado en BD
+        $allSettings = self::getSettings();
+        if (!empty($allSettings['username']) && !empty($allSettings['password'])) {
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+            curl_setopt($ch, CURLOPT_USERPWD, $allSettings['username'] . ':' . $allSettings['password']);
+        }
         
         if ($method === 'POST' && $data) {
             curl_setopt($ch, CURLOPT_POST, true);
