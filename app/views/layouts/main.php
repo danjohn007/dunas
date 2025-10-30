@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Control de Shelly Pro 4PM -->
+    <script src="<?php echo BASE_URL; ?>/js/shelly-control.js"></script>
     <?php
     // Obtener colores del tema (valores por defecto si no están configurados)
     $primaryColor = $systemSettings['theme_primary_color'] ?? '#2563eb';

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Control Shelly Pro 4PM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto py-12 px-4">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">
+                <i class="fas fa-cog text-blue-600 mr-3"></i>
+                Test Control Shelly Pro 4PM
+            </h1>
+            
+            <!-- Configuración Actual -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-info-circle text-blue-600 mr-2"></i>Configuración
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <strong>IP Shelly:</strong> <code class="bg-gray-100 px-2 py-1 rounded">192.168.1.95</code>
+                    </div>
+                    <div>
+                        <strong>Credenciales:</strong> <code class="bg-gray-100 px-2 py-1 rounded">admin:67da6c</code>
+                    </div>
+                    <div>
+                        <strong>URL Abrir:</strong> <code class="bg-gray-100 px-2 py-1 rounded text-xs">http://192.168.1.95/rpc/Switch.Set?id=0&on=false</code>
+                    </div>
+                    <div>
+                        <strong>URL Cerrar:</strong> <code class="bg-gray-100 px-2 py-1 rounded text-xs">http://192.168.1.95/rpc/Switch.Set?id=0&on=true</code>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información Importante -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Importante
+                </h2>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li><i class="fas fa-check text-green-600 mr-2"></i>Esta prueba funciona desde el <strong>navegador del usuario</strong>, no desde el servidor</li>
+                    <li><i class="fas fa-check text-green-600 mr-2"></i>El navegador debe estar en la <strong>misma red</strong> que el Shelly (192.168.1.95)</li>
+                    <li><i class="fas fa-check text-green-600 mr-2"></i>Utiliza las mismas URLs que ya confirmaste funcionan con curl</li>
+                    <li><i class="fas fa-info-circle text-blue-600 mr-2"></i>Si estás accediendo desde internet, esta prueba <strong>NO funcionará</strong></li>
+                </ul>
+            </div>
+            
+            <!-- Controles -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <button onclick="testOpenBarrier()" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-lg">
+                    <i class="fas fa-door-open mr-3"></i>ABRIR BARRERA
+                </button>
+                
+                <button onclick="testCloseBarrier()" 
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-lg">
+                    <i class="fas fa-door-closed mr-3"></i>CERRAR BARRERA
+                </button>
+            </div>
+            
+            <!-- Log de Resultados -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-terminal mr-2"></i>Log de Pruebas
+                </h3>
+                <div id="logContainer" class="bg-black text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+                    <div class="log-entry">Sistema inicializado - Esperando comandos...</div>
+                </div>
+            </div>
+            
+            <!-- Botón para limpiar log -->
+            <div class="mt-4 text-center">
+                <button onclick="clearLog()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
+                    <i class="fas fa-trash mr-2"></i>Limpiar Log
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * Control del Shelly Pro 4PM - Versión de Prueba
+ * Utiliza las URLs exactas que ya funcionan con curl
+ */
+
+class ShellyTestControl {
+    constructor() {
+        this.shellyIP = '192.168.1.95';
+        this.credentials = 'admin:67da6c';
+        
+        // URLs exactas que ya funcionan
+        this.openURL = `http://${this.credentials}@${this.shellyIP}/rpc/Switch.Set?id=0&on=false`;
+        this.closeURL = `http://${this.credentials}@${this.shellyIP}/rpc/Switch.Set?id=0&on=true`;
+        
+        this.log('🔌 Sistema Shelly inicializado');
+        this.log(`📍 IP: ${this.shellyIP}`);
+        this.log(`🔐 Usuario: ${this.credentials.split(':')[0]}`);
+    }
+
+    log(message) {
+        const logContainer = document.getElementById('logContainer');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.innerHTML = `<span class="text-gray-400">[${timestamp}]</span> ${message}`;
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    async makeRequest(url, action) {
+        this.log(`🔄 Iniciando ${action}...`);
+        this.log(`📡 URL: ${url.replace(this.credentials + '@', '***@')}`);
+        
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Authorization': `Basic ${btoa(this.credentials)}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.log(`✅ ${action} exitoso!`);
+                this.log(`📄 Respuesta: ${JSON.stringify(data, null, 2)}`);
+                return { success: true, data: data };
+            } else {
+                throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+            }
+        } catch (error) {
+            this.log(`❌ Error en ${action}: ${error.message}`);
+            
+            // Información adicional para debugging
+            if (error.message.includes('Failed to fetch')) {
+                this.log(`🌐 Posibles causas:`);
+                this.log(`   • El Shelly no está en la misma red que tu navegador`);
+                this.log(`   • El dispositivo está apagado o desconectado`);
+                this.log(`   • CORS bloqueado (normal desde servidor remoto)`);
+                this.log(`   • Firewall bloqueando la conexión`);
+            }
+            
+            return { success: false, error: error.message };
+        }
+    }
+
+    async openBarrier() {
+        return await this.makeRequest(this.openURL, 'ABRIR BARRERA');
+    }
+
+    async closeBarrier() {
+        return await this.makeRequest(this.closeURL, 'CERRAR BARRERA');
+    }
+}
+
+// Inicializar control
+const shellyTest = new ShellyTestControl();
+
+// Funciones globales para los botones
+async function testOpenBarrier() {
+    shellyTest.log('🔓 Comando ABRIR recibido...');
+    await shellyTest.openBarrier();
+}
+
+async function testCloseBarrier() {
+    shellyTest.log('🔒 Comando CERRAR recibido...');
+    await shellyTest.closeBarrier();
+}
+
+function clearLog() {
+    const logContainer = document.getElementById('logContainer');
+    logContainer.innerHTML = '<div class="log-entry">Log limpiado - Sistema listo...</div>';
+}
+
+// Información inicial
+shellyTest.log('');
+shellyTest.log('📋 INSTRUCCIONES:');
+shellyTest.log('1. Asegúrate de estar en la misma red que el Shelly (192.168.1.95)');
+shellyTest.log('2. Haz clic en ABRIR o CERRAR para probar');
+shellyTest.log('3. Observa los resultados en este log');
+shellyTest.log('');
+</script>
+
+</body>
+</html>

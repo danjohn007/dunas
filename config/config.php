@@ -75,15 +75,22 @@ function getShellyPublicIP() {
     return '192.168.1.95';
 }
 
-$SHELLY_PUBLIC_IP = getShellyPublicIP();
+// Configuración de Shelly Pro 4PM con credenciales confirmadas
+// SOLUCIÓN JAVASCRIPT: Control desde el navegador del cliente
+// El navegador del usuario SÍ está en la misma red que el Shelly
 
-define('SHELLY_API_URL', "http://$SHELLY_PUBLIC_IP/"); // IP pública con port forwarding
-define('SHELLY_API_TIMEOUT', 15); // Timeout aumentado para conexión externa
+define('SHELLY_API_URL', 'http://192.168.1.95'); // IP local directa del Shelly
+define('SHELLY_USERNAME', 'admin'); // Usuario confirmado
+define('SHELLY_PASSWORD', '67da6c'); // Contraseña confirmada (últimos 6 dígitos Device ID)
+define('SHELLY_API_TIMEOUT', 15); // Timeout para conexión
 define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera
-define('SHELLY_ENABLED', true); // Habilitado con port forwarding
-// URLs completas para las acciones
-define('SHELLY_OPEN_URL', "http://$SHELLY_PUBLIC_IP/rpc/Switch.Set?id=0&on=false");  // Abrir
-define('SHELLY_CLOSE_URL', "http://$SHELLY_PUBLIC_IP/rpc/Switch.Set?id=0&on=true");  // Cerrar
+define('SHELLY_ENABLED', true); // Habilitado con credenciales
+
+// URLs exactas que ya te funcionan con curl
+// curl -u admin:67da6c "http://192.168.1.95/rpc/Switch.Set?id=0&on=false"  # ABRIR
+// curl -u admin:67da6c "http://192.168.1.95/rpc/Switch.Set?id=0&on=true"   # CERRAR
+define('SHELLY_OPEN_URL', "http://192.168.1.95/rpc/Switch.Set?id=0&on=false");  // Abrir barrera
+define('SHELLY_CLOSE_URL', "http://192.168.1.95/rpc/Switch.Set?id=0&on=true");  // Cerrar barrera
 
 // Configuración de archivos
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB

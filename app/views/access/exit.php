@@ -50,7 +50,7 @@
             <i class="fas fa-sign-out-alt text-red-600 mr-2"></i>Registro de Salida
         </h2>
         
-        <form method="POST" action="<?php echo BASE_URL; ?>/access/registerExit/<?php echo $access['id']; ?>">
+        <form method="POST" action="<?php echo BASE_URL; ?>/access/registerExit/<?php echo $access['id']; ?>" id="exitForm">
             <div class="mb-6">
                 <label for="liters_supplied" class="block text-sm font-medium text-gray-700 mb-2">
                     Litros Suministrados <span class="text-red-500">*</span>
@@ -71,13 +71,21 @@
                 </p>
             </div>
             
+            <!-- Área de estado de la barrera -->
+            <div id="barrierStatus" class="hidden mb-6 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <div class="loading-spinner mr-3"></div>
+                    <span id="barrierStatusText">Cerrando barrera...</span>
+                </div>
+            </div>
+            
             <!-- Botones -->
             <div class="flex justify-end space-x-3">
                 <a href="<?php echo BASE_URL; ?>/access" 
                    class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-3 px-6 rounded-lg">
                     <i class="fas fa-times mr-2"></i>Cancelar
                 </a>
-                <button type="submit" 
+                <button type="submit" id="submitBtn"
                         class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg">
                     <i class="fas fa-sign-out-alt mr-2"></i>Registrar Salida
                 </button>
@@ -86,9 +94,72 @@
     </div>
 </div>
 
+<style>
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
 <script>
 // Auto-focus on the liters field
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('liters_supplied').focus();
+});
+
+// Interceptar el envío del formulario para cerrar la barrera
+document.getElementById('exitForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const barrierStatus = document.getElementById('barrierStatus');
+    const barrierStatusText = document.getElementById('barrierStatusText');
+    
+    // Deshabilitar botón y mostrar estado
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
+    barrierStatus.classList.remove('hidden');
+    barrierStatus.className = 'mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200';
+    barrierStatusText.textContent = 'Cerrando barrera...';
+    
+    try {
+        // Intentar cerrar la barrera usando JavaScript
+        console.log('🔒 Intentando cerrar barrera antes de enviar formulario...');
+        const result = await window.shellyControl.closeBarrier();
+        
+        if (result.success) {
+            barrierStatus.className = 'mb-6 p-4 rounded-lg bg-green-50 border border-green-200';
+            barrierStatusText.innerHTML = '<i class="fas fa-check text-green-600 mr-2"></i>Barrera cerrada exitosamente';
+            console.log('✅ Barrera cerrada, enviando formulario...');
+        } else {
+            barrierStatus.className = 'mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200';
+            barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>No se pudo cerrar barrera automáticamente, pero se registrará la salida';
+            console.log('⚠️ Error en barrera, pero continuando con registro...');
+        }
+        
+        // Esperar un momento para que el usuario vea el resultado
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+    } catch (error) {
+        console.error('❌ Error al controlar barrera:', error);
+        barrierStatus.className = 'mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200';
+        barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Error de conexión con la barrera, se registrará la salida';
+        
+        // Esperar un momento antes de continuar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Ahora sí enviar el formulario
+    barrierStatusText.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>Registrando en el sistema...';
+    this.submit();
 });
 </script>

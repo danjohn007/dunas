@@ -29,19 +29,25 @@ class ShellyAPI {
     
     private static function makeRequest($url, $method = 'GET', $data = null) {
         $ch = curl_init();
+        
+        // Si la URL ya contiene credenciales (formato: http://user:pass@host), usarla directamente
+        // Si no, agregar autenticación HTTP Basic
+        if (strpos($url, '@') === false && defined('SHELLY_USERNAME') && defined('SHELLY_PASSWORD')) {
+            // URL sin credenciales, agregar auth header
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+            curl_setopt($ch, CURLOPT_USERPWD, SHELLY_USERNAME . ':' . SHELLY_PASSWORD);
+        }
+        
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, self::TIMEOUT_EXTENDED);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+        curl_setopt($ch, CURLOPT_TIMEOUT, SHELLY_API_TIMEOUT);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // No seguir redirects para evitar loops de auth
         
-        // Configuraciones específicas para conexiones externas
+        // Configuraciones adicionales
         curl_setopt($ch, CURLOPT_USERAGENT, 'ShellyAPI/1.0 (Dunas Control System)');
-        curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 300); // Cache DNS por 5 minutos
-        curl_setopt($ch, CURLOPT_TCP_KEEPALIVE, 1);
-        curl_setopt($ch, CURLOPT_TCP_KEEPIDLE, 120);
-        curl_setopt($ch, CURLOPT_TCP_KEEPINTVL, 60);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         
         if ($method === 'POST' && $data) {
             curl_setopt($ch, CURLOPT_POST, true);
@@ -55,7 +61,7 @@ class ShellyAPI {
         curl_close($ch);
         
         // Log detallado para debugging
-        error_log("Shelly Request - URL: $url, HTTP: $httpCode, Time: {$totalTime}s");
+        error_log("Shelly Request - URL: $url, HTTP: $httpCode, Time: {$totalTime}s, Auth: " . (defined('SHELLY_USERNAME') ? 'YES (' . SHELLY_USERNAME . ')' : 'NO'));
         
         if ($error) {
             error_log("Shelly API Error: " . $error . " (URL: " . $url . ")");
