@@ -51,8 +51,8 @@ Para una validación rápida, editar `/config/config.php`:
 ```php
 // Cambiar estas 3 líneas:
 define('SHELLY_API_URL', 'http://192.168.1.95/');
-define('SHELLY_OPEN_URL', 'http://192.168.1.95/rpc/Switch.Set?id=0&on=false');
-define('SHELLY_CLOSE_URL', 'http://192.168.1.95/rpc/Switch.Set?id=0&on=true');
+define('SHELLY_OPEN_URL', 'http://192.168.1.95/rpc/Switch.Set?id=0&on=false');  // Canal 0 para abrir
+define('SHELLY_CLOSE_URL', 'http://192.168.1.95/rpc/Switch.Set?id=1&on=true'); // Canal 1 para cerrar
 ```
 
 ⚠️ **Nota**: Si el cableado es inverso, intercambiar `on=false` y `on=true`.
@@ -194,16 +194,17 @@ ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 ### Escenario 2: URLs Completas Personalizadas
 
 ```sql
--- Forzar URLs específicas
+-- Forzar URLs específicas (usando formato RPC API consistente)
 INSERT INTO settings (setting_key, setting_value) VALUES
-('shelly_open_url', 'http://192.168.1.95/relay/0?turn=off'),
-('shelly_close_url', 'http://192.168.1.95/relay/1?turn=on')
+('shelly_open_url', 'http://192.168.1.95/rpc/Switch.Set?id=0&on=false'),
+('shelly_close_url', 'http://192.168.1.95/rpc/Switch.Set?id=1&on=true')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 ```
 
 ✅ **Ventajas:**
 - Control total sobre las URLs
-- Útil para APIs personalizadas o Shelly con firmware modificado
+- Útil para configuraciones especiales o parámetros adicionales
+- **Nota**: También puedes usar la API Gen1 (`/relay/0?turn=off`) si tu Shelly la soporta
 
 ### Escenario 3: Mismo Canal con Timer
 
