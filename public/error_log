@@ -1,0 +1,60 @@
+[29-Oct-2025 13:57:13 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[29-Oct-2025 13:57:14 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[29-Oct-2025 13:57:14 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.005039s
+[29-Oct-2025 13:57:14 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[29-Oct-2025 13:57:17 America/Mexico_City] ShellyAPI::closeBarrier() - Intentando cerrar con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true
+[29-Oct-2025 13:57:17 America/Mexico_City] ShellyAPI::closeBarrier() - Intento 1 de 4
+[29-Oct-2025 13:57:17 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true, HTTP: 200, Time: 0.006492s
+[29-Oct-2025 13:57:17 America/Mexico_City] ShellyAPI::closeBarrier() - Éxito en intento 1
+[29-Oct-2025 13:57:37 America/Mexico_City] Shelly Request - URL: http://192.168.1.95/status, HTTP: 0, Time: 20.002354s
+[29-Oct-2025 13:57:37 America/Mexico_City] Shelly API Error: Connection timed out after 20002 milliseconds (URL: http://192.168.1.95/status)
+[29-Oct-2025 14:02:55 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[29-Oct-2025 14:02:55 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[29-Oct-2025 14:02:55 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.006085s
+[29-Oct-2025 14:02:55 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[29-Oct-2025 14:03:53 America/Mexico_City] ShellyAPI::closeBarrier() - Intentando cerrar con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true
+[29-Oct-2025 14:03:53 America/Mexico_City] ShellyAPI::closeBarrier() - Intento 1 de 4
+[29-Oct-2025 14:03:53 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true, HTTP: 200, Time: 0.005262s
+[29-Oct-2025 14:03:53 America/Mexico_City] ShellyAPI::closeBarrier() - Éxito en intento 1
+[29-Oct-2025 14:13:22 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[29-Oct-2025 14:13:22 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[29-Oct-2025 14:13:22 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.00475s
+[29-Oct-2025 14:13:22 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[29-Oct-2025 14:13:25 America/Mexico_City] ShellyAPI::closeBarrier() - Intentando cerrar con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true
+[29-Oct-2025 14:13:25 America/Mexico_City] ShellyAPI::closeBarrier() - Intento 1 de 4
+[29-Oct-2025 14:13:25 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true, HTTP: 200, Time: 0.006833s
+[29-Oct-2025 14:13:25 America/Mexico_City] ShellyAPI::closeBarrier() - Éxito en intento 1
+[29-Oct-2025 14:13:45 America/Mexico_City] Shelly Request - URL: http://192.168.1.95/status, HTTP: 0, Time: 20.001394s
+[29-Oct-2025 14:13:45 America/Mexico_City] Shelly API Error: Connection timed out after 20001 milliseconds (URL: http://192.168.1.95/status)
+[29-Oct-2025 14:16:16 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[29-Oct-2025 14:16:16 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[29-Oct-2025 14:16:16 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.006957s
+[29-Oct-2025 14:16:16 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[29-Oct-2025 14:16:55 America/Mexico_City] ShellyAPI::closeBarrier() - Intentando cerrar con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true
+[29-Oct-2025 14:16:55 America/Mexico_City] ShellyAPI::closeBarrier() - Intento 1 de 4
+[29-Oct-2025 14:16:55 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true, HTTP: 200, Time: 0.006018s
+[29-Oct-2025 14:16:55 America/Mexico_City] ShellyAPI::closeBarrier() - Éxito en intento 1
+[30-Oct-2025 04:33:47 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[30-Oct-2025 04:33:47 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[30-Oct-2025 04:33:47 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.005039s
+[30-Oct-2025 04:33:47 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[30-Oct-2025 04:34:20 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[30-Oct-2025 04:34:20 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[30-Oct-2025 04:34:20 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.005936s
+[30-Oct-2025 04:34:20 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[30-Oct-2025 04:36:31 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[30-Oct-2025 04:36:31 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[30-Oct-2025 04:36:32 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.005352s
+[30-Oct-2025 04:36:32 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[30-Oct-2025 04:37:01 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[30-Oct-2025 04:37:01 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[30-Oct-2025 04:37:01 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.008735s
+[30-Oct-2025 04:37:01 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[30-Oct-2025 08:54:52 America/Mexico_City] ShellyAPI::openBarrier() - Intentando abrir con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false
+[30-Oct-2025 08:54:52 America/Mexico_City] ShellyAPI::openBarrier() - Intento 1 de 4
+[30-Oct-2025 08:54:52 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=false, HTTP: 200, Time: 0.005501s
+[30-Oct-2025 08:54:52 America/Mexico_City] ShellyAPI::openBarrier() - Éxito en intento 1
+[30-Oct-2025 08:55:09 America/Mexico_City] ShellyAPI::closeBarrier() - Intentando cerrar con URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true
+[30-Oct-2025 08:55:09 America/Mexico_City] ShellyAPI::closeBarrier() - Intento 1 de 4
+[30-Oct-2025 08:55:09 America/Mexico_City] Shelly Request - URL: http://162.215.121.70/rpc/Switch.Set?id=0&on=true, HTTP: 200, Time: 0.006007s
+[30-Oct-2025 08:55:09 America/Mexico_City] ShellyAPI::closeBarrier() - Éxito en intento 1
