@@ -7,6 +7,7 @@ require_once APP_PATH . '/models/AccessLog.php';
 require_once APP_PATH . '/models/Driver.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Client.php';
+require_once APP_PATH . '/helpers/HikvisionAPI.php';
 
 class AccessController extends BaseController {
     
@@ -77,21 +78,47 @@ class AccessController extends BaseController {
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $accessId = $this->accessModel->create($_POST);
+                    $data = $_POST;
+                    
+                    // Leer placa desde cámara Hikvision
+                    $cameraReading = HikvisionAPI::readLicensePlate();
+                    if ($cameraReading['success'] && !empty($cameraReading['plate'])) {
+                        $data['license_plate_reading'] = $cameraReading['plate'];
+                        
+                        // Obtener placa de la unidad seleccionada
+                        $unit = $this->unitModel->getById($data['unit_id']);
+                        if ($unit) {
+                            $data['plate_discrepancy'] = HikvisionAPI::hasDiscrepancy(
+                                $unit['plate_number'], 
+                                $cameraReading['plate']
+                            );
+                        }
+                    }
+                    
+                    $accessId = $this->accessModel->create($data);
                     
                     // Abrir barrera con Shelly Relay
                     $shellyResult = ShellyAPI::openBarrier();
                     
+                    $message = 'Acceso registrado exitosamente';
+                    if (!empty($data['license_plate_reading'])) {
+                        $message .= '. Placa leída por cámara: ' . $data['license_plate_reading'];
+                        if (!empty($data['plate_discrepancy'])) {
+                            $message .= ' (⚠️ DISCREPANCIA DETECTADA)';
+                        }
+                    }
+                    
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
                         $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
-                        $message = 'Acceso registrado pero no se pudo abrir la barrera automáticamente. ';
+                        $message .= ' pero no se pudo abrir la barrera automáticamente. ';
                         $message .= 'Error: ' . $errorDetails . $errorUrl;
                         $message .= '. Por favor, verifique que el dispositivo Shelly esté encendido y conectado a la red, ';
                         $message .= 'y que la URL configurada sea correcta en Configuraciones del Sistema.';
                         $this->setFlash('warning', $message);
                     } else {
-                        $this->setFlash('success', 'Acceso registrado y barrera abierta exitosamente.');
+                        $message .= ' y barrera abierta exitosamente.';
+                        $this->setFlash('success', $message);
                     }
                     
                     $this->redirect('/access/detail/' . $accessId);
@@ -238,7 +265,22 @@ class AccessController extends BaseController {
         $unit = $this->unitModel->findByPlateNumber($plateNumber);
         
         if ($unit) {
-            $this->json(['success' => true, 'exists' => true, 'unit' => $unit]);
+            // Obtener último registro de entrada para esta placa
+            $lastEntry = $this->accessModel->getLastEntryByPlate($plateNumber);
+            
+            // Obtener choferes del cliente de la unidad
+            $drivers = [];
+            if (!empty($unit['client_id'])) {
+                $drivers = $this->unitModel->getDriversByClient($unit['client_id']);
+            }
+            
+            $this->json([
+                'success' => true, 
+                'exists' => true, 
+                'unit' => $unit,
+                'lastEntry' => $lastEntry,
+                'drivers' => $drivers
+            ]);
         } else {
             $this->json(['success' => true, 'exists' => false]);
         }
@@ -281,9 +323,10 @@ class AccessController extends BaseController {
             } else {
                 // Crear nuevo chofer
                 $driverData = [
+                    'client_id' => $clientId,
                     'full_name' => $_POST['driver_name'],
-                    'license_number' => $_POST['driver_license'] ?? 'LIC' . time(),
-                    'license_expiry' => $_POST['driver_license_expiry'] ?? date('Y-m-d', strtotime('+1 year')),
+                    'license_number' => !empty($_POST['driver_license']) ? $_POST['driver_license'] : null,
+                    'license_expiry' => !empty($_POST['driver_license_expiry']) ? $_POST['driver_license_expiry'] : null,
                     'phone' => $_POST['driver_phone'],
                     'status' => 'active'
                 ];
@@ -298,12 +341,14 @@ class AccessController extends BaseController {
             } else {
                 // Crear nueva unidad
                 $unitData = [
+                    'client_id' => $clientId,
+                    'driver_id' => $driverId,
                     'plate_number' => $plateNumber,
                     'capacity_liters' => $_POST['capacity_liters'],
                     'brand' => $_POST['brand'] ?? 'Genérico',
                     'model' => $_POST['model'] ?? 'Estándar',
-                    'year' => $_POST['year'] ?? date('Y'),
-                    'serial_number' => $_POST['serial_number'] ?? 'SN' . time(),
+                    'year' => !empty($_POST['year']) ? $_POST['year'] : null,
+                    'serial_number' => !empty($_POST['serial_number']) ? $_POST['serial_number'] : null,
                     'status' => 'active'
                 ];
                 $unitId = $this->unitModel->create($unitData);
@@ -316,15 +361,35 @@ class AccessController extends BaseController {
                 'client_id' => $clientId
             ];
             
+            // Leer placa desde cámara Hikvision
+            $cameraReading = HikvisionAPI::readLicensePlate();
+            if ($cameraReading['success'] && !empty($cameraReading['plate'])) {
+                $accessData['license_plate_reading'] = $cameraReading['plate'];
+                $accessData['plate_discrepancy'] = HikvisionAPI::hasDiscrepancy(
+                    $plateNumber, 
+                    $cameraReading['plate']
+                );
+            }
+            
             $accessId = $this->accessModel->create($accessData);
             
             // Abrir barrera
             $shellyResult = ShellyAPI::openBarrier();
             
+            $message = 'Entrada registrada exitosamente';
+            if (!empty($accessData['license_plate_reading'])) {
+                $message .= '. Placa leída por cámara: ' . $accessData['license_plate_reading'];
+                if (!empty($accessData['plate_discrepancy'])) {
+                    $message .= ' (⚠️ DISCREPANCIA DETECTADA)';
+                }
+            }
+            
             if (!$shellyResult['success']) {
-                $this->setFlash('warning', 'Entrada registrada pero no se pudo abrir la barrera automáticamente.');
+                $message .= ' pero no se pudo abrir la barrera automáticamente.';
+                $this->setFlash('warning', $message);
             } else {
-                $this->setFlash('success', 'Entrada registrada y barrera abierta exitosamente.');
+                $message .= ' y barrera abierta exitosamente.';
+                $this->setFlash('success', $message);
             }
             
             $this->redirect('/access/printTicket/' . $accessId);

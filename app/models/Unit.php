@@ -11,35 +11,50 @@ class Unit {
     }
     
     public function getAll($filters = []) {
-        $sql = "SELECT * FROM units WHERE 1=1";
+        $sql = "SELECT u.*, c.business_name as client_name, d.full_name as driver_name 
+                FROM units u
+                LEFT JOIN clients c ON u.client_id = c.id
+                LEFT JOIN drivers d ON u.driver_id = d.id
+                WHERE 1=1";
         $params = [];
         
         if (!empty($filters['status'])) {
-            $sql .= " AND status = ?";
+            $sql .= " AND u.status = ?";
             $params[] = $filters['status'];
         }
         
-        $sql .= " ORDER BY created_at DESC";
+        if (!empty($filters['client_id'])) {
+            $sql .= " AND u.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
+        $sql .= " ORDER BY u.created_at DESC";
         
         return $this->db->fetchAll($sql, $params);
     }
     
     public function getById($id) {
-        $sql = "SELECT * FROM units WHERE id = ?";
+        $sql = "SELECT u.*, c.business_name as client_name, d.full_name as driver_name 
+                FROM units u
+                LEFT JOIN clients c ON u.client_id = c.id
+                LEFT JOIN drivers d ON u.driver_id = d.id
+                WHERE u.id = ?";
         return $this->db->fetchOne($sql, [$id]);
     }
     
     public function create($data) {
-        $sql = "INSERT INTO units (plate_number, capacity_liters, brand, model, year, serial_number, photo, status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO units (client_id, driver_id, plate_number, capacity_liters, brand, model, year, serial_number, photo, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
+            $data['client_id'],
+            $data['driver_id'],
             $data['plate_number'],
             $data['capacity_liters'],
             $data['brand'],
             $data['model'],
-            $data['year'],
-            $data['serial_number'],
+            $data['year'] ?? null,
+            $data['serial_number'] ?? null,
             $data['photo'] ?? null,
             $data['status'] ?? 'active'
         ];
@@ -49,16 +64,18 @@ class Unit {
     }
     
     public function update($id, $data) {
-        $sql = "UPDATE units SET plate_number = ?, capacity_liters = ?, brand = ?, model = ?, 
+        $sql = "UPDATE units SET client_id = ?, driver_id = ?, plate_number = ?, capacity_liters = ?, brand = ?, model = ?, 
                 year = ?, serial_number = ?, status = ?";
         
         $params = [
+            $data['client_id'],
+            $data['driver_id'],
             $data['plate_number'],
             $data['capacity_liters'],
             $data['brand'],
             $data['model'],
-            $data['year'],
-            $data['serial_number'],
+            $data['year'] ?? null,
+            $data['serial_number'] ?? null,
             $data['status']
         ];
         
@@ -79,8 +96,17 @@ class Unit {
     }
     
     public function findByPlateNumber($plateNumber) {
-        $sql = "SELECT * FROM units WHERE plate_number = ?";
+        $sql = "SELECT u.*, c.business_name as client_name, d.full_name as driver_name 
+                FROM units u
+                LEFT JOIN clients c ON u.client_id = c.id
+                LEFT JOIN drivers d ON u.driver_id = d.id
+                WHERE u.plate_number = ?";
         return $this->db->fetchOne($sql, [$plateNumber]);
+    }
+    
+    public function getDriversByClient($clientId) {
+        $sql = "SELECT * FROM drivers WHERE client_id = ? AND status = 'active' ORDER BY full_name ASC";
+        return $this->db->fetchAll($sql, [$clientId]);
     }
     
     public function searchByPlateNumber($search) {
