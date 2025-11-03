@@ -28,40 +28,32 @@ class ShellyAPI {
     }
     
     /**
-     * Realiza una llamada RPC al Shelly Cloud API
-     * @param string $method Método RPC a llamar (ej: 'Switch.Set')
-     * @param array $params Parámetros del método
+     * Realiza una llamada al Shelly Cloud API
+     * @param array $params Parámetros del método (debe incluir 'id' y 'on')
      * @return array Resultado de la operación
      */
-    private static function makeRPCRequest($method, $params = []) {
+    private static function makeCloudRequest($params = []) {
         $settings = self::getSettings();
         
-        // Construir el payload JSON-RPC
-        $rpcPayload = [
-            'id' => 1,
-            'method' => $method,
-            'params' => $params,
-            'auth' => [
-                'token' => $settings['auth_token']
-            ]
-        ];
-        
-        // Construir URL del endpoint
+        // Construir URL del endpoint - usando el endpoint de control de relay
         $url = 'https://' . $settings['server'] . '/device/relay/control';
         
+        // Preparar datos para enviar (form-urlencoded según especificación del Cloud API)
+        $postData = [
+            'auth_key' => $settings['auth_token'],
+            'id' => $settings['device_id'],
+            'channel' => isset($params['id']) ? $params['id'] : 0,
+            'turn' => isset($params['on']) ? ($params['on'] ? 'on' : 'off') : 'on'
+        ];
+        
         // Log de debugging
-        error_log("Shelly Cloud RPC - Method: $method, Device: " . $settings['device_id']);
+        error_log("Shelly Cloud API - Channel: " . $postData['channel'] . ", Turn: " . $postData['turn'] . ", Device: " . $settings['device_id']);
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-            'auth_key' => $settings['auth_token'],
-            'id' => $settings['device_id'],
-            'channel' => isset($params['id']) ? $params['id'] : 0,
-            'turn' => isset($params['on']) ? ($params['on'] ? 'on' : 'off') : 'on'
-        ]));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
         curl_setopt($ch, CURLOPT_TIMEOUT, SHELLY_API_TIMEOUT);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
         curl_setopt($ch, CURLOPT_USERAGENT, 'ShellyAPI/2.0 (Dunas Control System - Cloud)');
@@ -117,7 +109,7 @@ class ShellyAPI {
             error_log("ShellyAPI::openBarrier() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
             
             // Abrir barrera = Switch OFF (on=false)
-            $result = self::makeRPCRequest('Switch.Set', [
+            $result = self::makeCloudRequest([
                 'id' => SHELLY_SWITCH_ID,
                 'on' => false
             ]);
@@ -156,7 +148,7 @@ class ShellyAPI {
             error_log("ShellyAPI::closeBarrier() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
             
             // Cerrar barrera = Switch ON (on=true)
-            $result = self::makeRPCRequest('Switch.Set', [
+            $result = self::makeCloudRequest([
                 'id' => SHELLY_SWITCH_ID,
                 'on' => true
             ]);
