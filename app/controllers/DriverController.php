@@ -64,9 +64,8 @@ class DriverController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
+                'client_id' => 'required|integer',
                 'full_name' => 'required',
-                'license_number' => 'required|unique:drivers,license_number',
-                'license_expiry' => 'required|date',
                 'phone' => 'required|phone'
             ];
             
@@ -93,8 +92,13 @@ class DriverController extends BaseController {
             }
         }
         
+        // Obtener clientes para el formulario
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        
         $data = [
             'title' => 'Nuevo Chofer',
+            'clients' => $clientModel->getAll(['status' => 'active']),
             'showNav' => true
         ];
         
@@ -114,9 +118,8 @@ class DriverController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
+                'client_id' => 'required|integer',
                 'full_name' => 'required',
-                'license_number' => 'required',
-                'license_expiry' => 'required|date',
                 'phone' => 'required|phone'
             ];
             
@@ -147,9 +150,14 @@ class DriverController extends BaseController {
             }
         }
         
+        // Obtener clientes para el formulario
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        
         $data = [
             'title' => 'Editar Chofer',
             'driver' => $driver,
+            'clients' => $clientModel->getAll(['status' => 'active']),
             'showNav' => true
         ];
         

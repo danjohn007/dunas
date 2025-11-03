@@ -61,12 +61,12 @@ class UnitController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
+                'client_id' => 'required|integer',
+                'driver_id' => 'required|integer',
                 'plate_number' => 'required|unique:units,plate_number',
                 'capacity_liters' => 'required|integer',
                 'brand' => 'required',
-                'model' => 'required',
-                'year' => 'required|integer',
-                'serial_number' => 'required|unique:units,serial_number'
+                'model' => 'required'
             ];
             
             if ($validator->validate($_POST, $rules)) {
@@ -92,8 +92,16 @@ class UnitController extends BaseController {
             }
         }
         
+        // Obtener clientes y drivers para el formulario
+        require_once APP_PATH . '/models/Client.php';
+        require_once APP_PATH . '/models/Driver.php';
+        $clientModel = new Client();
+        $driverModel = new Driver();
+        
         $data = [
             'title' => 'Nueva Unidad',
+            'clients' => $clientModel->getAll(['status' => 'active']),
+            'drivers' => $driverModel->getAll(['status' => 'active']),
             'showNav' => true
         ];
         
@@ -113,12 +121,12 @@ class UnitController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
+                'client_id' => 'required|integer',
+                'driver_id' => 'required|integer',
                 'plate_number' => 'required',
                 'capacity_liters' => 'required|integer',
                 'brand' => 'required',
-                'model' => 'required',
-                'year' => 'required|integer',
-                'serial_number' => 'required'
+                'model' => 'required'
             ];
             
             if ($validator->validate($_POST, $rules)) {
@@ -148,9 +156,17 @@ class UnitController extends BaseController {
             }
         }
         
+        // Obtener clientes y drivers para el formulario
+        require_once APP_PATH . '/models/Client.php';
+        require_once APP_PATH . '/models/Driver.php';
+        $clientModel = new Client();
+        $driverModel = new Driver();
+        
         $data = [
             'title' => 'Editar Unidad',
             'unit' => $unit,
+            'clients' => $clientModel->getAll(['status' => 'active']),
+            'drivers' => $driverModel->getAll(['status' => 'active']),
             'showNav' => true
         ];
         

@@ -87,6 +87,26 @@
             </div>
         </div>
         
+        <!-- Paso 2b: Selección de Chofer (cuando la unidad existe) -->
+        <div id="step2Driver" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-user text-blue-600 mr-2"></i>Paso 2: Seleccionar Chofer
+            </h2>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Chofer <span class="text-red-500">*</span>
+                    </label>
+                    <select name="driver_id_existing" id="driverIdExisting"
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Seleccione un chofer</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Seleccione el chofer para esta entrada</p>
+                </div>
+            </div>
+        </div>
+        
         <!-- Paso 3: Datos del Cliente -->
         <div id="step3" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
@@ -95,49 +115,58 @@
             
             <input type="hidden" name="client_id" id="clientId" value="">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre de la Empresa <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="client_name" id="clientName" required
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Nombre del cliente">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Teléfono <span class="text-red-500">*</span>
-                    </label>
-                    <input type="tel" name="client_phone" id="clientPhone" required
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Número de teléfono">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        RFC/CURP
-                    </label>
-                    <input type="text" name="client_rfc" id="clientRfc"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="RFC o CURP">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Tipo de Cliente
-                    </label>
-                    <select name="client_type" id="clientType"
-                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="commercial">Comercial</option>
-                        <option value="residential">Residencial</option>
-                        <option value="industrial">Industrial</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Dirección
-                    </label>
-                    <input type="text" name="client_address" id="clientAddress"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Dirección del cliente">
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="newClientCheck" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700">Registrar nuevo cliente</span>
+                </label>
+            </div>
+            
+            <div id="newClientFields" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre de la Empresa <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="client_name" id="clientName"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Nombre del cliente">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" name="client_phone" id="clientPhone"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Número de teléfono">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            RFC/CURP
+                        </label>
+                        <input type="text" name="client_rfc" id="clientRfc"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="RFC o CURP">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Tipo de Cliente
+                        </label>
+                        <select name="client_type" id="clientType"
+                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <option value="commercial">Comercial</option>
+                            <option value="residential">Residencial</option>
+                            <option value="industrial">Industrial</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección
+                        </label>
+                        <input type="text" name="client_address" id="clientAddress"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Dirección del cliente">
+                    </div>
                 </div>
             </div>
         </div>
@@ -150,38 +179,47 @@
             
             <input type="hidden" name="driver_id" id="driverId" value="">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre Completo <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="driver_name" id="driverName" required
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Nombre del chofer">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Teléfono <span class="text-red-500">*</span>
-                    </label>
-                    <input type="tel" name="driver_phone" id="driverPhone" required
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Número de teléfono">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Número de Licencia
-                    </label>
-                    <input type="text" name="driver_license" id="driverLicense"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Número de licencia">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Vigencia de Licencia
-                    </label>
-                    <input type="date" name="driver_license_expiry" id="driverLicenseExpiry"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           value="<?php echo date('Y-m-d', strtotime('+1 year')); ?>">
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="newDriverCheck" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700">Registrar nuevo chofer</span>
+                </label>
+            </div>
+            
+            <div id="newDriverFields" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre Completo <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="driver_name" id="driverName"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Nombre del chofer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" name="driver_phone" id="driverPhone"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Número de teléfono">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Número de Licencia
+                        </label>
+                        <input type="text" name="driver_license" id="driverLicense"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Número de licencia">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Vigencia de Licencia
+                        </label>
+                        <input type="date" name="driver_license_expiry" id="driverLicenseExpiry"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               value="<?php echo date('Y-m-d', strtotime('+1 year')); ?>">
+                    </div>
                 </div>
             </div>
         </div>
@@ -207,9 +245,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchResult = document.getElementById('searchResult');
     const registrationForm = document.getElementById('registrationForm');
     const step2Unit = document.getElementById('step2Unit');
+    const step2Driver = document.getElementById('step2Driver');
     const step3 = document.getElementById('step3');
     const step4 = document.getElementById('step4');
     const actionButtons = document.getElementById('actionButtons');
+    const newClientCheck = document.getElementById('newClientCheck');
+    const newClientFields = document.getElementById('newClientFields');
+    const newDriverCheck = document.getElementById('newDriverCheck');
+    const newDriverFields = document.getElementById('newDriverFields');
     
     // Convertir a mayúsculas automáticamente
     plateSearch.addEventListener('input', function() {
@@ -221,6 +264,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') {
             e.preventDefault();
             searchBtn.click();
+        }
+    });
+    
+    // Toggle para nuevo cliente
+    newClientCheck.addEventListener('change', function() {
+        if (this.checked) {
+            newClientFields.classList.remove('hidden');
+            document.getElementById('clientName').setAttribute('required', 'required');
+            document.getElementById('clientPhone').setAttribute('required', 'required');
+            document.getElementById('clientId').value = '';
+        } else {
+            newClientFields.classList.add('hidden');
+            document.getElementById('clientName').removeAttribute('required');
+            document.getElementById('clientPhone').removeAttribute('required');
+        }
+    });
+    
+    // Toggle para nuevo chofer
+    newDriverCheck.addEventListener('change', function() {
+        if (this.checked) {
+            newDriverFields.classList.remove('hidden');
+            document.getElementById('driverName').setAttribute('required', 'required');
+            document.getElementById('driverPhone').setAttribute('required', 'required');
+            document.getElementById('driverId').value = '';
+        } else {
+            newDriverFields.classList.add('hidden');
+            document.getElementById('driverName').removeAttribute('required');
+            document.getElementById('driverPhone').removeAttribute('required');
         }
     });
     
@@ -243,43 +314,106 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('plateNumber').value = plate;
                 
                 if (data.exists) {
-                    // Unidad existe
-                    searchResult.className = 'mt-4 p-4 bg-green-50 border border-green-200 rounded-lg';
-                    searchResult.innerHTML = `
+                    // Unidad existe - precargar datos del último registro
+                    let infoHtml = `
                         <div class="flex items-center text-green-800">
                             <i class="fas fa-check-circle text-2xl mr-3"></i>
                             <div>
                                 <p class="font-semibold">Unidad encontrada</p>
                                 <p class="text-sm">Placa: ${data.unit.plate_number} - Capacidad: ${parseInt(data.unit.capacity_liters).toLocaleString()} L</p>
+                    `;
+                    
+                    if (data.lastEntry) {
+                        infoHtml += `
+                                <p class="text-sm mt-1">Cliente: ${data.lastEntry.client_name || 'N/A'}</p>
+                                <p class="text-sm">Último chofer: ${data.lastEntry.driver_name || 'N/A'}</p>
+                        `;
+                    }
+                    
+                    infoHtml += `
                             </div>
                         </div>
                     `;
                     
+                    searchResult.className = 'mt-4 p-4 bg-green-50 border border-green-200 rounded-lg';
+                    searchResult.innerHTML = infoHtml;
+                    
                     document.getElementById('unitId').value = data.unit.id;
                     document.getElementById('capacityLiters').value = data.unit.capacity_liters;
                     step2Unit.classList.add('hidden');
+                    
+                    // Precargar cliente del último registro
+                    if (data.lastEntry && data.lastEntry.client_id) {
+                        document.getElementById('clientId').value = data.lastEntry.client_id;
+                        newClientCheck.checked = false;
+                        newClientFields.classList.add('hidden');
+                    }
+                    
+                    // Mostrar selector de choferes
+                    if (data.drivers && data.drivers.length > 0) {
+                        const driverSelect = document.getElementById('driverIdExisting');
+                        driverSelect.innerHTML = '<option value="">Seleccione un chofer</option>';
+                        
+                        data.drivers.forEach(driver => {
+                            const option = document.createElement('option');
+                            option.value = driver.id;
+                            option.textContent = driver.full_name;
+                            
+                            // Preseleccionar el último chofer usado
+                            if (data.lastEntry && parseInt(driver.id) === parseInt(data.lastEntry.driver_id)) {
+                                option.selected = true;
+                                document.getElementById('driverId').value = driver.id;
+                            }
+                            
+                            driverSelect.appendChild(option);
+                        });
+                        
+                        // Manejar cambio de chofer
+                        driverSelect.addEventListener('change', function() {
+                            document.getElementById('driverId').value = this.value;
+                        });
+                        
+                        step2Driver.classList.remove('hidden');
+                        step3.classList.add('hidden');
+                        step4.classList.add('hidden');
+                    } else {
+                        step2Driver.classList.add('hidden');
+                        step3.classList.remove('hidden');
+                        step4.classList.remove('hidden');
+                        newClientCheck.checked = true;
+                        newClientFields.classList.remove('hidden');
+                        newDriverCheck.checked = true;
+                        newDriverFields.classList.remove('hidden');
+                    }
                 } else {
-                    // Unidad no existe - mostrar formulario
+                    // Unidad no existe - mostrar formulario completo
                     searchResult.className = 'mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg';
                     searchResult.innerHTML = `
                         <div class="flex items-center text-yellow-800">
                             <i class="fas fa-exclamation-triangle text-2xl mr-3"></i>
                             <div>
                                 <p class="font-semibold">Unidad no encontrada</p>
-                                <p class="text-sm">Complete los datos para dar de alta la unidad</p>
+                                <p class="text-sm">Complete los datos para dar de alta la unidad, cliente y chofer</p>
                             </div>
                         </div>
                     `;
                     
                     document.getElementById('unitId').value = '';
                     step2Unit.classList.remove('hidden');
+                    step2Driver.classList.add('hidden');
+                    step3.classList.remove('hidden');
+                    step4.classList.remove('hidden');
                     document.getElementById('capacityLiters').setAttribute('required', 'required');
+                    
+                    // Mostrar campos de registro
+                    newClientCheck.checked = true;
+                    newClientFields.classList.remove('hidden');
+                    newDriverCheck.checked = true;
+                    newDriverFields.classList.remove('hidden');
                 }
                 
                 searchResult.classList.remove('hidden');
                 registrationForm.classList.remove('hidden');
-                step3.classList.remove('hidden');
-                step4.classList.remove('hidden');
                 actionButtons.classList.remove('hidden');
             }
         } catch (error) {

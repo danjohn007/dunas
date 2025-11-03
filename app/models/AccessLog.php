@@ -71,14 +71,16 @@ class AccessLog {
     public function create($data) {
         $ticketCode = $this->generateTicketCode();
         
-        $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, status) 
-                VALUES (NOW(), ?, ?, ?, ?, 'in_progress')";
+        $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, license_plate_reading, plate_discrepancy, status) 
+                VALUES (NOW(), ?, ?, ?, ?, ?, ?, 'in_progress')";
         
         $params = [
             $data['driver_id'],
             $data['unit_id'],
             $data['client_id'],
-            $ticketCode
+            $ticketCode,
+            $data['license_plate_reading'] ?? null,
+            $data['plate_discrepancy'] ?? false
         ];
         
         $this->db->execute($sql, $params);
@@ -146,5 +148,20 @@ class AccessLog {
                 ORDER BY al.entry_datetime DESC";
         
         return $this->db->fetchAll($sql);
+    }
+    
+    public function getLastEntryByPlate($plateNumber) {
+        $sql = "SELECT al.*, d.id as driver_id, d.full_name as driver_name, 
+                u.id as unit_id, u.plate_number, u.client_id, u.driver_id as unit_driver_id,
+                c.id as client_id, c.business_name as client_name
+                FROM access_logs al
+                JOIN drivers d ON al.driver_id = d.id
+                JOIN units u ON al.unit_id = u.id
+                JOIN clients c ON al.client_id = c.id
+                WHERE u.plate_number = ?
+                ORDER BY al.entry_datetime DESC
+                LIMIT 1";
+        
+        return $this->db->fetchOne($sql, [$plateNumber]);
     }
 }

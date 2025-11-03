@@ -11,32 +11,44 @@ class Driver {
     }
     
     public function getAll($filters = []) {
-        $sql = "SELECT * FROM drivers WHERE 1=1";
+        $sql = "SELECT d.*, c.business_name as client_name 
+                FROM drivers d
+                LEFT JOIN clients c ON d.client_id = c.id
+                WHERE 1=1";
         $params = [];
         
         if (!empty($filters['status'])) {
-            $sql .= " AND status = ?";
+            $sql .= " AND d.status = ?";
             $params[] = $filters['status'];
         }
         
-        $sql .= " ORDER BY created_at DESC";
+        if (!empty($filters['client_id'])) {
+            $sql .= " AND d.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
+        $sql .= " ORDER BY d.created_at DESC";
         
         return $this->db->fetchAll($sql, $params);
     }
     
     public function getById($id) {
-        $sql = "SELECT * FROM drivers WHERE id = ?";
+        $sql = "SELECT d.*, c.business_name as client_name 
+                FROM drivers d
+                LEFT JOIN clients c ON d.client_id = c.id
+                WHERE d.id = ?";
         return $this->db->fetchOne($sql, [$id]);
     }
     
     public function create($data) {
-        $sql = "INSERT INTO drivers (full_name, license_number, license_expiry, phone, photo, status) 
-                VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO drivers (client_id, full_name, license_number, license_expiry, phone, photo, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
+            $data['client_id'],
             $data['full_name'],
-            $data['license_number'],
-            $data['license_expiry'],
+            $data['license_number'] ?? null,
+            $data['license_expiry'] ?? null,
             $data['phone'],
             $data['photo'] ?? null,
             $data['status'] ?? 'active'
@@ -47,13 +59,14 @@ class Driver {
     }
     
     public function update($id, $data) {
-        $sql = "UPDATE drivers SET full_name = ?, license_number = ?, license_expiry = ?, 
+        $sql = "UPDATE drivers SET client_id = ?, full_name = ?, license_number = ?, license_expiry = ?, 
                 phone = ?, status = ?";
         
         $params = [
+            $data['client_id'],
             $data['full_name'],
-            $data['license_number'],
-            $data['license_expiry'],
+            $data['license_number'] ?? null,
+            $data['license_expiry'] ?? null,
             $data['phone'],
             $data['status']
         ];
