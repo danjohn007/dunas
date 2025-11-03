@@ -50,9 +50,9 @@ ini_set('session.cookie_secure', 0); // Cambiar a 1 si se usa HTTPS
 
 define('SHELLY_AUTH_TOKEN', 'MzgwNjRhdWlk0574CFA7E6D9F34D8F306EB51648C8DA5D79A03333414C2FBF51CFA88A780F9867246CE317003A74'); // Token de autenticación del Cloud API
 define('SHELLY_DEVICE_ID', '34987A67DA6C'); // ID del dispositivo Shelly
-define('SHELLY_SERVER', 'shelly-208-eu.shelly.cloud:6022/jrpc'); // Servidor Cloud de Shelly
+define('SHELLY_SERVER', 'shelly-208-eu.shelly.cloud'); // Servidor Cloud de Shelly (sin puerto ni path)
 define('SHELLY_API_TIMEOUT', 15); // Timeout para conexión en segundos
-define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera
+define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera (canal)
 define('SHELLY_ENABLED', true); // Habilitado con Cloud API
 
 // Configuración de archivos
