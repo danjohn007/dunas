@@ -180,6 +180,51 @@
     </footer>
     
     <script>
+        // Objeto para controlar el Shelly
+        window.shellyControl = {
+            async openBarrier() {
+                try {
+                    const response = await fetch('<?php echo BASE_URL; ?>/access/openBarrier', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Error al abrir barrera:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+            
+            async closeBarrier() {
+                try {
+                    const response = await fetch('<?php echo BASE_URL; ?>/access/closeBarrier', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Error al cerrar barrera:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+        };
+        
         // Cerrar alertas automáticamente después de 5 segundos
         setTimeout(function() {
             const alerts = document.querySelectorAll('[role="alert"]');

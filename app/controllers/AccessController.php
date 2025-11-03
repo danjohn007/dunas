@@ -223,9 +223,21 @@ class AccessController extends BaseController {
         $result = ShellyAPI::openBarrier();
         
         if ($result['success']) {
-            $this->json(['success' => true, 'message' => 'Barrera abierta exitosamente.']);
+            $this->json([
+                'success' => true, 
+                'message' => 'Barrera abierta exitosamente.'
+            ]);
         } else {
-            $this->json(['success' => false, 'message' => 'Error al abrir la barrera.'], 500);
+            $errorMessage = 'Error al abrir la barrera';
+            if (isset($result['error'])) {
+                $errorMessage .= ': ' . $result['error'];
+            }
+            
+            $this->json([
+                'success' => false, 
+                'message' => $errorMessage,
+                'error' => $result['error'] ?? 'Error desconocido'
+            ], 500);
         }
     }
     
@@ -235,9 +247,21 @@ class AccessController extends BaseController {
         $result = ShellyAPI::closeBarrier();
         
         if ($result['success']) {
-            $this->json(['success' => true, 'message' => 'Barrera cerrada exitosamente.']);
+            $this->json([
+                'success' => true, 
+                'message' => 'Barrera cerrada exitosamente.'
+            ]);
         } else {
-            $this->json(['success' => false, 'message' => 'Error al cerrar la barrera.'], 500);
+            $errorMessage = 'Error al cerrar la barrera';
+            if (isset($result['error'])) {
+                $errorMessage .= ': ' . $result['error'];
+            }
+            
+            $this->json([
+                'success' => false, 
+                'message' => $errorMessage,
+                'error' => $result['error'] ?? 'Error desconocido'
+            ], 500);
         }
     }
     

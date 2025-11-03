@@ -82,12 +82,17 @@ class ShellyAPI {
         $decoded = json_decode($response, true);
         
         // Verificar si hubo error en la respuesta
-        if (isset($decoded['isok']) && !$decoded['isok']) {
-            $errorMsg = $decoded['errors'] ?? 'Unknown error';
-            error_log("Shelly Cloud API Error Response: " . json_encode($errorMsg));
-            return ['success' => false, 'error' => $errorMsg, 'data' => $decoded];
+        if (isset($decoded['isok'])) {
+            if (!$decoded['isok']) {
+                $errorMsg = $decoded['errors'] ?? 'Error en la respuesta del dispositivo';
+                error_log("Shelly Cloud API Error Response: " . json_encode($errorMsg));
+                return ['success' => false, 'error' => $errorMsg, 'data' => $decoded];
+            }
+            // Si isok es true, la operación fue exitosa
+            return ['success' => true, 'data' => $decoded, 'response_time' => $totalTime];
         }
         
+        // Si no hay campo 'isok', pero llegamos aquí, asumimos éxito
         return ['success' => true, 'data' => $decoded, 'response_time' => $totalTime];
     }
     
@@ -98,6 +103,7 @@ class ShellyAPI {
     public static function openBarrier() {
         // Verificar si Shelly está habilitado
         if (!SHELLY_ENABLED) {
+            error_log("ShellyAPI::openBarrier() - Shelly deshabilitado, retornando éxito simulado");
             return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
         }
         
@@ -105,6 +111,8 @@ class ShellyAPI {
         error_log("ShellyAPI::openBarrier() - Intentando abrir barrera via Cloud API");
         
         $result = null;
+        $lastError = '';
+        
         for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
             error_log("ShellyAPI::openBarrier() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
             
@@ -115,16 +123,24 @@ class ShellyAPI {
             ]);
             
             if ($result['success']) {
-                error_log("ShellyAPI::openBarrier() - Éxito en intento " . ($attempt + 1));
+                error_log("ShellyAPI::openBarrier() - ✅ Éxito en intento " . ($attempt + 1));
                 break;
             } else {
-                error_log("ShellyAPI::openBarrier() - Fallo en intento " . ($attempt + 1) . ": " . ($result['error'] ?? 'Error desconocido'));
+                $lastError = $result['error'] ?? 'Error desconocido';
+                error_log("ShellyAPI::openBarrier() - ❌ Fallo en intento " . ($attempt + 1) . ": " . $lastError);
             }
             
             // Si falla y aún quedan intentos, esperar un poco antes de reintentar
             if ($attempt < self::MAX_RETRIES) {
+                error_log("ShellyAPI::openBarrier() - Esperando antes del siguiente intento...");
                 usleep(self::RETRY_DELAY_MICROSECONDS);
             }
+        }
+        
+        // Si falló todos los intentos, asegurar que se devuelve el último error
+        if (!$result['success']) {
+            $result['error'] = $lastError;
+            error_log("ShellyAPI::openBarrier() - ❌ Falló después de todos los intentos. Error final: " . $lastError);
         }
         
         return $result;
@@ -137,6 +153,7 @@ class ShellyAPI {
     public static function closeBarrier() {
         // Verificar si Shelly está habilitado
         if (!SHELLY_ENABLED) {
+            error_log("ShellyAPI::closeBarrier() - Shelly deshabilitado, retornando éxito simulado");
             return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
         }
         
@@ -144,6 +161,8 @@ class ShellyAPI {
         error_log("ShellyAPI::closeBarrier() - Intentando cerrar barrera via Cloud API");
         
         $result = null;
+        $lastError = '';
+        
         for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
             error_log("ShellyAPI::closeBarrier() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
             
@@ -154,16 +173,24 @@ class ShellyAPI {
             ]);
             
             if ($result['success']) {
-                error_log("ShellyAPI::closeBarrier() - Éxito en intento " . ($attempt + 1));
+                error_log("ShellyAPI::closeBarrier() - ✅ Éxito en intento " . ($attempt + 1));
                 break;
             } else {
-                error_log("ShellyAPI::closeBarrier() - Fallo en intento " . ($attempt + 1) . ": " . ($result['error'] ?? 'Error desconocido'));
+                $lastError = $result['error'] ?? 'Error desconocido';
+                error_log("ShellyAPI::closeBarrier() - ❌ Fallo en intento " . ($attempt + 1) . ": " . $lastError);
             }
             
             // Si falla y aún quedan intentos, esperar un poco antes de reintentar
             if ($attempt < self::MAX_RETRIES) {
+                error_log("ShellyAPI::closeBarrier() - Esperando antes del siguiente intento...");
                 usleep(self::RETRY_DELAY_MICROSECONDS);
             }
+        }
+        
+        // Si falló todos los intentos, asegurar que se devuelve el último error
+        if (!$result['success']) {
+            $result['error'] = $lastError;
+            error_log("ShellyAPI::closeBarrier() - ❌ Falló después de todos los intentos. Error final: " . $lastError);
         }
         
         return $result;

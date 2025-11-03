@@ -148,8 +148,8 @@ document.getElementById('accessForm').addEventListener('submit', async function(
             console.log('✅ Barrera abierta, enviando formulario...');
         } else {
             barrierStatus.className = 'mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200';
-            barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>No se pudo abrir barrera automáticamente, pero se registrará el acceso';
-            console.log('⚠️ Error en barrera, pero continuando con registro...');
+            barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>No se pudo abrir barrera automáticamente, se registrará el acceso';
+            console.log('⚠️ Error en barrera:', result.error || result.message || 'Error desconocido');
         }
         
         // Esperar un momento para que el usuario vea el resultado
@@ -158,7 +158,7 @@ document.getElementById('accessForm').addEventListener('submit', async function(
     } catch (error) {
         console.error('❌ Error al controlar barrera:', error);
         barrierStatus.className = 'mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200';
-        barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Error de conexión con la barrera, se registrará el acceso';
+        barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Error de comunicación con la barrera, se registrará el acceso';
         
         // Esperar un momento antes de continuar
         await new Promise(resolve => setTimeout(resolve, 1000));
