@@ -277,44 +277,47 @@
 
 ---
 
-## 🔌 Integración IoT - Shelly Relay
+## ☁️ Integración IoT - Shelly Cloud API
 
 ### Características de la Integración
 
 **Dispositivo Compatible:**
 - Shelly Pro 4PM (4 canales)
-- Control de barreras vehiculares
+- Control de barreras vehiculares vía Cloud API
 
 **Funcionalidades:**
 
 1. **Control Automático:**
-   - Apertura automática al registrar entrada
-   - Cierre automático al registrar salida
-   - Timeout de seguridad (2 segundos)
+   - Apertura automática al registrar entrada (Switch OFF)
+   - Cierre automático al registrar salida (Switch ON)
+   - Reintentos automáticos (hasta 3 intentos)
 
 2. **Control Manual:**
    - Botones de control en interfaz web
    - Apertura/cierre manual desde el sistema
-   - Estado en tiempo real del relay
+   - Control remoto desde cualquier ubicación
 
-3. **API REST:**
-   - Comunicación vía HTTP
+3. **Cloud API:**
+   - Comunicación vía HTTPS al Shelly Cloud
    - Comandos de control:
-     - `/relay/0?turn=on` - Abrir
-     - `/relay/1?turn=on` - Cerrar
-   - Consulta de estado: `/status`
+     - `POST /device/relay/control` con `turn=off` - Abrir barrera
+     - `POST /device/relay/control` con `turn=on` - Cerrar barrera
+   - Consulta de estado: `POST /device/status`
+   - Autenticación mediante Auth Token
 
 4. **Manejo de Errores:**
-   - Timeout configurable (5 segundos)
-   - Logs de errores de comunicación
+   - Timeout configurable (15 segundos)
+   - Logs detallados de errores de comunicación
    - Notificaciones en caso de fallo
    - Modo manual de respaldo
+   - Sistema de reintentos automáticos
 
 **Configuración:**
 ```php
-define('SHELLY_API_URL', 'http://192.168.1.100');
-define('SHELLY_RELAY_OPEN', 0);   // Canal apertura
-define('SHELLY_RELAY_CLOSE', 1);  // Canal cierre
+define('SHELLY_AUTH_TOKEN', 'YOUR_AUTH_TOKEN');    // Token del Cloud API
+define('SHELLY_DEVICE_ID', 'YOUR_DEVICE_ID');      // ID del dispositivo
+define('SHELLY_SERVER', 'shelly-XXX-eu.shelly.cloud'); // Servidor Cloud
+define('SHELLY_SWITCH_ID', 0);                     // Canal del switch
 ```
 
 ---

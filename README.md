@@ -102,37 +102,39 @@ sudo chown -R www-data:www-data logs
 # Windows: Asegurar que el usuario del servidor web tenga permisos de escritura
 ```
 
-### 5. Configurar Shelly Relay (Opcional)
+### 5. Configurar Shelly Cloud API (Opcional)
 
-Si desea utilizar la integración con Shelly Relay para control de barreras:
+Si desea utilizar la integración con Shelly Cloud API para control de barreras:
 
 Edite el archivo `config/config.php`:
 
 ```php
-define('SHELLY_API_URL', 'http://192.168.1.100'); // IP de su dispositivo Shelly
-define('SHELLY_RELAY_OPEN', 0);   // Canal para abrir barrera
-define('SHELLY_RELAY_CLOSE', 1);  // Canal para cerrar barrera
+define('SHELLY_AUTH_TOKEN', 'YOUR_AUTH_TOKEN');    // Token del Shelly Cloud API
+define('SHELLY_DEVICE_ID', 'YOUR_DEVICE_ID');      // ID del dispositivo Shelly
+define('SHELLY_SERVER', 'shelly-XXX-eu.shelly.cloud'); // Servidor Cloud
+define('SHELLY_SWITCH_ID', 0);                     // Canal del switch
 ```
+
+**Para obtener las credenciales:**
+1. Abra la aplicación Shelly Cloud
+2. Vaya a Configuración de usuario → Clave de autorización cloud (Auth Token)
+3. Encuentre el Device ID en la información del dispositivo
 
 ### 6. Verificar instalación
 
-Acceda al archivo de prueba de conexión:
+Acceda al sistema desde su navegador:
 
 ```
-http://localhost/test-connection.php
+http://localhost
 ```
 
 o 
 
 ```
-http://localhost/dunas/test-connection.php
+http://localhost/dunas
 ```
 
-Este archivo verificará:
-- ✅ Conexión a la base de datos
-- ✅ Detección de URL base
-- ✅ Permisos de directorios
-- ✅ Configuración del sistema
+Inicie sesión con las credenciales de administrador (ver sección "Usuarios de Prueba")
 
 ## 👥 Usuarios de Prueba
 

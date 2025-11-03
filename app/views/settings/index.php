@@ -228,9 +228,9 @@
                         </label>
                         <input type="text" name="shelly_server" 
                                value="<?php echo htmlspecialchars($settings['shelly_server'] ?? SHELLY_SERVER); ?>"
-                               placeholder="shelly-208-eu.shelly.cloud:6022/jrpc"
+                               placeholder="shelly-208-eu.shelly.cloud"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
-                        <p class="mt-1 text-xs text-gray-500">Servidor Cloud de Shelly</p>
+                        <p class="mt-1 text-xs text-gray-500">Servidor Cloud de Shelly (sin puerto ni path)</p>
                     </div>
                 </div>
             </div>
