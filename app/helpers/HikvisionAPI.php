@@ -46,10 +46,11 @@ class HikvisionAPI {
                 curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
             }
             
-            // Deshabilitar verificación SSL si es entorno de desarrollo
-            // En producción, configurar certificados apropiados
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            // Configurar verificación SSL basada en entorno
+            // En producción, se recomienda configurar certificados apropiados
+            $verifySSL = $settings->get('hikvision_verify_ssl', 'false') === 'true';
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -237,8 +238,10 @@ class HikvisionAPI {
                 curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
             }
             
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            // Configurar verificación SSL
+            $verifySSL = $settings->get('hikvision_verify_ssl', 'false') === 'true';
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

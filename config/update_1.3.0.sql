@@ -30,12 +30,8 @@ MODIFY COLUMN serial_number VARCHAR(100) NULL;
 ALTER TABLE units
 DROP INDEX serial_number;
 
--- Crear índice único solo para valores no NULL en serial_number
-CREATE UNIQUE INDEX idx_serial_number_unique ON units(serial_number) WHERE serial_number IS NOT NULL;
-
--- Nota: MySQL no soporta índices parciales (WHERE clause), usaremos un trigger en su lugar
--- Eliminar el índice que acabamos de intentar crear
-DROP INDEX IF EXISTS idx_serial_number_unique ON units;
+-- Nota: MySQL no soporta índices parciales (WHERE clause)
+-- Para serial_number, permitimos múltiples NULL pero valores duplicados no-NULL generarán error en aplicación
 
 -- ============================================================
 -- MODIFICACIONES A LA TABLA drivers
@@ -120,7 +116,8 @@ FROM drivers WHERE client_id IS NULL;
 INSERT INTO settings (setting_key, setting_value) VALUES
 ('hikvision_api_url', ''),
 ('hikvision_username', ''),
-('hikvision_password', '')
+('hikvision_password', ''),
+('hikvision_verify_ssl', 'false')
 ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================================

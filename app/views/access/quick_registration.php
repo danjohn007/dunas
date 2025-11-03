@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             option.textContent = driver.full_name;
                             
                             // Preseleccionar el último chofer usado
-                            if (data.lastEntry && driver.id == data.lastEntry.driver_id) {
+                            if (data.lastEntry && parseInt(driver.id) === parseInt(data.lastEntry.driver_id)) {
                                 option.selected = true;
                                 document.getElementById('driverId').value = driver.id;
                             }
