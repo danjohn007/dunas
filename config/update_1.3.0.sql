@@ -113,6 +113,17 @@ SELECT 'Drivers sin cliente:' as mensaje, COUNT(*) as cantidad
 FROM drivers WHERE client_id IS NULL;
 
 -- ============================================================
+-- CONFIGURACIONES DE SISTEMA - HIKVISION
+-- ============================================================
+
+-- Agregar configuraciones para cámara Hikvision
+INSERT INTO settings (setting_key, setting_value) VALUES
+('hikvision_api_url', ''),
+('hikvision_username', ''),
+('hikvision_password', '')
+ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
+
+-- ============================================================
 -- MENSAJES FINALES
 -- ============================================================
 
@@ -124,4 +135,5 @@ SELECT '2. Año y número de serie son opcionales en unidades' as cambio;
 SELECT '3. Drivers ahora requieren cliente' as cambio;
 SELECT '4. Número de licencia y vencimiento son opcionales en drivers' as cambio;
 SELECT '5. Access logs ahora soportan lectura de cámara de placas' as cambio;
+SELECT '6. Configuraciones agregadas para cámara Hikvision' as cambio;
 SELECT NOW() as fecha_actualizacion;
