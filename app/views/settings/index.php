@@ -192,43 +192,45 @@
             </div>
         </div>
         
-        <!-- Configuración de Shelly Relay API -->
+        <!-- Configuración de Shelly Cloud API -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
-                <i class="fas fa-network-wired text-orange-600 mr-2"></i>Shelly Relay API
+                <i class="fas fa-cloud text-orange-600 mr-2"></i>Shelly Cloud API
             </h2>
             
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        URL de la API de Shelly
+                        Token de Autenticación
                     </label>
-                    <input type="text" name="shelly_api_url" 
-                           value="<?php echo htmlspecialchars($settings['shelly_api_url'] ?? 'http://192.168.1.100'); ?>"
-                           placeholder="http://192.168.1.100"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                    <p class="mt-1 text-xs text-gray-500">Dirección IP del dispositivo Shelly Relay</p>
+                    <input type="text" name="shelly_auth_token" 
+                           value="<?php echo htmlspecialchars($settings['shelly_auth_token'] ?? SHELLY_AUTH_TOKEN); ?>"
+                           placeholder="Token de autenticación del Cloud API"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    <p class="mt-1 text-xs text-gray-500">Token de autenticación del Shelly Cloud API</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Canal para Abrir Barrera
+                            Device ID
                         </label>
-                        <input type="number" name="shelly_relay_open" 
-                               value="<?php echo htmlspecialchars($settings['shelly_relay_open'] ?? '0'); ?>"
-                               min="0" max="3"
-                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="shelly_device_id" 
+                               value="<?php echo htmlspecialchars($settings['shelly_device_id'] ?? SHELLY_DEVICE_ID); ?>"
+                               placeholder="ID del dispositivo"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono">
+                        <p class="mt-1 text-xs text-gray-500">ID del dispositivo Shelly</p>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Canal para Cerrar Barrera
+                            Servidor Cloud
                         </label>
-                        <input type="number" name="shelly_relay_close" 
-                               value="<?php echo htmlspecialchars($settings['shelly_relay_close'] ?? '1'); ?>"
-                               min="0" max="3"
-                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="shelly_server" 
+                               value="<?php echo htmlspecialchars($settings['shelly_server'] ?? SHELLY_SERVER); ?>"
+                               placeholder="shelly-208-eu.shelly.cloud:6022/jrpc"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                        <p class="mt-1 text-xs text-gray-500">Servidor Cloud de Shelly</p>
                     </div>
                 </div>
             </div>
