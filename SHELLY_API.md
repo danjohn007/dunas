@@ -1,8 +1,8 @@
-# API de Integración Shelly Relay - Sistema DUNAS
+# API de Integración Shelly Cloud - Sistema DUNAS
 
 ## 📡 Descripción General
 
-El sistema DUNAS se integra con dispositivos Shelly Pro 4PM para control automatizado de barreras vehiculares mediante comunicación HTTP REST.
+El sistema DUNAS se integra con dispositivos Shelly Pro 4PM para control automatizado de barreras vehiculares mediante el **Shelly Cloud API**. Esta integración permite controlar el dispositivo remotamente sin necesidad de conexión directa por IP local.
 
 ## 🔧 Configuración
 
@@ -10,12 +10,20 @@ El sistema DUNAS se integra con dispositivos Shelly Pro 4PM para control automat
 **Ubicación:** `config/config.php`
 
 ```php
-// Configuración de Shelly Relay API
-define('SHELLY_API_URL', 'http://192.168.1.100'); // IP del dispositivo Shelly
-define('SHELLY_API_TIMEOUT', 5);                   // Timeout en segundos
-define('SHELLY_RELAY_OPEN', 0);                    // Canal para abrir barrera
-define('SHELLY_RELAY_CLOSE', 1);                   // Canal para cerrar barrera
+// Configuración de Shelly Pro 4PM via Cloud API
+define('SHELLY_AUTH_TOKEN', 'YOUR_AUTH_TOKEN');     // Token de autenticación del Cloud API
+define('SHELLY_DEVICE_ID', 'YOUR_DEVICE_ID');       // ID del dispositivo Shelly
+define('SHELLY_SERVER', 'shelly-XXX-eu.shelly.cloud'); // Servidor Cloud de Shelly
+define('SHELLY_API_TIMEOUT', 15);                   // Timeout para conexión en segundos
+define('SHELLY_SWITCH_ID', 0);                      // ID del switch para abrir/cerrar barrera
+define('SHELLY_ENABLED', true);                     // Habilitado con Cloud API
 ```
+
+### Obtener Credenciales
+
+1. **Auth Token**: Acceda a la aplicación Shelly Cloud → Configuración de usuario → Clave de autorización cloud
+2. **Device ID**: Encontrará el ID en la información del dispositivo en la aplicación Shelly Cloud
+3. **Server**: El servidor se asigna según su región (ej: shelly-208-eu.shelly.cloud)
 
 ## 📚 Clase ShellyAPI
 
@@ -46,10 +54,10 @@ if ($result['success']) {
 ```
 
 **Comportamiento:**
-1. Activa el relay configurado en `SHELLY_RELAY_OPEN`
-2. Espera 2 segundos
-3. Desactiva el relay automáticamente
-4. Registra errores en logs
+1. Envía comando al Shelly Cloud API para apagar el switch (on=false)
+2. El comando se transmite a través de la nube al dispositivo
+3. Registra la operación y errores en logs
+4. Reintenta automáticamente hasta 3 veces en caso de fallo
 
 ---
 
@@ -76,10 +84,10 @@ if ($result['success']) {
 ```
 
 **Comportamiento:**
-1. Activa el relay configurado en `SHELLY_RELAY_CLOSE`
-2. Espera 2 segundos
-3. Desactiva el relay automáticamente
-4. Registra errores en logs
+1. Envía comando al Shelly Cloud API para encender el switch (on=true)
+2. El comando se transmite a través de la nube al dispositivo
+3. Registra la operación y errores en logs
+4. Reintenta automáticamente hasta 3 veces en caso de fallo
 
 ---
 
@@ -100,12 +108,13 @@ if ($result['success']) {
     'success' => bool,
     'error' => string,
     'data' => [
-        // Información completa del estado del dispositivo
-        'wifi_sta' => [...],
-        'cloud' => [...],
-        'mqtt' => [...],
-        'relays' => [...],
-        // ... más datos
+        // Información del estado del dispositivo desde Cloud API
+        'isok' => bool,
+        'data' => [
+            'online' => bool,
+            'device_status' => [...],
+            // ... más datos
+        ]
     ]
 ]
 ```
@@ -144,96 +153,77 @@ if ($result['success']) {
 
 ---
 
-## 🔌 Endpoints del Dispositivo Shelly
+## 🌐 Endpoints del Shelly Cloud API
 
 ### Estructura de URLs
 
-**Base URL:** `http://{IP_DEL_DISPOSITIVO}`
+**Base URL:** `https://{SHELLY_SERVER}`
 
-### Control de Relays
+### Control de Relay
 
-#### Encender Relay
+#### Controlar Relay (Encender/Apagar)
 ```
-GET /relay/{channel}?turn=on
+POST https://{SHELLY_SERVER}/device/relay/control
 ```
 
-**Parámetros:**
+**Parámetros (form-urlencoded):**
+- `auth_key`: Token de autenticación
+- `id`: Device ID
 - `channel`: Número del canal (0-3)
-- `turn`: `on` para encender
+- `turn`: `on` para encender, `off` para apagar
 
-**Ejemplo:**
+**Ejemplo con curl:**
 ```bash
-curl "http://192.168.1.100/relay/0?turn=on"
+curl -X POST "https://shelly-208-eu.shelly.cloud/device/relay/control" \
+     -d "auth_key=YOUR_AUTH_TOKEN" \
+     -d "id=YOUR_DEVICE_ID" \
+     -d "channel=0" \
+     -d "turn=on"
 ```
 
-#### Apagar Relay
-```
-GET /relay/{channel}?turn=off
-```
-
-**Ejemplo:**
-```bash
-curl "http://192.168.1.100/relay/0?turn=off"
-```
-
-#### Toggle Relay
-```
-GET /relay/{channel}?turn=toggle
-```
-
-**Ejemplo:**
-```bash
-curl "http://192.168.1.100/relay/0?turn=toggle"
-```
-
-#### Encender con Timer
-```
-GET /relay/{channel}?turn=on&timer={seconds}
-```
-
-**Ejemplo (encender por 5 segundos):**
-```bash
-curl "http://192.168.1.100/relay/0?turn=on&timer=5"
+**Respuesta exitosa (JSON):**
+```json
+{
+    "isok": true,
+    "data": {
+        "device_id": "34987A67DA6C",
+        "channel": 0,
+        "state": "on"
+    }
+}
 ```
 
 ### Consulta de Estado
 
-#### Estado General
+#### Estado del Dispositivo
 ```
-GET /status
+POST https://{SHELLY_SERVER}/device/status
+```
+
+**Parámetros:**
+- `auth_key`: Token de autenticación
+- `id`: Device ID
+
+**Ejemplo con curl:**
+```bash
+curl -X POST "https://shelly-208-eu.shelly.cloud/device/status" \
+     -d "auth_key=YOUR_AUTH_TOKEN" \
+     -d "id=YOUR_DEVICE_ID"
 ```
 
 **Respuesta (JSON):**
 ```json
 {
-    "wifi_sta": {
-        "connected": true,
-        "ssid": "MyWiFi",
-        "ip": "192.168.1.100"
-    },
-    "relays": [
-        {
-            "ison": false,
-            "has_timer": false,
-            "overpower": false
+    "isok": true,
+    "data": {
+        "online": true,
+        "device_status": {
+            "switch:0": {
+                "output": false,
+                "source": "cloud"
+            }
         }
-    ]
-}
-```
-
-#### Estado de Relay Específico
-```
-GET /relay/{channel}
-```
-
-**Respuesta (JSON):**
-```json
-{
-    "ison": false,
-    "has_timer": false,
-    "timer_remaining": 0,
-    "overpower": false,
-    "is_valid": true
+    }
 }
 ```
 
@@ -396,33 +386,43 @@ try {
 ### Problema: Dispositivo no responde
 
 **Verificaciones:**
-1. Ping al dispositivo:
-   ```bash
-   ping 192.168.1.100
-   ```
+1. Verificar conectividad del dispositivo:
+   - Asegúrese de que el dispositivo esté encendido
+   - Verifique que el dispositivo tenga conexión WiFi
+   - Confirme que el dispositivo esté conectado al Shelly Cloud
 
-2. Verificar en navegador:
-   ```
-   http://192.168.1.100/status
-   ```
+2. Verificar credenciales:
+   - Token de autenticación correcto
+   - Device ID correcto
+   - Servidor Cloud correcto
 
-3. Revisar configuración WiFi del Shelly
+3. Verificar estado en la aplicación Shelly Cloud:
+   - Abra la app Shelly Cloud
+   - Verifique que el dispositivo aparezca como "online"
 
-4. Verificar firewall del servidor
+4. Verificar conectividad del servidor:
+   - El servidor debe poder acceder a Internet
+   - Verificar que no haya firewall bloqueando conexiones HTTPS salientes
 
 ### Problema: Relay no cambia de estado
 
 **Verificaciones:**
-1. Probar comando directo:
+1. Probar comando directo desde curl:
    ```bash
-   curl "http://192.168.1.100/relay/0?turn=on"
+   curl -X POST "https://shelly-208-eu.shelly.cloud/device/relay/control" \
+        -d "auth_key=YOUR_TOKEN" \
+        -d "id=YOUR_DEVICE_ID" \
+        -d "channel=0" \
+        -d "turn=on"
    ```
 
 2. Verificar cableado del relay
 
-3. Revisar logs del dispositivo Shelly
+3. Revisar estado del dispositivo en la app Shelly Cloud
 
 4. Verificar que el canal sea correcto (0-3)
+
+5. Confirmar que el dispositivo tenga firmware actualizado
 
 ### Problema: Timeout constante
 
@@ -513,9 +513,10 @@ if ($lastCommand && (time() - $lastCommand) < 2) {
 
 ## 📚 Referencias
 
-- **Documentación Shelly:** https://shelly-api-docs.shelly.cloud/
+- **Documentación Shelly Cloud API:** https://support.shelly.cloud/en/support/solutions/articles/103000222504-what-is-shelly-cloud-api-
+- **Documentación Técnica Shelly:** https://shelly-api-docs.shelly.cloud/
 - **Shelly Pro 4PM:** https://www.shelly.cloud/en/products/shop/shelly-pro-4-pm
-- **API REST Shelly:** https://shelly-api-docs.shelly.cloud/gen1/#shelly-family-overview
+- **Cloud Control API:** https://shelly-api-docs.shelly.cloud/cloud-control-api/
 
 ---
 

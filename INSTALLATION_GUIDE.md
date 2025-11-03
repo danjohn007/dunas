@@ -286,41 +286,51 @@ Reiniciar el servidor web después de los cambios.
 
 ---
 
-## 🔌 Configuración de Shelly Relay
+## ☁️ Configuración de Shelly Cloud API
 
 ### Paso 1: Configurar Dispositivo Shelly
 
-1. **Conectar el Shelly Relay a la red:**
-   - Conectar el dispositivo a la alimentación
-   - Usar la app móvil Shelly o el portal web
-   - Configurar WiFi y obtener la IP del dispositivo
+1. **Conectar el Shelly a Internet:**
+   - Conectar el dispositivo Shelly Pro 4PM a la alimentación
+   - Usar la app móvil Shelly para conectarlo a WiFi
+   - Asegurar que el dispositivo aparezca como "online" en la app
 
-2. **Probar conexión:**
-   ```bash
-   # Verificar que el dispositivo responde
-   curl http://IP_DEL_SHELLY/status
-   ```
+2. **Obtener credenciales del Cloud API:**
+   - Abrir la aplicación Shelly Cloud
+   - Ir a **Configuración de usuario** → **Clave de autorización cloud**
+   - Copiar el **Auth Token** (será una cadena larga alfanumérica)
+   - Ir a la información del dispositivo y anotar el **Device ID**
+   - Identificar el servidor Cloud (ej: shelly-208-eu.shelly.cloud)
 
 ### Paso 2: Configurar en el Sistema
 
 Editar `config/config.php`:
 
 ```php
-// Configuración de Shelly Relay API
-define('SHELLY_API_URL', 'http://192.168.1.100'); // Cambiar a la IP real
-define('SHELLY_API_TIMEOUT', 5);
-define('SHELLY_RELAY_OPEN', 0);  // Canal para abrir barrera
-define('SHELLY_RELAY_CLOSE', 1); // Canal para cerrar barrera
+// Configuración de Shelly Cloud API
+define('SHELLY_AUTH_TOKEN', 'YOUR_AUTH_TOKEN');    // Token del Cloud API
+define('SHELLY_DEVICE_ID', 'YOUR_DEVICE_ID');      // ID del dispositivo
+define('SHELLY_SERVER', 'shelly-XXX-eu.shelly.cloud'); // Servidor Cloud
+define('SHELLY_SWITCH_ID', 0);                     // Canal del switch
+define('SHELLY_ENABLED', true);                    // Habilitar integración
 ```
 
 ### Paso 3: Probar Integración
 
-Acceder a:
-```
-http://localhost/dunas/access
-```
+1. **Desde el sistema:**
+   - Acceder a: `http://localhost/dunas/settings`
+   - Verificar que las credenciales del Shelly Cloud estén correctas
+   - Ir a: `http://localhost/dunas/access`
+   - Usar los controles manuales de barrera para probar
 
-Usar los controles manuales de barrera para probar la conexión.
+2. **Probar directamente con curl:**
+   ```bash
+   curl -X POST "https://shelly-208-eu.shelly.cloud/device/relay/control" \
+        -d "auth_key=YOUR_AUTH_TOKEN" \
+        -d "id=YOUR_DEVICE_ID" \
+        -d "channel=0" \
+        -d "turn=on"
+   ```
 
 ---
 

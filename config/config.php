@@ -44,53 +44,16 @@ ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', 0); // Cambiar a 1 si se usa HTTPS
 
-// Configuración de Shelly Relay API con Port Forwarding
-// IMPORTANTE: Asegúrate de que tu router tenga port forwarding configurado:
-// Puerto público 80 -> IP local 192.168.1.95:80
-function getShellyPublicIP() {
-    // Lista de servicios para obtener IP pública
-    $services = [
-        'https://api.ipify.org',
-        'https://icanhazip.com',
-        'https://ipecho.net/plain'
-    ];
-    
-    foreach ($services as $service) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $service);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'ShellyAPI/1.0');
-        
-        $ip = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
-        
-        if (!$error && $ip && filter_var(trim($ip), FILTER_VALIDATE_IP)) {
-            return trim($ip);
-        }
-    }
-    
-    // Fallback a IP local si no se puede obtener IP pública
-    return '192.168.1.95';
-}
+// Configuración de Shelly Pro 4PM via Cloud API
+// Se utiliza el Cloud API de Shelly para control remoto del dispositivo
+// sin necesidad de conexión directa por IP local
 
-// Configuración de Shelly Pro 4PM con credenciales confirmadas
-// SOLUCIÓN JAVASCRIPT: Control desde el navegador del cliente
-// El navegador del usuario SÍ está en la misma red que el Shelly
-
-define('SHELLY_API_URL', 'http://192.168.1.95'); // IP local directa del Shelly
-define('SHELLY_USERNAME', 'admin'); // Usuario confirmado
-define('SHELLY_PASSWORD', '67da6c'); // Contraseña confirmada (últimos 6 dígitos Device ID)
-define('SHELLY_API_TIMEOUT', 15); // Timeout para conexión
-define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera
-define('SHELLY_ENABLED', true); // Habilitado con credenciales
-
-// URLs exactas que ya te funcionan con curl
-// curl -u admin:67da6c "http://192.168.1.95/rpc/Switch.Set?id=0&on=false"  # ABRIR
-// curl -u admin:67da6c "http://192.168.1.95/rpc/Switch.Set?id=0&on=true"   # CERRAR
-define('SHELLY_OPEN_URL', "http://192.168.1.95/rpc/Switch.Set?id=0&on=false");  // Abrir barrera
-define('SHELLY_CLOSE_URL', "http://192.168.1.95/rpc/Switch.Set?id=0&on=true");  // Cerrar barrera
+define('SHELLY_AUTH_TOKEN', 'MzgwNjRhdWlk0574CFA7E6D9F34D8F306EB51648C8DA5D79A03333414C2FBF51CFA88A780F9867246CE317003A74'); // Token de autenticación del Cloud API
+define('SHELLY_DEVICE_ID', '34987A67DA6C'); // ID del dispositivo Shelly
+define('SHELLY_SERVER', 'shelly-208-eu.shelly.cloud'); // Servidor Cloud de Shelly (sin puerto ni path)
+define('SHELLY_API_TIMEOUT', 15); // Timeout para conexión en segundos
+define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera (canal)
+define('SHELLY_ENABLED', true); // Habilitado con Cloud API
 
 // Configuración de archivos
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
