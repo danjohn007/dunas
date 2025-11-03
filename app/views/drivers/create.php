@@ -9,6 +9,22 @@
     <div class="bg-white rounded-lg shadow-md p-6">
         <form method="POST" action="<?php echo BASE_URL; ?>/drivers/create" enctype="multipart/form-data">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Cliente -->
+                <div class="md:col-span-2">
+                    <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Cliente <span class="text-red-500">*</span>
+                    </label>
+                    <select id="client_id" name="client_id" required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Seleccione un cliente</option>
+                        <?php foreach ($data['clients'] as $client): ?>
+                            <option value="<?php echo $client['id']; ?>">
+                                <?php echo htmlspecialchars($client['business_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
                 <!-- Nombre Completo -->
                 <div class="md:col-span-2">
                     <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">
@@ -22,9 +38,9 @@
                 <!-- Número de Licencia -->
                 <div>
                     <label for="license_number" class="block text-sm font-medium text-gray-700 mb-1">
-                        Número de Licencia <span class="text-red-500">*</span>
+                        Número de Licencia
                     </label>
-                    <input type="text" id="license_number" name="license_number" required
+                    <input type="text" id="license_number" name="license_number"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Número de licencia de conducir">
                 </div>
@@ -32,9 +48,9 @@
                 <!-- Fecha de Vencimiento de Licencia -->
                 <div>
                     <label for="license_expiry" class="block text-sm font-medium text-gray-700 mb-1">
-                        Vencimiento de Licencia <span class="text-red-500">*</span>
+                        Vencimiento de Licencia
                     </label>
-                    <input type="date" id="license_expiry" name="license_expiry" required
+                    <input type="date" id="license_expiry" name="license_expiry"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 

@@ -9,6 +9,41 @@
     <div class="bg-white rounded-lg shadow-md p-6">
         <form method="POST" action="<?php echo BASE_URL; ?>/units/create" enctype="multipart/form-data">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Cliente -->
+                <div class="md:col-span-2">
+                    <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Cliente <span class="text-red-500">*</span>
+                    </label>
+                    <select id="client_id" name="client_id" required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Seleccione un cliente</option>
+                        <?php foreach ($data['clients'] as $client): ?>
+                            <option value="<?php echo $client['id']; ?>">
+                                <?php echo htmlspecialchars($client['business_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <!-- Chofer -->
+                <div class="md:col-span-2">
+                    <label for="driver_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Chofer <span class="text-red-500">*</span>
+                    </label>
+                    <select id="driver_id" name="driver_id" required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Seleccione un chofer</option>
+                        <?php foreach ($data['drivers'] as $driver): ?>
+                            <option value="<?php echo $driver['id']; ?>">
+                                <?php echo htmlspecialchars($driver['full_name']); ?>
+                                <?php if (!empty($driver['client_name'])): ?>
+                                    - <?php echo htmlspecialchars($driver['client_name']); ?>
+                                <?php endif; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
                 <!-- Número de Placa -->
                 <div>
                     <label for="plate_number" class="block text-sm font-medium text-gray-700 mb-1">
@@ -52,9 +87,9 @@
                 <!-- Año -->
                 <div>
                     <label for="year" class="block text-sm font-medium text-gray-700 mb-1">
-                        Año <span class="text-red-500">*</span>
+                        Año
                     </label>
-                    <input type="number" id="year" name="year" required min="1900" max="2100"
+                    <input type="number" id="year" name="year" min="1900" max="2100"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ej: 2020">
                 </div>
@@ -62,9 +97,9 @@
                 <!-- Número de Serie -->
                 <div>
                     <label for="serial_number" class="block text-sm font-medium text-gray-700 mb-1">
-                        Número de Serie <span class="text-red-500">*</span>
+                        Número de Serie
                     </label>
-                    <input type="text" id="serial_number" name="serial_number" required
+                    <input type="text" id="serial_number" name="serial_number"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Número de serie del vehículo">
                 </div>
