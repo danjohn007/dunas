@@ -88,15 +88,17 @@ class ShellyActionService {
             case 'pulse':
                 // Hacer pulse respetando el flag aquí (en vez de ShellyAPI) para tener control fino
                 $durationMs = (int)($cfg['duration_ms'] ?? 500);
+                $waitTime = max(10000, $durationMs * 1000); // Convertir ms a microsegundos
+                
                 if ($invert) {
                     error_log("ShellyActionService::execute() - PULSE con inversión: OFF → ON (${durationMs}ms)");
                     $api->relayTurnOff($channel);
-                    usleep(max(10000, $durationMs * 1000));
+                    usleep($waitTime);
                     return $api->relayTurnOn($channel);
                 } else {
                     error_log("ShellyActionService::execute() - PULSE sin inversión: ON → OFF (${durationMs}ms)");
                     $api->relayTurnOn($channel);
-                    usleep(max(10000, $durationMs * 1000));
+                    usleep($waitTime);
                     return $api->relayTurnOff($channel);
                 }
                 

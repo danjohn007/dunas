@@ -214,7 +214,9 @@ class ShellyAPI {
     }
     
     /**
-     * Pulso en relay: apaga, espera, y enciende (invertido por defecto)
+     * Pulso en relay: apaga, espera, y enciende
+     * Nota: La secuencia invertida (off→on) está implementada para compatibilidad.
+     * El servicio ShellyActionService controla la inversión según configuración del dispositivo.
      * @param int $channel Canal del relay (0-3)
      * @param int $durationMs Duración del pulso en milisegundos
      * @return array Resultado de la operación
@@ -224,9 +226,9 @@ class ShellyAPI {
             return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
         }
         
-        error_log("ShellyAPI::relayPulse() - Ejecutando pulso invertido (off→on) en canal $channel por {$durationMs}ms");
+        error_log("ShellyAPI::relayPulse() - Ejecutando pulso (off→on) en canal $channel por {$durationMs}ms");
         
-        // Invertido por defecto: off → on
+        // Secuencia: off → on
         $result = $this->relayTurnOff($channel);
         if (!$result['success']) {
             return $result;

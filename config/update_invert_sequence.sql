@@ -3,9 +3,7 @@
 -- Date: 2025-11-04
 
 -- Add invert_sequence column with default 1 (inverted: off→on)
+-- All existing devices will automatically have invert_sequence = 1 due to DEFAULT
 ALTER TABLE shelly_devices 
 ADD COLUMN invert_sequence TINYINT NOT NULL DEFAULT 1 
 AFTER channel_count;
-
--- Update existing devices to use inverted sequence (off→on) as default
-UPDATE shelly_devices SET invert_sequence = 1 WHERE invert_sequence IS NULL;
