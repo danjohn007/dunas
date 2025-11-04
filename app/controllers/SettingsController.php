@@ -119,6 +119,7 @@ class SettingsController extends BaseController {
                         'server_host' => $serverHost,
                         'active_channel' => max(0, min(3, (int)($d['active_channel'] ?? 0))),
                         'channel_count' => max(1, min(4, (int)($d['channel_count'] ?? 4))),
+                        'invert_sequence' => isset($d['invert_sequence']) ? 1 : 0,
                         'is_enabled' => isset($d['is_enabled']) ? 1 : 0,
                         'sort_order' => (int)($d['sort_order'] ?? $i),
                     ];
