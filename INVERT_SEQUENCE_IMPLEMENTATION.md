@@ -25,25 +25,23 @@ Added new column to `shelly_devices` table:
 - Default value: 1 (inverted) for new devices
 
 #### ShellyActionService (`app/services/ShellyActionService.php`)
-**Major Enhancement**: All action types now respect the `invert_sequence` flag
+**Major Enhancement**: Toggle actions use state mapping (single call), not sequences
 
 **Toggle Actions:**
-- Open with invert=1: OFF → ON (default)
-- Open with invert=0: ON → OFF
-- Close with invert=1: ON → OFF (default)
-- Close with invert=0: OFF → ON
+- Open with invert=1: OFF (single call - default)
+- Open with invert=0: ON (single call)
+- Close with invert=1: ON (single call - default)
+- Close with invert=0: OFF (single call)
 
 **On Actions:**
-- With invert=1: OFF → ON (ensures relay is ready)
-- With invert=0: ON (simple on command)
+- Always: ON (single call, no pre-steps regardless of invert flag)
 
 **Off Actions:**
-- With invert=1: ON → OFF (ensures relay is ready)
-- With invert=0: OFF (simple off command)
+- Always: OFF (single call, no pre-steps regardless of invert flag)
 
 **Pulse Actions:**
-- With invert=1: OFF → wait → ON (default)
-- With invert=0: ON → wait → OFF
+- With invert=1: ON → wait → OFF (two-step by definition)
+- With invert=0: OFF → wait → ON (two-step by definition)
 
 All actions include detailed error logging for debugging.
 
@@ -90,13 +88,13 @@ Added "Invertido (off → on)" checkbox in two places:
 ### Access Control
 When using the access control system:
 - Entrada (Entry): Executes "open" action
-  - Inverted: OFF → ON (barrera opens)
-  - Normal: ON → OFF
+  - Inverted: OFF (single call - barrera opens)
+  - Normal: ON (single call)
 - Salida (Exit): Executes "close" action
-  - Inverted: ON → OFF (barrera closes)
-  - Normal: OFF → ON
+  - Inverted: ON (single call - barrera closes)
+  - Normal: OFF (single call)
 
-The appropriate sequence is automatically applied based on the device's `invert_sequence` setting.
+The appropriate state is mapped based on the device's `invert_sequence` setting. No double signals or sequences are used.
 
 ## Benefits
 

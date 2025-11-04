@@ -41,65 +41,55 @@ class ShellyActionService {
         // Ejecutar según el tipo de acción
         switch ($cfg['action_kind']) {
             case 'toggle':
-                // Toggle: usar el modo (open/close) y el flag de inversión
+                // Interpretar open/close como ESTADOS (una sola llamada), no como secuencias.
+                // Mapeo por defecto (invertido=0): open=ON, close=OFF
+                // Mapeo invertido (invertido=1):  open=OFF, close=ON
                 if ($mode === 'open') {
                     if ($invert) {
-                        // Invertido: off → on
-                        error_log("ShellyActionService::execute() - Toggle OPEN con inversión: OFF → ON");
-                        $api->relayTurnOff($channel);
-                        return $api->relayTurnOn($channel);
-                    } else {
-                        // Normal: on → off
-                        error_log("ShellyActionService::execute() - Toggle OPEN sin inversión: ON → OFF");
-                        $api->relayTurnOn($channel);
+                        error_log("ShellyActionService::execute() - TOGGLE OPEN (invertido) => OFF");
                         return $api->relayTurnOff($channel);
+                    } else {
+                        error_log("ShellyActionService::execute() - TOGGLE OPEN (normal) => ON");
+                        return $api->relayTurnOn($channel);
                     }
-                } else {
-                    // close
+                } else { // close
                     if ($invert) {
-                        // Invertido: on → off
-                        error_log("ShellyActionService::execute() - Toggle CLOSE con inversión: ON → OFF");
-                        $api->relayTurnOn($channel);
-                        return $api->relayTurnOff($channel);
-                    } else {
-                        // Normal: off → on
-                        error_log("ShellyActionService::execute() - Toggle CLOSE sin inversión: OFF → ON");
-                        $api->relayTurnOff($channel);
+                        error_log("ShellyActionService::execute() - TOGGLE CLOSE (invertido) => ON");
                         return $api->relayTurnOn($channel);
+                    } else {
+                        error_log("ShellyActionService::execute() - TOGGLE CLOSE (normal) => OFF");
+                        return $api->relayTurnOff($channel);
                     }
                 }
-                    
+
             case 'on':
-                // Si invertido, 'on' se interpreta como off→on; si no, solo on
-                if ($invert) {
-                    error_log("ShellyActionService::execute() - ON con inversión: OFF → ON");
-                    $api->relayTurnOff($channel);
-                }
+                // Acción unitaria: encender (sin pre-pasos)
+                error_log("ShellyActionService::execute() - ON");
                 return $api->relayTurnOn($channel);
                 
             case 'off':
-                // Si invertido, 'off' se interpreta como on→off; si no, solo off
-                if ($invert) {
-                    error_log("ShellyActionService::execute() - OFF con inversión: ON → OFF");
-                    $api->relayTurnOn($channel);
-                }
+                // Acción unitaria: apagar (sin pre-pasos)
+                error_log("ShellyActionService::execute() - OFF");
                 return $api->relayTurnOff($channel);
                 
             case 'pulse':
-                // Hacer pulse respetando el flag aquí (en vez de ShellyAPI) para tener control fino
+                // Si algún flujo usa 'pulse', aquí sí hay dos pasos por definición (on y off o viceversa).
+                // Mantenerlo como pulso "final hacia ON" si invert=0, o "final hacia OFF" si invert=1.
                 $durationMs = (int)($cfg['duration_ms'] ?? 500);
-                $waitTime = max(10000, $durationMs * 1000); // Convertir ms a microsegundos
+                $waitTime = max(10000, $durationMs * 1000);
                 
                 if ($invert) {
-                    error_log("ShellyActionService::execute() - PULSE con inversión: OFF → ON ({$durationMs}ms)");
-                    $api->relayTurnOff($channel);
-                    usleep($waitTime);
-                    return $api->relayTurnOn($channel);
-                } else {
-                    error_log("ShellyActionService::execute() - PULSE sin inversión: ON → OFF ({$durationMs}ms)");
+                    // Final hacia OFF
+                    error_log("ShellyActionService::execute() - PULSE invertido: ON→OFF ({$durationMs}ms)");
                     $api->relayTurnOn($channel);
                     usleep($waitTime);
                     return $api->relayTurnOff($channel);
+                } else {
+                    // Final hacia ON
+                    error_log("ShellyActionService::execute() - PULSE normal: OFF→ON ({$durationMs}ms)");
+                    $api->relayTurnOff($channel);
+                    usleep($waitTime);
+                    return $api->relayTurnOn($channel);
                 }
                 
             default:
