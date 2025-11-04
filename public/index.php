@@ -10,6 +10,12 @@ require_once __DIR__ . '/../config/config.php';
 // Iniciar sesión
 Session::start();
 
+// Configuración de errores para producción
+// No mostrar errores en la interfaz de usuario
+ini_set('display_errors', '0');
+// Registrar errores excepto deprecados y notices
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+
 // Obtener la URI solicitada
 $requestUri = $_SERVER['REQUEST_URI'];
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
