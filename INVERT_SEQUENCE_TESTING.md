@@ -38,35 +38,35 @@ UPDATE shelly_devices SET invert_sequence = 1 WHERE invert_sequence IS NULL;
 
 ### 3. Action Testing - Toggle with Invertido ON (default)
 When `invert_sequence = 1`:
-- [ ] **Open action**: Should execute OFF → ON
-  - Check logs for: "Toggle OPEN con inversión: OFF → ON"
-- [ ] **Close action**: Should execute ON → OFF
-  - Check logs for: "Toggle CLOSE con inversión: ON → OFF"
+- [ ] **Open action**: Should execute OFF (single call only)
+  - Check logs for: "TOGGLE OPEN (invertido) => OFF"
+- [ ] **Close action**: Should execute ON (single call only)
+  - Check logs for: "TOGGLE CLOSE (invertido) => ON"
 
 ### 4. Action Testing - Toggle with Invertido OFF
 When `invert_sequence = 0`:
 - [ ] Uncheck "Invertido (off → on)" in Settings
 - [ ] Save the device configuration
-- [ ] **Open action**: Should execute ON → OFF
-  - Check logs for: "Toggle OPEN sin inversión: ON → OFF"
-- [ ] **Close action**: Should execute OFF → ON
-  - Check logs for: "Toggle CLOSE sin inversión: OFF → ON"
+- [ ] **Open action**: Should execute ON (single call only)
+  - Check logs for: "TOGGLE OPEN (normal) => ON"
+- [ ] **Close action**: Should execute OFF (single call only)
+  - Check logs for: "TOGGLE CLOSE (normal) => OFF"
 
 ### 5. Action Testing - ON
-- [ ] **With Invertido ON**: Should execute OFF → ON
-  - Check logs for: "ON con inversión: OFF → ON"
-- [ ] **With Invertido OFF**: Should execute only ON (single command)
+- [ ] **Always**: Should execute only ON (single call, no pre-steps)
+  - Check logs for: "ON"
+  - No difference between Invertido ON or OFF
 
 ### 6. Action Testing - OFF
-- [ ] **With Invertido ON**: Should execute ON → OFF
-  - Check logs for: "OFF con inversión: ON → OFF"
-- [ ] **With Invertido OFF**: Should execute only OFF (single command)
+- [ ] **Always**: Should execute only OFF (single call, no pre-steps)
+  - Check logs for: "OFF"
+  - No difference between Invertido ON or OFF
 
 ### 7. Action Testing - PULSE
-- [ ] **With Invertido ON**: Should execute OFF → wait → ON
-  - Check logs for: "PULSE con inversión: OFF → ON"
-- [ ] **With Invertido OFF**: Should execute ON → wait → OFF
-  - Check logs for: "PULSE sin inversión: ON → OFF"
+- [ ] **With Invertido ON**: Should execute ON → wait → OFF
+  - Check logs for: "PULSE invertido: ON→OFF"
+- [ ] **With Invertido OFF**: Should execute OFF → wait → ON
+  - Check logs for: "PULSE normal: OFF→ON"
 
 ### 8. Multi-Device Testing
 - [ ] Configure multiple devices with different `invert_sequence` values
@@ -77,11 +77,11 @@ When `invert_sequence = 0`:
 
 | Action | Mode  | Invertido ON (1)     | Invertido OFF (0)    |
 |--------|-------|----------------------|----------------------|
-| toggle | open  | OFF → ON             | ON → OFF             |
-| toggle | close | ON → OFF             | OFF → ON             |
-| on     | -     | OFF → ON             | ON                   |
-| off    | -     | ON → OFF             | OFF                  |
-| pulse  | -     | OFF → wait → ON      | ON → wait → OFF      |
+| toggle | open  | OFF (single)         | ON (single)          |
+| toggle | close | ON (single)          | OFF (single)         |
+| on     | -     | ON (single)          | ON (single)          |
+| off    | -     | OFF (single)         | OFF (single)         |
+| pulse  | -     | ON → wait → OFF      | OFF → wait → ON      |
 
 ## Log Files
 Check `/logs` directory for error logs with action execution details:
