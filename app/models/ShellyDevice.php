@@ -87,7 +87,8 @@ class ShellyDevice {
             }
             
             // Borrar dispositivos que ya no aparecen en la lista
-            if (!empty($existingIds)) {
+            // Solo borrar si hay elementos en $seen (para prevenir borrado masivo accidental)
+            if (!empty($existingIds) && !empty($rows)) {
                 $toDelete = array_diff($existingIds, $seen);
                 if (!empty($toDelete)) {
                     $in = implode(',', array_fill(0, count($toDelete), '?'));

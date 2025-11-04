@@ -95,6 +95,7 @@ class SettingsController extends BaseController {
         try {
             $db = Database::getInstance();
             $rows = [];
+            $skippedDevices = 0;
             
             // Procesar dispositivos enviados desde el formulario
             if (isset($_POST['devices']) && is_array($_POST['devices'])) {
@@ -106,6 +107,7 @@ class SettingsController extends BaseController {
                     
                     // Validar campos requeridos
                     if (empty($authToken) || empty($deviceId) || empty($serverHost)) {
+                        $skippedDevices++;
                         continue; // Saltar dispositivos con datos incompletos
                     }
                     
@@ -163,7 +165,12 @@ class SettingsController extends BaseController {
                 }
             }
             
-            $this->setFlash('success', 'Dispositivos Shelly guardados exitosamente.');
+            // Mensaje de éxito con información de dispositivos omitidos
+            if ($skippedDevices > 0) {
+                $this->setFlash('warning', "Dispositivos Shelly guardados. Se omitieron $skippedDevices dispositivo(s) con datos incompletos.");
+            } else {
+                $this->setFlash('success', 'Dispositivos Shelly guardados exitosamente.');
+            }
         } catch (Exception $e) {
             error_log("Error al guardar dispositivos Shelly: " . $e->getMessage());
             $this->setFlash('error', 'Error al guardar dispositivos Shelly: ' . $e->getMessage());

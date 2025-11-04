@@ -24,6 +24,27 @@ class AccessController extends BaseController {
         $this->clientModel = new Client();
     }
     
+    /**
+     * Ejecuta una acción Shelly con fallback al método legacy
+     * @param string $action Código de la acción ('abrir_cerrar', etc.)
+     * @param string $mode Modo de operación ('open' o 'close')
+     * @return array Resultado de la operación
+     */
+    private function executeShellyAction($action, $mode) {
+        try {
+            $db = Database::getInstance();
+            return ShellyActionService::execute($db, $action, $mode);
+        } catch (Exception $e) {
+            // Si no hay dispositivos configurados, usar método legacy
+            error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+            if ($mode === 'open') {
+                return ShellyAPI::openBarrier();
+            } else {
+                return ShellyAPI::closeBarrier();
+            }
+        }
+    }
+    
     public function index() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
@@ -99,14 +120,7 @@ class AccessController extends BaseController {
                     $accessId = $this->accessModel->create($data);
                     
                     // Abrir barrera con Shelly Relay usando el nuevo servicio
-                    try {
-                        $db = Database::getInstance();
-                        $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'open');
-                    } catch (Exception $e) {
-                        // Si no hay dispositivos configurados, usar método legacy
-                        error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
-                        $shellyResult = ShellyAPI::openBarrier();
-                    }
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
                     
                     $message = 'Acceso registrado exitosamente';
                     if (!empty($data['license_plate_reading'])) {
@@ -180,14 +194,7 @@ class AccessController extends BaseController {
                     $this->accessModel->registerExit($id, $_POST['liters_supplied']);
                     
                     // Cerrar barrera con Shelly Relay usando el nuevo servicio
-                    try {
-                        $db = Database::getInstance();
-                        $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'close');
-                    } catch (Exception $e) {
-                        // Si no hay dispositivos configurados, usar método legacy
-                        error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
-                        $shellyResult = ShellyAPI::closeBarrier();
-                    }
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
                     
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
@@ -235,14 +242,7 @@ class AccessController extends BaseController {
     public function openBarrier() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
-        try {
-            $db = Database::getInstance();
-            $result = ShellyActionService::execute($db, 'abrir_cerrar', 'open');
-        } catch (Exception $e) {
-            // Si no hay dispositivos configurados, usar método legacy
-            error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
-            $result = ShellyAPI::openBarrier();
-        }
+        $result = $this->executeShellyAction('abrir_cerrar', 'open');
         
         if ($result['success']) {
             $this->json([
@@ -266,14 +266,7 @@ class AccessController extends BaseController {
     public function closeBarrier() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
-        try {
-            $db = Database::getInstance();
-            $result = ShellyActionService::execute($db, 'abrir_cerrar', 'close');
-        } catch (Exception $e) {
-            // Si no hay dispositivos configurados, usar método legacy
-            error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
-            $result = ShellyAPI::closeBarrier();
-        }
+        $result = $this->executeShellyAction('abrir_cerrar', 'close');
         
         if ($result['success']) {
             $this->json([
@@ -427,13 +420,7 @@ class AccessController extends BaseController {
             $accessId = $this->accessModel->create($accessData);
             
             // Abrir barrera usando el nuevo servicio
-            try {
-                $db = Database::getInstance();
-                $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'open');
-            } catch (Exception $e) {
-                error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
-                $shellyResult = ShellyAPI::openBarrier();
-            }
+            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
             
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
@@ -503,13 +490,7 @@ class AccessController extends BaseController {
             $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
             
             // Cerrar barrera usando el nuevo servicio
-            try {
-                $db = Database::getInstance();
-                $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'close');
-            } catch (Exception $e) {
-                error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
-                $shellyResult = ShellyAPI::closeBarrier();
-            }
+            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
             
             $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
             

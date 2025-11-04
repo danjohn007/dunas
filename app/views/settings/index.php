@@ -244,7 +244,7 @@
             <!-- Contenedor de dispositivos -->
             <div id="shellyDevicesContainer" class="space-y-4">
                 <?php if (empty($shellyDevices)): ?>
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500" data-no-devices>
                         <i class="fas fa-info-circle text-2xl mb-2"></i>
                         <p>No hay dispositivos Shelly configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
                     </div>
@@ -473,14 +473,14 @@
     </template>
     
     <script>
-        let deviceIndex = <?php echo count($shellyDevices); ?>;
+        let deviceIndex = <?php echo (int)count($shellyDevices); ?>;
         
         function addShellyDevice() {
             const container = document.getElementById('shellyDevicesContainer');
             const template = document.getElementById('shellyDeviceTemplate');
             
             // Remover mensaje de "no hay dispositivos" si existe
-            const noDevicesMsg = container.querySelector('.bg-gray-50.text-center');
+            const noDevicesMsg = container.querySelector('[data-no-devices]');
             if (noDevicesMsg) {
                 noDevicesMsg.remove();
             }
@@ -506,7 +506,7 @@
                 const container = document.getElementById('shellyDevicesContainer');
                 if (container.querySelectorAll('.shelly-device-card').length === 0) {
                     container.innerHTML = `
-                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500">
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500" data-no-devices>
                             <i class="fas fa-info-circle text-2xl mb-2"></i>
                             <p>No hay dispositivos Shelly configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
                         </div>

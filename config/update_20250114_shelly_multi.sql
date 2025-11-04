@@ -41,15 +41,17 @@ CREATE TABLE IF NOT EXISTS shelly_actions (
 INSERT INTO shelly_devices (name, auth_token, device_id, server_host, active_channel, channel_count, is_enabled, sort_order)
 SELECT 
   'Abrir/Cerrar',
-  (SELECT setting_value FROM settings WHERE setting_key = 'shelly_auth_token' LIMIT 1),
-  (SELECT setting_value FROM settings WHERE setting_key = 'shelly_device_id' LIMIT 1),
-  (SELECT setting_value FROM settings WHERE setting_key = 'shelly_server' LIMIT 1),
+  COALESCE((SELECT setting_value FROM settings WHERE setting_key = 'shelly_auth_token' LIMIT 1), ''),
+  COALESCE((SELECT setting_value FROM settings WHERE setting_key = 'shelly_device_id' LIMIT 1), ''),
+  COALESCE((SELECT setting_value FROM settings WHERE setting_key = 'shelly_server' LIMIT 1), ''),
   0,  -- Canal por defecto
   4,  -- 4 canales por defecto
   1,  -- Habilitado
   0   -- Primer dispositivo
 FROM settings 
 WHERE setting_key = 'shelly_auth_token'
+  AND (SELECT setting_value FROM settings WHERE setting_key = 'shelly_auth_token' LIMIT 1) IS NOT NULL
+  AND (SELECT setting_value FROM settings WHERE setting_key = 'shelly_auth_token' LIMIT 1) != ''
   AND NOT EXISTS (SELECT 1 FROM shelly_devices)
 LIMIT 1;
 
