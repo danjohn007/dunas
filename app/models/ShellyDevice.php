@@ -54,7 +54,7 @@ class ShellyDevice {
                     $seen[] = $id;
                     // Actualizar dispositivo existente
                     $db->execute(
-                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, active_channel=?, channel_count=?, is_enabled=?, updated_at=NOW() WHERE id=?",
+                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, active_channel=?, channel_count=?, invert_sequence=?, is_enabled=?, updated_at=NOW() WHERE id=?",
                         [
                             $r['name'],
                             $r['auth_token'],
@@ -62,6 +62,7 @@ class ShellyDevice {
                             $r['server_host'],
                             (int)$r['active_channel'],
                             (int)$r['channel_count'],
+                            isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
                             (int)$r['is_enabled'],
                             $id
                         ]
@@ -69,7 +70,7 @@ class ShellyDevice {
                 } else {
                     // Insertar nuevo dispositivo
                     $db->execute(
-                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, active_channel, channel_count, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?)",
+                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, active_channel, channel_count, invert_sequence, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?,?)",
                         [
                             $r['name'],
                             $r['auth_token'],
@@ -77,6 +78,7 @@ class ShellyDevice {
                             $r['server_host'],
                             (int)$r['active_channel'],
                             (int)$r['channel_count'],
+                            isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
                             1,
                             (int)($r['sort_order'] ?? 0)
                         ]

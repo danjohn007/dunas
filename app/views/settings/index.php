@@ -340,12 +340,18 @@
                             </div>
                             
                             <!-- Habilitado -->
-                            <div>
+                            <div class="space-y-2">
                                 <label class="flex items-center">
                                     <input type="checkbox" name="devices[<?php echo $index; ?>][is_enabled]" 
                                            value="1" <?php echo $device['is_enabled'] ? 'checked' : ''; ?>
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
                                     <span class="text-sm text-gray-700">Dispositivo habilitado</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="devices[<?php echo $index; ?>][invert_sequence]" 
+                                           value="1" <?php echo isset($device['invert_sequence']) && $device['invert_sequence'] ? 'checked' : ''; ?>
+                                           class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 mr-2">
+                                    <span class="text-sm text-gray-700">Invertido (off → on)</span>
                                 </label>
                             </div>
                             
@@ -459,11 +465,16 @@
                 </div>
             </div>
             
-            <div>
+            <div class="space-y-2">
                 <label class="flex items-center">
                     <input type="checkbox" name="devices[INDEX][is_enabled]" value="1" checked
                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
                     <span class="text-sm text-gray-700">Dispositivo habilitado</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" name="devices[INDEX][invert_sequence]" value="1" checked
+                           class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 mr-2">
+                    <span class="text-sm text-gray-700">Invertido (off → on)</span>
                 </label>
             </div>
             

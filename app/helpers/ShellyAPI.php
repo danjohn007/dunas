@@ -214,7 +214,7 @@ class ShellyAPI {
     }
     
     /**
-     * Pulso en relay: enciende, espera, y apaga
+     * Pulso en relay: apaga, espera, y enciende (invertido por defecto)
      * @param int $channel Canal del relay (0-3)
      * @param int $durationMs Duración del pulso en milisegundos
      * @return array Resultado de la operación
@@ -224,16 +224,17 @@ class ShellyAPI {
             return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
         }
         
-        error_log("ShellyAPI::relayPulse() - Ejecutando pulso en canal $channel por {$durationMs}ms");
+        error_log("ShellyAPI::relayPulse() - Ejecutando pulso invertido (off→on) en canal $channel por {$durationMs}ms");
         
-        $result = $this->relayTurnOn($channel);
+        // Invertido por defecto: off → on
+        $result = $this->relayTurnOff($channel);
         if (!$result['success']) {
             return $result;
         }
         
         usleep(max(10000, $durationMs * 1000)); // Convertir ms a microsegundos
         
-        return $this->relayTurnOff($channel);
+        return $this->relayTurnOn($channel);
     }
     
     /**

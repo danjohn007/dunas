@@ -29,28 +29,76 @@ class ShellyActionService {
             ? (int)$cfg['action_channel']
             : (int)$cfg['active_channel'];
         
+        // Obtener el flag de inversión del dispositivo (default 1 = invertido)
+        $invert = isset($cfg['invert_sequence']) ? (int)$cfg['invert_sequence'] : 1;
+        
         // Crear instancia de ShellyAPI con los datos del dispositivo
         $api = new ShellyAPI($cfg['auth_token'], $cfg['device_id'], $cfg['server_host']);
+        
+        // Log de la configuración de inversión
+        error_log("ShellyActionService::execute() - Acción: $code, Modo: $mode, Invertido: $invert, Canal: $channel");
         
         // Ejecutar según el tipo de acción
         switch ($cfg['action_kind']) {
             case 'toggle':
-                // Toggle: usar el modo (open/close) para decidir si encender o apagar
-                return $mode === 'open'
-                    ? $api->relayTurnOn($channel)
-                    : $api->relayTurnOff($channel);
+                // Toggle: usar el modo (open/close) y el flag de inversión
+                if ($mode === 'open') {
+                    if ($invert) {
+                        // Invertido: off → on
+                        error_log("ShellyActionService::execute() - Toggle OPEN con inversión: OFF → ON");
+                        $api->relayTurnOff($channel);
+                        return $api->relayTurnOn($channel);
+                    } else {
+                        // Normal: on → off
+                        error_log("ShellyActionService::execute() - Toggle OPEN sin inversión: ON → OFF");
+                        $api->relayTurnOn($channel);
+                        return $api->relayTurnOff($channel);
+                    }
+                } else {
+                    // close
+                    if ($invert) {
+                        // Invertido: on → off
+                        error_log("ShellyActionService::execute() - Toggle CLOSE con inversión: ON → OFF");
+                        $api->relayTurnOn($channel);
+                        return $api->relayTurnOff($channel);
+                    } else {
+                        // Normal: off → on
+                        error_log("ShellyActionService::execute() - Toggle CLOSE sin inversión: OFF → ON");
+                        $api->relayTurnOff($channel);
+                        return $api->relayTurnOn($channel);
+                    }
+                }
                     
             case 'on':
-                // Siempre encender
+                // Si invertido, 'on' se interpreta como off→on; si no, solo on
+                if ($invert) {
+                    error_log("ShellyActionService::execute() - ON con inversión: OFF → ON");
+                    $api->relayTurnOff($channel);
+                }
                 return $api->relayTurnOn($channel);
                 
             case 'off':
-                // Siempre apagar
+                // Si invertido, 'off' se interpreta como on→off; si no, solo off
+                if ($invert) {
+                    error_log("ShellyActionService::execute() - OFF con inversión: ON → OFF");
+                    $api->relayTurnOn($channel);
+                }
                 return $api->relayTurnOff($channel);
                 
             case 'pulse':
-                // Pulso: encender, esperar, apagar
-                return $api->relayPulse($channel, (int)($cfg['duration_ms'] ?? 500));
+                // Hacer pulse respetando el flag aquí (en vez de ShellyAPI) para tener control fino
+                $durationMs = (int)($cfg['duration_ms'] ?? 500);
+                if ($invert) {
+                    error_log("ShellyActionService::execute() - PULSE con inversión: OFF → ON (${durationMs}ms)");
+                    $api->relayTurnOff($channel);
+                    usleep(max(10000, $durationMs * 1000));
+                    return $api->relayTurnOn($channel);
+                } else {
+                    error_log("ShellyActionService::execute() - PULSE sin inversión: ON → OFF (${durationMs}ms)");
+                    $api->relayTurnOn($channel);
+                    usleep(max(10000, $durationMs * 1000));
+                    return $api->relayTurnOff($channel);
+                }
                 
             default:
                 throw new Exception("action_kind no soportado: " . $cfg['action_kind']);
