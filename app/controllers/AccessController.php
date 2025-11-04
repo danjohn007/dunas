@@ -8,6 +8,7 @@ require_once APP_PATH . '/models/Driver.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Client.php';
 require_once APP_PATH . '/helpers/HikvisionAPI.php';
+require_once APP_PATH . '/services/ShellyActionService.php';
 
 class AccessController extends BaseController {
     
@@ -97,8 +98,15 @@ class AccessController extends BaseController {
                     
                     $accessId = $this->accessModel->create($data);
                     
-                    // Abrir barrera con Shelly Relay
-                    $shellyResult = ShellyAPI::openBarrier();
+                    // Abrir barrera con Shelly Relay usando el nuevo servicio
+                    try {
+                        $db = Database::getInstance();
+                        $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'open');
+                    } catch (Exception $e) {
+                        // Si no hay dispositivos configurados, usar método legacy
+                        error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+                        $shellyResult = ShellyAPI::openBarrier();
+                    }
                     
                     $message = 'Acceso registrado exitosamente';
                     if (!empty($data['license_plate_reading'])) {
@@ -171,8 +179,15 @@ class AccessController extends BaseController {
                 try {
                     $this->accessModel->registerExit($id, $_POST['liters_supplied']);
                     
-                    // Cerrar barrera con Shelly Relay
-                    $shellyResult = ShellyAPI::closeBarrier();
+                    // Cerrar barrera con Shelly Relay usando el nuevo servicio
+                    try {
+                        $db = Database::getInstance();
+                        $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'close');
+                    } catch (Exception $e) {
+                        // Si no hay dispositivos configurados, usar método legacy
+                        error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+                        $shellyResult = ShellyAPI::closeBarrier();
+                    }
                     
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
@@ -220,7 +235,14 @@ class AccessController extends BaseController {
     public function openBarrier() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
-        $result = ShellyAPI::openBarrier();
+        try {
+            $db = Database::getInstance();
+            $result = ShellyActionService::execute($db, 'abrir_cerrar', 'open');
+        } catch (Exception $e) {
+            // Si no hay dispositivos configurados, usar método legacy
+            error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+            $result = ShellyAPI::openBarrier();
+        }
         
         if ($result['success']) {
             $this->json([
@@ -244,7 +266,14 @@ class AccessController extends BaseController {
     public function closeBarrier() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
-        $result = ShellyAPI::closeBarrier();
+        try {
+            $db = Database::getInstance();
+            $result = ShellyActionService::execute($db, 'abrir_cerrar', 'close');
+        } catch (Exception $e) {
+            // Si no hay dispositivos configurados, usar método legacy
+            error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+            $result = ShellyAPI::closeBarrier();
+        }
         
         if ($result['success']) {
             $this->json([
@@ -397,8 +426,14 @@ class AccessController extends BaseController {
             
             $accessId = $this->accessModel->create($accessData);
             
-            // Abrir barrera
-            $shellyResult = ShellyAPI::openBarrier();
+            // Abrir barrera usando el nuevo servicio
+            try {
+                $db = Database::getInstance();
+                $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'open');
+            } catch (Exception $e) {
+                error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+                $shellyResult = ShellyAPI::openBarrier();
+            }
             
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
@@ -467,8 +502,14 @@ class AccessController extends BaseController {
             // Registrar salida con capacidad máxima de la unidad
             $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
             
-            // Cerrar barrera
-            $shellyResult = ShellyAPI::closeBarrier();
+            // Cerrar barrera usando el nuevo servicio
+            try {
+                $db = Database::getInstance();
+                $shellyResult = ShellyActionService::execute($db, 'abrir_cerrar', 'close');
+            } catch (Exception $e) {
+                error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+                $shellyResult = ShellyAPI::closeBarrier();
+            }
             
             $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
             
