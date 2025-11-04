@@ -91,12 +91,12 @@ class ShellyActionService {
                 $waitTime = max(10000, $durationMs * 1000); // Convertir ms a microsegundos
                 
                 if ($invert) {
-                    error_log("ShellyActionService::execute() - PULSE con inversión: OFF → ON (${durationMs}ms)");
+                    error_log("ShellyActionService::execute() - PULSE con inversión: OFF → ON ({$durationMs}ms)");
                     $api->relayTurnOff($channel);
                     usleep($waitTime);
                     return $api->relayTurnOn($channel);
                 } else {
-                    error_log("ShellyActionService::execute() - PULSE sin inversión: ON → OFF (${durationMs}ms)");
+                    error_log("ShellyActionService::execute() - PULSE sin inversión: ON → OFF ({$durationMs}ms)");
                     $api->relayTurnOn($channel);
                     usleep($waitTime);
                     return $api->relayTurnOff($channel);
