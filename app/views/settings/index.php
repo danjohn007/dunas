@@ -192,50 +192,6 @@
             </div>
         </div>
         
-        <!-- Configuración de Shelly Cloud API -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">
-                <i class="fas fa-cloud text-orange-600 mr-2"></i>Shelly Cloud API
-            </h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Token de Autenticación
-                    </label>
-                    <input type="text" name="shelly_auth_token" 
-                           value="<?php echo htmlspecialchars($settings['shelly_auth_token'] ?? SHELLY_AUTH_TOKEN); ?>"
-                           placeholder="Token de autenticación del Cloud API"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Token de autenticación del Shelly Cloud API</p>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Device ID
-                        </label>
-                        <input type="text" name="shelly_device_id" 
-                               value="<?php echo htmlspecialchars($settings['shelly_device_id'] ?? SHELLY_DEVICE_ID); ?>"
-                               placeholder="ID del dispositivo"
-                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono">
-                        <p class="mt-1 text-xs text-gray-500">ID del dispositivo Shelly</p>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Servidor Cloud
-                        </label>
-                        <input type="text" name="shelly_server" 
-                               value="<?php echo htmlspecialchars($settings['shelly_server'] ?? SHELLY_SERVER); ?>"
-                               placeholder="shelly-208-eu.shelly.cloud"
-                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
-                        <p class="mt-1 text-xs text-gray-500">Servidor Cloud de Shelly (sin puerto ni path)</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Configuración de Tickets -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
@@ -267,4 +223,311 @@
             </button>
         </div>
     </form>
+    
+    <!-- Configuración de Dispositivos Shelly Cloud -->
+    <form method="POST" action="<?php echo BASE_URL; ?>/settings/saveShellyDevices" id="shellyDevicesForm">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-cloud text-orange-600 mr-2"></i>Dispositivos Shelly Cloud
+                </h2>
+                <button type="button" onclick="addShellyDevice()" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i>Nuevo dispositivo +
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">
+                Configure múltiples dispositivos Shelly para control de acceso. Cada dispositivo puede tener canales independientes y acciones configurables.
+            </p>
+            
+            <!-- Contenedor de dispositivos -->
+            <div id="shellyDevicesContainer" class="space-y-4">
+                <?php if (empty($shellyDevices)): ?>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500">
+                        <i class="fas fa-info-circle text-2xl mb-2"></i>
+                        <p>No hay dispositivos Shelly configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($shellyDevices as $index => $device): ?>
+                        <?php 
+                            $action = !empty($device['actions']) ? $device['actions'][0] : null;
+                            $actionCode = $action ? $action['code'] : 'abrir_cerrar';
+                        ?>
+                        <div class="shelly-device-card bg-gray-50 border border-gray-300 rounded-lg p-6 relative">
+                            <!-- Botón eliminar -->
+                            <button type="button" onclick="removeShellyDevice(this)" 
+                                    class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            
+                            <input type="hidden" name="devices[<?php echo $index; ?>][id]" value="<?php echo $device['id']; ?>">
+                            <input type="hidden" name="devices[<?php echo $index; ?>][sort_order]" value="<?php echo $index; ?>">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <!-- Token de Autenticación -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Token de Autenticación
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" name="devices[<?php echo $index; ?>][auth_token]" 
+                                               value="<?php echo htmlspecialchars($device['auth_token']); ?>"
+                                               placeholder="Token de autenticación"
+                                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm pr-10"
+                                               required>
+                                        <button type="button" onclick="togglePasswordVisibility(this)" 
+                                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Device ID -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Device ID
+                                    </label>
+                                    <input type="text" name="devices[<?php echo $index; ?>][device_id]" 
+                                           value="<?php echo htmlspecialchars($device['device_id']); ?>"
+                                           placeholder="34987A67DA6C"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono"
+                                           required>
+                                </div>
+                                
+                                <!-- Servidor Cloud -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Servidor Cloud
+                                    </label>
+                                    <input type="text" name="devices[<?php echo $index; ?>][server_host]" 
+                                           value="<?php echo htmlspecialchars($device['server_host']); ?>"
+                                           placeholder="shelly-208-eu.shelly.cloud"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm"
+                                           required>
+                                    <p class="mt-1 text-xs text-gray-500">Sin https:// ni puerto</p>
+                                </div>
+                                
+                                <!-- Nombre de Acción -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Nombre
+                                    </label>
+                                    <select name="devices[<?php echo $index; ?>][action_code]" 
+                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="abrir_cerrar" <?php echo $actionCode === 'abrir_cerrar' ? 'selected' : ''; ?>>Abrir/Cerrar</option>
+                                        <option value="vacio" <?php echo $actionCode === 'vacio' ? 'selected' : ''; ?>>Vacío</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Puerto Activo (Radios) -->
+                            <div class="mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Puerto activo:
+                                </label>
+                                <div class="flex space-x-6">
+                                    <?php for ($ch = 0; $ch < 4; $ch++): ?>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="devices[<?php echo $index; ?>][active_channel]" 
+                                                   value="<?php echo $ch; ?>"
+                                                   <?php echo ($device['active_channel'] == $ch) ? 'checked' : ''; ?>
+                                                   class="mr-2 text-orange-600 focus:ring-orange-500">
+                                            <span class="text-sm"><?php echo $ch; ?></span>
+                                        </label>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            
+                            <!-- Habilitado -->
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="devices[<?php echo $index; ?>][is_enabled]" 
+                                           value="1" <?php echo $device['is_enabled'] ? 'checked' : ''; ?>
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                    <span class="text-sm text-gray-700">Dispositivo habilitado</span>
+                                </label>
+                            </div>
+                            
+                            <input type="hidden" name="devices[<?php echo $index; ?>][channel_count]" value="4">
+                            <input type="hidden" name="devices[<?php echo $index; ?>][name]" value="<?php echo htmlspecialchars($device['name']); ?>">
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <!-- Botones para dispositivos Shelly -->
+        <div class="flex justify-end space-x-4 mb-6">
+            <a href="<?php echo BASE_URL; ?>/dashboard" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-save mr-2"></i>Guardar Dispositivos Shelly
+            </button>
+        </div>
+    </form>
+    
+    <!-- Template para nuevos dispositivos (oculto) -->
+    <template id="shellyDeviceTemplate">
+        <div class="shelly-device-card bg-gray-50 border border-gray-300 rounded-lg p-6 relative">
+            <button type="button" onclick="removeShellyDevice(this)" 
+                    class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <input type="hidden" name="devices[INDEX][id]" value="">
+            <input type="hidden" name="devices[INDEX][sort_order]" value="INDEX">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Token de Autenticación
+                    </label>
+                    <div class="relative">
+                        <input type="password" name="devices[INDEX][auth_token]" 
+                               placeholder="Token de autenticación"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm pr-10"
+                               required>
+                        <button type="button" onclick="togglePasswordVisibility(this)" 
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Device ID
+                    </label>
+                    <input type="text" name="devices[INDEX][device_id]" 
+                           placeholder="34987A67DA6C"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono"
+                           required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Servidor Cloud
+                    </label>
+                    <input type="text" name="devices[INDEX][server_host]" 
+                           placeholder="shelly-208-eu.shelly.cloud"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm"
+                           required>
+                    <p class="mt-1 text-xs text-gray-500">Sin https:// ni puerto</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre
+                    </label>
+                    <select name="devices[INDEX][action_code]" 
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="abrir_cerrar" selected>Abrir/Cerrar</option>
+                        <option value="vacio">Vacío</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Puerto activo:
+                </label>
+                <div class="flex space-x-6">
+                    <label class="flex items-center">
+                        <input type="radio" name="devices[INDEX][active_channel]" value="0" checked
+                               class="mr-2 text-orange-600 focus:ring-orange-500">
+                        <span class="text-sm">0</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="devices[INDEX][active_channel]" value="1"
+                               class="mr-2 text-orange-600 focus:ring-orange-500">
+                        <span class="text-sm">1</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="devices[INDEX][active_channel]" value="2"
+                               class="mr-2 text-orange-600 focus:ring-orange-500">
+                        <span class="text-sm">2</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="devices[INDEX][active_channel]" value="3"
+                               class="mr-2 text-orange-600 focus:ring-orange-500">
+                        <span class="text-sm">3</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div>
+                <label class="flex items-center">
+                    <input type="checkbox" name="devices[INDEX][is_enabled]" value="1" checked
+                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                    <span class="text-sm text-gray-700">Dispositivo habilitado</span>
+                </label>
+            </div>
+            
+            <input type="hidden" name="devices[INDEX][channel_count]" value="4">
+            <input type="hidden" name="devices[INDEX][name]" value="Abrir/Cerrar">
+        </div>
+    </template>
+    
+    <script>
+        let deviceIndex = <?php echo count($shellyDevices); ?>;
+        
+        function addShellyDevice() {
+            const container = document.getElementById('shellyDevicesContainer');
+            const template = document.getElementById('shellyDeviceTemplate');
+            
+            // Remover mensaje de "no hay dispositivos" si existe
+            const noDevicesMsg = container.querySelector('.bg-gray-50.text-center');
+            if (noDevicesMsg) {
+                noDevicesMsg.remove();
+            }
+            
+            // Clonar template
+            const clone = template.content.cloneNode(true);
+            const html = clone.querySelector('.shelly-device-card').outerHTML;
+            
+            // Reemplazar INDEX con el índice actual
+            const newHtml = html.replace(/INDEX/g, deviceIndex);
+            
+            // Insertar al final
+            container.insertAdjacentHTML('beforeend', newHtml);
+            deviceIndex++;
+        }
+        
+        function removeShellyDevice(btn) {
+            if (confirm('¿Está seguro de eliminar este dispositivo?')) {
+                const card = btn.closest('.shelly-device-card');
+                card.remove();
+                
+                // Si no quedan dispositivos, mostrar mensaje
+                const container = document.getElementById('shellyDevicesContainer');
+                if (container.querySelectorAll('.shelly-device-card').length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500">
+                            <i class="fas fa-info-circle text-2xl mb-2"></i>
+                            <p>No hay dispositivos Shelly configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function togglePasswordVisibility(btn) {
+            const input = btn.previousElementSibling;
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </div>
