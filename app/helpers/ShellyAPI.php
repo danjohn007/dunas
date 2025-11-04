@@ -12,6 +12,31 @@ class ShellyAPI {
     const RETRY_DELAY_MICROSECONDS = 1000000; // 1 segundo
     const MAX_RETRIES = 3;
     
+    private $token;
+    private $deviceId;
+    private $server;
+    
+    /**
+     * Constructor - permite crear instancia con configuración específica
+     * @param string $authToken Token de autenticación (opcional, usa settings si no se provee)
+     * @param string $deviceId ID del dispositivo (opcional, usa settings si no se provee)
+     * @param string $serverHost Servidor Cloud (opcional, usa settings si no se provee)
+     */
+    public function __construct($authToken = null, $deviceId = null, $serverHost = null) {
+        if ($authToken && $deviceId && $serverHost) {
+            // Usar parámetros proporcionados
+            $this->token = $authToken;
+            $this->deviceId = $deviceId;
+            $this->server = $serverHost;
+        } else {
+            // Usar configuración de settings
+            $settings = self::getSettings();
+            $this->token = $settings['auth_token'];
+            $this->deviceId = $settings['device_id'];
+            $this->server = $settings['server'];
+        }
+    }
+    
     private static function getSettings() {
         static $settings = null;
         if ($settings === null) {
@@ -29,25 +54,23 @@ class ShellyAPI {
     
     /**
      * Realiza una llamada al Shelly Cloud API
-     * @param array $params Parámetros del método (debe incluir 'id' y 'on')
+     * @param array $params Parámetros del método (debe incluir 'channel' y 'turn')
      * @return array Resultado de la operación
      */
-    private static function makeCloudRequest($params = []) {
-        $settings = self::getSettings();
-        
+    private function makeCloudRequest($params = []) {
         // Construir URL del endpoint - usando el endpoint de control de relay
-        $url = 'https://' . $settings['server'] . '/device/relay/control';
+        $url = 'https://' . $this->server . '/device/relay/control';
         
         // Preparar datos para enviar (form-urlencoded según especificación del Cloud API)
         $postData = [
-            'auth_key' => $settings['auth_token'],
-            'id' => $settings['device_id'],
-            'channel' => isset($params['id']) ? $params['id'] : 0,
-            'turn' => isset($params['on']) ? ($params['on'] ? 'on' : 'off') : 'on'
+            'auth_key' => $this->token,
+            'id' => $this->deviceId,
+            'channel' => isset($params['channel']) ? $params['channel'] : 0,
+            'turn' => isset($params['turn']) ? $params['turn'] : 'on'
         ];
         
         // Log de debugging
-        error_log("Shelly Cloud API - Channel: " . $postData['channel'] . ", Turn: " . $postData['turn'] . ", Device: " . $settings['device_id']);
+        error_log("Shelly Cloud API - Channel: " . $postData['channel'] . ", Turn: " . $postData['turn'] . ", Device: " . $this->deviceId);
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -97,124 +120,158 @@ class ShellyAPI {
     }
     
     /**
-     * Abre la barrera vehicular (Switch OFF)
+     * Enciende un relay (Switch ON)
+     * @param int $channel Canal del relay (0-3)
      * @return array Resultado de la operación
      */
-    public static function openBarrier() {
+    public function relayTurnOn($channel = 0) {
         // Verificar si Shelly está habilitado
         if (!SHELLY_ENABLED) {
-            error_log("ShellyAPI::openBarrier() - Shelly deshabilitado, retornando éxito simulado");
+            error_log("ShellyAPI::relayTurnOn() - Shelly deshabilitado, retornando éxito simulado");
             return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
         }
         
-        // Log para debug
-        error_log("ShellyAPI::openBarrier() - Intentando abrir barrera via Cloud API");
+        error_log("ShellyAPI::relayTurnOn() - Intentando encender relay canal $channel via Cloud API");
         
         $result = null;
         $lastError = '';
         
         for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
-            error_log("ShellyAPI::openBarrier() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
+            error_log("ShellyAPI::relayTurnOn() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
             
-            // Abrir barrera = Switch OFF (on=false)
-            $result = self::makeCloudRequest([
-                'id' => SHELLY_SWITCH_ID,
-                'on' => false
+            $result = $this->makeCloudRequest([
+                'channel' => $channel,
+                'turn' => 'on'
             ]);
             
             if ($result['success']) {
-                error_log("ShellyAPI::openBarrier() - ✅ Éxito en intento " . ($attempt + 1));
+                error_log("ShellyAPI::relayTurnOn() - ✅ Éxito en intento " . ($attempt + 1));
                 break;
             } else {
                 $lastError = $result['error'] ?? 'Error desconocido';
-                error_log("ShellyAPI::openBarrier() - ❌ Fallo en intento " . ($attempt + 1) . ": " . $lastError);
+                error_log("ShellyAPI::relayTurnOn() - ❌ Fallo en intento " . ($attempt + 1) . ": " . $lastError);
             }
             
-            // Si falla y aún quedan intentos, esperar un poco antes de reintentar
             if ($attempt < self::MAX_RETRIES) {
-                error_log("ShellyAPI::openBarrier() - Esperando antes del siguiente intento...");
+                error_log("ShellyAPI::relayTurnOn() - Esperando antes del siguiente intento...");
                 usleep(self::RETRY_DELAY_MICROSECONDS);
             }
         }
         
-        // Si falló todos los intentos, asegurar que se devuelve el último error
         if (!$result['success']) {
             $result['error'] = $lastError;
-            error_log("ShellyAPI::openBarrier() - ❌ Falló después de todos los intentos. Error final: " . $lastError);
+            error_log("ShellyAPI::relayTurnOn() - ❌ Falló después de todos los intentos. Error final: " . $lastError);
         }
         
         return $result;
     }
     
     /**
-     * Cierra la barrera vehicular (Switch ON)
+     * Apaga un relay (Switch OFF)
+     * @param int $channel Canal del relay (0-3)
      * @return array Resultado de la operación
      */
-    public static function closeBarrier() {
+    public function relayTurnOff($channel = 0) {
         // Verificar si Shelly está habilitado
         if (!SHELLY_ENABLED) {
-            error_log("ShellyAPI::closeBarrier() - Shelly deshabilitado, retornando éxito simulado");
+            error_log("ShellyAPI::relayTurnOff() - Shelly deshabilitado, retornando éxito simulado");
             return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
         }
         
-        // Log para debug
-        error_log("ShellyAPI::closeBarrier() - Intentando cerrar barrera via Cloud API");
+        error_log("ShellyAPI::relayTurnOff() - Intentando apagar relay canal $channel via Cloud API");
         
         $result = null;
         $lastError = '';
         
         for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
-            error_log("ShellyAPI::closeBarrier() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
+            error_log("ShellyAPI::relayTurnOff() - Intento " . ($attempt + 1) . " de " . (self::MAX_RETRIES + 1));
             
-            // Cerrar barrera = Switch ON (on=true)
-            $result = self::makeCloudRequest([
-                'id' => SHELLY_SWITCH_ID,
-                'on' => true
+            $result = $this->makeCloudRequest([
+                'channel' => $channel,
+                'turn' => 'off'
             ]);
             
             if ($result['success']) {
-                error_log("ShellyAPI::closeBarrier() - ✅ Éxito en intento " . ($attempt + 1));
+                error_log("ShellyAPI::relayTurnOff() - ✅ Éxito en intento " . ($attempt + 1));
                 break;
             } else {
                 $lastError = $result['error'] ?? 'Error desconocido';
-                error_log("ShellyAPI::closeBarrier() - ❌ Fallo en intento " . ($attempt + 1) . ": " . $lastError);
+                error_log("ShellyAPI::relayTurnOff() - ❌ Fallo en intento " . ($attempt + 1) . ": " . $lastError);
             }
             
-            // Si falla y aún quedan intentos, esperar un poco antes de reintentar
             if ($attempt < self::MAX_RETRIES) {
-                error_log("ShellyAPI::closeBarrier() - Esperando antes del siguiente intento...");
+                error_log("ShellyAPI::relayTurnOff() - Esperando antes del siguiente intento...");
                 usleep(self::RETRY_DELAY_MICROSECONDS);
             }
         }
         
-        // Si falló todos los intentos, asegurar que se devuelve el último error
         if (!$result['success']) {
             $result['error'] = $lastError;
-            error_log("ShellyAPI::closeBarrier() - ❌ Falló después de todos los intentos. Error final: " . $lastError);
+            error_log("ShellyAPI::relayTurnOff() - ❌ Falló después de todos los intentos. Error final: " . $lastError);
         }
         
         return $result;
+    }
+    
+    /**
+     * Pulso en relay: enciende, espera, y apaga
+     * @param int $channel Canal del relay (0-3)
+     * @param int $durationMs Duración del pulso en milisegundos
+     * @return array Resultado de la operación
+     */
+    public function relayPulse($channel = 0, $durationMs = 500) {
+        if (!SHELLY_ENABLED) {
+            return ['success' => true, 'message' => 'Shelly deshabilitado - modo simulación'];
+        }
+        
+        error_log("ShellyAPI::relayPulse() - Ejecutando pulso en canal $channel por {$durationMs}ms");
+        
+        $result = $this->relayTurnOn($channel);
+        if (!$result['success']) {
+            return $result;
+        }
+        
+        usleep(max(10000, $durationMs * 1000)); // Convertir ms a microsegundos
+        
+        return $this->relayTurnOff($channel);
+    }
+    
+    /**
+     * Abre la barrera vehicular (Switch OFF) - Método de compatibilidad
+     * @return array Resultado de la operación
+     */
+    public static function openBarrier() {
+        $api = new self(); // Usar configuración de settings
+        return $api->relayTurnOff(SHELLY_SWITCH_ID);
+    }
+    
+    /**
+     * Cierra la barrera vehicular (Switch ON) - Método de compatibilidad
+     * @return array Resultado de la operación
+     */
+    public static function closeBarrier() {
+        $api = new self(); // Usar configuración de settings
+        return $api->relayTurnOn(SHELLY_SWITCH_ID);
     }
     
     /**
      * Obtiene el estado del dispositivo Shelly via Cloud API
      * @return array Resultado de la operación
      */
-    public static function getStatus() {
+    public function getStatus() {
         if (!SHELLY_ENABLED) {
             return ['success' => false, 'error' => 'Shelly deshabilitado'];
         }
         
-        $settings = self::getSettings();
-        $url = 'https://' . $settings['server'] . '/device/status';
+        $url = 'https://' . $this->server . '/device/status';
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-            'auth_key' => $settings['auth_token'],
-            'id' => $settings['device_id']
+            'auth_key' => $this->token,
+            'id' => $this->deviceId
         ]));
         curl_setopt($ch, CURLOPT_TIMEOUT, SHELLY_API_TIMEOUT);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
@@ -237,7 +294,7 @@ class ShellyAPI {
      * @param int $channel Canal del switch (por defecto 0)
      * @return array Resultado de la operación
      */
-    public static function getRelayStatus($channel = 0) {
-        return self::getStatus();
+    public function getRelayStatus($channel = 0) {
+        return $this->getStatus();
     }
 }

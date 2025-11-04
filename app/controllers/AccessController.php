@@ -8,6 +8,7 @@ require_once APP_PATH . '/models/Driver.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Client.php';
 require_once APP_PATH . '/helpers/HikvisionAPI.php';
+require_once APP_PATH . '/services/ShellyActionService.php';
 
 class AccessController extends BaseController {
     
@@ -21,6 +22,27 @@ class AccessController extends BaseController {
         $this->driverModel = new Driver();
         $this->unitModel = new Unit();
         $this->clientModel = new Client();
+    }
+    
+    /**
+     * Ejecuta una acción Shelly con fallback al método legacy
+     * @param string $action Código de la acción ('abrir_cerrar', etc.)
+     * @param string $mode Modo de operación ('open' o 'close')
+     * @return array Resultado de la operación
+     */
+    private function executeShellyAction($action, $mode) {
+        try {
+            $db = Database::getInstance();
+            return ShellyActionService::execute($db, $action, $mode);
+        } catch (Exception $e) {
+            // Si no hay dispositivos configurados, usar método legacy
+            error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
+            if ($mode === 'open') {
+                return ShellyAPI::openBarrier();
+            } else {
+                return ShellyAPI::closeBarrier();
+            }
+        }
     }
     
     public function index() {
@@ -97,8 +119,8 @@ class AccessController extends BaseController {
                     
                     $accessId = $this->accessModel->create($data);
                     
-                    // Abrir barrera con Shelly Relay
-                    $shellyResult = ShellyAPI::openBarrier();
+                    // Abrir barrera con Shelly Relay usando el nuevo servicio
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
                     
                     $message = 'Acceso registrado exitosamente';
                     if (!empty($data['license_plate_reading'])) {
@@ -171,8 +193,8 @@ class AccessController extends BaseController {
                 try {
                     $this->accessModel->registerExit($id, $_POST['liters_supplied']);
                     
-                    // Cerrar barrera con Shelly Relay
-                    $shellyResult = ShellyAPI::closeBarrier();
+                    // Cerrar barrera con Shelly Relay usando el nuevo servicio
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
                     
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
@@ -220,7 +242,7 @@ class AccessController extends BaseController {
     public function openBarrier() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
-        $result = ShellyAPI::openBarrier();
+        $result = $this->executeShellyAction('abrir_cerrar', 'open');
         
         if ($result['success']) {
             $this->json([
@@ -244,7 +266,7 @@ class AccessController extends BaseController {
     public function closeBarrier() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
-        $result = ShellyAPI::closeBarrier();
+        $result = $this->executeShellyAction('abrir_cerrar', 'close');
         
         if ($result['success']) {
             $this->json([
@@ -397,8 +419,8 @@ class AccessController extends BaseController {
             
             $accessId = $this->accessModel->create($accessData);
             
-            // Abrir barrera
-            $shellyResult = ShellyAPI::openBarrier();
+            // Abrir barrera usando el nuevo servicio
+            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
             
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
@@ -467,8 +489,8 @@ class AccessController extends BaseController {
             // Registrar salida con capacidad máxima de la unidad
             $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
             
-            // Cerrar barrera
-            $shellyResult = ShellyAPI::closeBarrier();
+            // Cerrar barrera usando el nuevo servicio
+            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
             
             $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
             
