@@ -61,7 +61,7 @@ class ShellyActionService {
                         return $api->relayTurnOff($channel);
                     }
                 }
-                    
+
             case 'on':
                 // Acción unitaria: encender (sin pre-pasos)
                 error_log("ShellyActionService::execute() - ON");
