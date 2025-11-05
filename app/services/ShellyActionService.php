@@ -48,18 +48,16 @@ class ShellyActionService {
                     break;
                 
                 case 'on':
-                    if ($invert) { $api->relayTurnOff($channel); }
                     $lastResult = $api->relayTurnOn($channel);
                     break;
                 
                 case 'off':
-                    if ($invert) { $api->relayTurnOn($channel); }
                     $lastResult = $api->relayTurnOff($channel);
                     break;
                 
                 case 'pulse':
                     $durationMs = (int)($cfg['duration_ms'] ?? 500);
-                    $waitTime = max(10000, $durationMs * 1000);
+                    $waitTime = $durationMs * 1000; // Convert ms to microseconds
                     if ($invert) {
                         $api->relayTurnOn($channel);
                         usleep($waitTime);

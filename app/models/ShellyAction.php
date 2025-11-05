@@ -87,8 +87,7 @@ class ShellyAction {
         return $db->fetchAll("
             SELECT
                 sd.*,
-                sa.code, sa.label, sa.action_kind, sa.channel AS action_channel, sa.duration_ms,
-                sd.is_simultaneous
+                sa.code, sa.label, sa.action_kind, sa.channel AS action_channel, sa.duration_ms
             FROM shelly_devices sd
             JOIN shelly_actions sa ON sa.device_id = sd.id
             WHERE sd.is_enabled=1
