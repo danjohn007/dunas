@@ -308,16 +308,27 @@
                                     <p class="mt-1 text-xs text-gray-500">Sin https:// ni puerto</p>
                                 </div>
                                 
-                                <!-- Nombre de Acción -->
+                                <!-- Acción -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Nombre
+                                        Acción
                                     </label>
                                     <select name="devices[<?php echo $index; ?>][action_code]" 
                                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                                         <option value="abrir_cerrar" <?php echo $actionCode === 'abrir_cerrar' ? 'selected' : ''; ?>>Abrir/Cerrar</option>
                                         <option value="vacio" <?php echo $actionCode === 'vacio' ? 'selected' : ''; ?>>Vacío</option>
                                     </select>
+                                </div>
+                                
+                                <!-- Área -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Área
+                                    </label>
+                                    <input type="text" name="devices[<?php echo $index; ?>][area]" 
+                                           value="<?php echo htmlspecialchars($device['area'] ?? ''); ?>"
+                                           placeholder="Ej: Entrada principal"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                             </div>
                             
@@ -352,6 +363,12 @@
                                            value="1" <?php echo isset($device['invert_sequence']) && $device['invert_sequence'] ? 'checked' : ''; ?>
                                            class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 mr-2">
                                     <span class="text-sm text-gray-700">Invertido (off → on)</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="devices[<?php echo $index; ?>][is_simultaneous]" 
+                                           value="1" <?php echo isset($device['is_simultaneous']) && $device['is_simultaneous'] ? 'checked' : ''; ?>
+                                           class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2">
+                                    <span class="text-sm text-gray-700">Dispositivo simultáneo</span>
                                 </label>
                             </div>
                             
@@ -427,13 +444,23 @@
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre
+                        Acción
                     </label>
                     <select name="devices[INDEX][action_code]" 
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="abrir_cerrar" selected>Abrir/Cerrar</option>
                         <option value="vacio">Vacío</option>
                     </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Área
+                    </label>
+                    <input type="text" name="devices[INDEX][area]" 
+                           value=""
+                           placeholder="Ej: Entrada principal"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
             </div>
             
@@ -475,6 +502,11 @@
                     <input type="checkbox" name="devices[INDEX][invert_sequence]" value="1" checked
                            class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 mr-2">
                     <span class="text-sm text-gray-700">Invertido (off → on)</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" name="devices[INDEX][is_simultaneous]" value="1"
+                           class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2">
+                    <span class="text-sm text-gray-700">Dispositivo simultáneo</span>
                 </label>
             </div>
             

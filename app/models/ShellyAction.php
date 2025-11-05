@@ -76,4 +76,23 @@ class ShellyAction {
             ORDER BY sa.code
         ");
     }
+    
+    /**
+     * Resuelve todos los dispositivos que tienen una acción específica
+     * @param Database $db Instancia de base de datos
+     * @param string $code Código de la acción (ej: 'abrir_cerrar')
+     * @return array Lista de dispositivos con la acción
+     */
+    public static function resolveAllByAction($db, $code) {
+        return $db->fetchAll("
+            SELECT
+                sd.*,
+                sa.code, sa.label, sa.action_kind, sa.channel AS action_channel, sa.duration_ms
+            FROM shelly_devices sd
+            JOIN shelly_actions sa ON sa.device_id = sd.id
+            WHERE sd.is_enabled=1
+                AND sa.code = ?
+            ORDER BY sd.sort_order, sd.id
+        ", [$code]);
+    }
 }
