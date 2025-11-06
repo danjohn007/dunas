@@ -28,12 +28,13 @@ class AccessController extends BaseController {
      * Ejecuta una acción Shelly con fallback al método legacy
      * @param string $action Código de la acción ('abrir_cerrar', etc.)
      * @param string $mode Modo de operación ('open' o 'close')
+     * @param string|null $correlationId ID de correlación para idempotencia
      * @return array Resultado de la operación
      */
-    private function executeShellyAction($action, $mode) {
+    private function executeShellyAction($action, $mode, $correlationId = null) {
         try {
             $db = Database::getInstance();
-            return ShellyActionService::execute($db, $action, $mode);
+            return ShellyActionService::execute($db, $action, $mode, $correlationId);
         } catch (Exception $e) {
             // Si no hay dispositivos configurados, usar método legacy
             error_log("ShellyActionService error, usando método legacy: " . $e->getMessage());
@@ -120,7 +121,9 @@ class AccessController extends BaseController {
                     $accessId = $this->accessModel->create($data);
                     
                     // Abrir barrera con Shelly Relay usando el nuevo servicio
-                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
+                    // Usar ID de acceso para correlación e idempotencia
+                    $correlationId = "access:{$accessId}:entry";
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
                     
                     $message = 'Acceso registrado exitosamente';
                     if (!empty($data['license_plate_reading'])) {
@@ -194,7 +197,9 @@ class AccessController extends BaseController {
                     $this->accessModel->registerExit($id, $_POST['liters_supplied']);
                     
                     // Cerrar barrera con Shelly Relay usando el nuevo servicio
-                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
+                    // Usar ID de acceso para correlación e idempotencia
+                    $correlationId = "access:{$id}:exit";
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
                     
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
@@ -420,7 +425,8 @@ class AccessController extends BaseController {
             $accessId = $this->accessModel->create($accessData);
             
             // Abrir barrera usando el nuevo servicio
-            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
+            $correlationId = "access:{$accessId}:entry";
+            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
             
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
@@ -490,7 +496,8 @@ class AccessController extends BaseController {
             $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
             
             // Cerrar barrera usando el nuevo servicio
-            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
+            $correlationId = "access:{$access['id']}:exit";
+            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
             
             $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
             
@@ -602,7 +609,8 @@ class AccessController extends BaseController {
                 $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
                 
                 // Cerrar barrera usando el nuevo servicio
-                $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
+                $correlationId = "access:{$access['id']}:exit";
+                $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
                 
                 $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
                 

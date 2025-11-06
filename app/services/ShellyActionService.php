@@ -5,6 +5,8 @@
  */
 require_once APP_PATH . '/helpers/ShellyAPI.php';
 require_once APP_PATH . '/models/ShellyAction.php';
+require_once APP_PATH . '/services/ShellyCloudClient.php';
+require_once APP_PATH . '/helpers/ShellyLockHelper.php';
 
 class ShellyActionService {
     
@@ -13,10 +15,11 @@ class ShellyActionService {
      * @param Database $db Instancia de base de datos
      * @param string $code Código de la acción (ej: 'abrir_cerrar')
      * @param string $mode Modo de operación: 'open' | 'close'
+     * @param string|null $correlationId ID de correlación para idempotencia (ej: "access:123:entry")
      * @return array Resultado de la operación
      * @throws Exception Si no hay configuración para la acción
      */
-    public static function execute($db, $code, $mode) {
+    public static function execute($db, $code, $mode, ?string $correlationId = null) {
         // Obtener todos los dispositivos que tienen esta acción
         $rows = ShellyAction::resolveAllByAction($db, $code);
         
@@ -36,37 +39,108 @@ class ShellyActionService {
             $invert = isset($cfg['invert_sequence']) ? (int)$cfg['invert_sequence'] : 1;
             $pulseDuration = isset($cfg['pulse_duration_ms']) ? (int)$cfg['pulse_duration_ms'] : 5000;
             
-            $api = new ShellyAPI($cfg['auth_token'], $cfg['device_id'], $cfg['server_host']);
+            // Generar ID de correlación si no se proporcionó
+            $correlation = $correlationId ?? uniqid("shelly_{$code}_{$mode}_", true);
+            $action = $mode === 'open' ? 'entry' : 'exit';
             
-            switch ($cfg['action_kind']) {
-                case 'toggle':
-                    // Para entrada: pulso de 5 segundos en entry_channel
-                    // Para salida: activar exit_channel
-                    if ($mode === 'open') {
-                        $lastResult = self::executePulse($api, $channel, $pulseDuration, $invert);
-                    } else {
-                        $lastResult = $invert ? $api->relayTurnOn($channel) : $api->relayTurnOff($channel);
-                    }
-                    break;
-                
-                case 'on':
-                    $lastResult = $api->relayTurnOn($channel);
-                    break;
-                
-                case 'off':
-                    $lastResult = $api->relayTurnOff($channel);
-                    break;
-                
-                case 'pulse':
-                    $durationMs = (int)($cfg['duration_ms'] ?? $pulseDuration);
-                    $lastResult = self::executePulse($api, $channel, $durationMs, $invert);
-                    break;
-                
-                default:
-                    throw new Exception("action_kind no soportado: " . $cfg['action_kind']);
+            // Verificar si el pulso ya fue ejecutado (idempotencia)
+            if (ShellyLockHelper::pulseExists($db, $channel, $correlation)) {
+                error_log("ShellyActionService - Pulse already exists: {$correlation}, skipping");
+                continue;
             }
             
-            error_log("ShellyActionService::execute() - {$code} {$mode} - device={$cfg['device_id']} channel={$channel} simul={$cfg['is_simultaneous']} invert={$invert}");
+            // Ejecutar con lock para evitar dobles pulsos
+            $lastResult = ShellyLockHelper::withPortLock($db, $channel, function() use ($cfg, $channel, $pulseDuration, $invert, $db, $correlation, $action) {
+                // Usar el nuevo cliente mejorado que garantiza pulsos completos
+                $useNewClient = true; // Flag para controlar si usar el nuevo cliente
+                
+                if ($useNewClient) {
+                    $client = new ShellyCloudClient(
+                        $cfg['server_host'],
+                        $cfg['device_id'],
+                        $cfg['auth_token'] ?? ''
+                    );
+                    
+                    switch ($cfg['action_kind']) {
+                        case 'toggle':
+                        case 'pulse':
+                            $durationMs = (int)($cfg['duration_ms'] ?? $pulseDuration);
+                            $result = $client->pulse($channel, $durationMs, (bool)$invert);
+                            
+                            // Registrar en log de pulsos
+                            ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
+                                'device_id' => $cfg['device_id'],
+                                'duration_ms' => $durationMs,
+                                'success' => $result['ok'],
+                                'error_message' => $result['error'] ?? null
+                            ]);
+                            
+                            // Convertir resultado a formato legacy
+                            return ['success' => $result['ok'], 'data' => $result['result'] ?? null, 'error' => $result['error'] ?? null];
+                        
+                        case 'on':
+                            $result = $invert ? $client->turnOn($channel) : $client->turnOff($channel);
+                            ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
+                                'device_id' => $cfg['device_id'],
+                                'success' => $result['ok'],
+                                'error_message' => $result['error'] ?? null
+                            ]);
+                            return ['success' => $result['ok'], 'data' => $result['result'] ?? null, 'error' => $result['error'] ?? null];
+                        
+                        case 'off':
+                            $result = $invert ? $client->turnOff($channel) : $client->turnOn($channel);
+                            ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
+                                'device_id' => $cfg['device_id'],
+                                'success' => $result['ok'],
+                                'error_message' => $result['error'] ?? null
+                            ]);
+                            return ['success' => $result['ok'], 'data' => $result['result'] ?? null, 'error' => $result['error'] ?? null];
+                        
+                        default:
+                            throw new Exception("action_kind no soportado: " . $cfg['action_kind']);
+                    }
+                } else {
+                    // Fallback a API legacy
+                    $api = new ShellyAPI($cfg['auth_token'], $cfg['device_id'], $cfg['server_host']);
+                    
+                    switch ($cfg['action_kind']) {
+                        case 'toggle':
+                        case 'pulse':
+                            $durationMs = (int)($cfg['duration_ms'] ?? $pulseDuration);
+                            $result = self::executePulse($api, $channel, $durationMs, $invert);
+                            ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
+                                'device_id' => $cfg['device_id'],
+                                'duration_ms' => $durationMs,
+                                'success' => $result['success'] ?? false,
+                                'error_message' => $result['error'] ?? null
+                            ]);
+                            return $result;
+                        
+                        case 'on':
+                            $result = $api->relayTurnOn($channel);
+                            ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
+                                'device_id' => $cfg['device_id'],
+                                'success' => $result['success'] ?? false,
+                                'error_message' => $result['error'] ?? null
+                            ]);
+                            return $result;
+                        
+                        case 'off':
+                            $result = $api->relayTurnOff($channel);
+                            ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
+                                'device_id' => $cfg['device_id'],
+                                'success' => $result['success'] ?? false,
+                                'error_message' => $result['error'] ?? null
+                            ]);
+                            return $result;
+                        
+                        default:
+                            throw new Exception("action_kind no soportado: " . $cfg['action_kind']);
+                    }
+                }
+            });
+            
+            error_log("ShellyActionService::execute() - {$code} {$mode} - device={$cfg['device_id']} channel={$channel} correlation={$correlation}");
         }
         
         return $lastResult; // último resultado por conveniencia

@@ -117,50 +117,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('liters_supplied').focus();
 });
 
-// Interceptar el envío del formulario para cerrar la barrera
-document.getElementById('exitForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
+// Interceptar el envío del formulario para deshabilitar botón y evitar doble clic
+document.getElementById('exitForm').addEventListener('submit', function(e) {
     const submitBtn = document.getElementById('submitBtn');
     const barrierStatus = document.getElementById('barrierStatus');
     const barrierStatusText = document.getElementById('barrierStatusText');
     
-    // Deshabilitar botón y mostrar estado
+    // Deshabilitar botón inmediatamente para evitar doble clic
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
     barrierStatus.classList.remove('hidden');
     barrierStatus.className = 'mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200';
-    barrierStatusText.textContent = 'Cerrando barrera...';
+    barrierStatusText.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>Registrando salida y cerrando barrera...';
     
-    try {
-        // Intentar cerrar la barrera usando JavaScript
-        console.log('🔒 Intentando cerrar barrera antes de enviar formulario...');
-        const result = await window.shellyControl.closeBarrier();
-        
-        if (result.success) {
-            barrierStatus.className = 'mb-6 p-4 rounded-lg bg-green-50 border border-green-200';
-            barrierStatusText.innerHTML = '<i class="fas fa-check text-green-600 mr-2"></i>Barrera cerrada exitosamente';
-            console.log('✅ Barrera cerrada, enviando formulario...');
-        } else {
-            barrierStatus.className = 'mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200';
-            barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>No se pudo cerrar barrera automáticamente, se registrará la salida';
-            console.log('⚠️ Error en barrera:', result.error || result.message || 'Error desconocido');
-        }
-        
-        // Esperar un momento para que el usuario vea el resultado
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-    } catch (error) {
-        console.error('❌ Error al controlar barrera:', error);
-        barrierStatus.className = 'mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200';
-        barrierStatusText.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Error de comunicación con la barrera, se registrará la salida';
-        
-        // Esperar un momento antes de continuar
-        await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    // Ahora sí enviar el formulario
-    barrierStatusText.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>Registrando en el sistema...';
-    this.submit();
+    // Permitir que el formulario se envíe normalmente
+    // El servidor manejará el cierre de la barrera con idempotencia
 });
 </script>
