@@ -58,6 +58,7 @@
                 <div class="relative">
                     <input type="number" id="liters_supplied" name="liters_supplied" required
                            min="0" max="<?php echo $access['capacity_liters']; ?>" step="1"
+                           value="<?php echo $access['capacity_liters']; ?>"
                            class="w-full text-2xl font-bold rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 py-4"
                            placeholder="0">
                     <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-xl text-gray-500">

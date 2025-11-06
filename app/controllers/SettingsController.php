@@ -6,6 +6,7 @@ require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Settings.php';
 require_once APP_PATH . '/models/ShellyDevice.php';
 require_once APP_PATH . '/models/ShellyAction.php';
+require_once APP_PATH . '/models/HikvisionDevice.php';
 
 class SettingsController extends BaseController {
     
@@ -29,10 +30,14 @@ class SettingsController extends BaseController {
             $device['actions'] = ShellyAction::getByDevice($db, $device['id']);
         }
         
+        // Obtener dispositivos HikVision configurados
+        $hikvisionDevices = HikvisionDevice::getAll($db);
+        
         $data = [
             'title' => 'Configuraciones del Sistema',
             'settings' => $settings,
             'shellyDevices' => $shellyDevices,
+            'hikvisionDevices' => $hikvisionDevices,
             'showNav' => true
         ];
         
@@ -119,6 +124,9 @@ class SettingsController extends BaseController {
                         'server_host' => $serverHost,
                         'area' => trim($d['area'] ?? ''),
                         'active_channel' => max(0, min(3, (int)($d['active_channel'] ?? 0))),
+                        'entry_channel' => max(0, min(3, (int)($d['entry_channel'] ?? 0))),
+                        'exit_channel' => max(0, min(3, (int)($d['exit_channel'] ?? 1))),
+                        'pulse_duration_ms' => max(100, min(10000, (int)($d['pulse_duration_ms'] ?? 5000))),
                         'channel_count' => max(1, min(4, (int)($d['channel_count'] ?? 4))),
                         'invert_sequence' => isset($d['invert_sequence']) ? 1 : 0,
                         'is_simultaneous' => isset($d['is_simultaneous']) ? 1 : 0,
@@ -177,6 +185,68 @@ class SettingsController extends BaseController {
         } catch (Exception $e) {
             error_log("Error al guardar dispositivos Shelly: " . $e->getMessage());
             $this->setFlash('error', 'Error al guardar dispositivos Shelly: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/settings');
+    }
+    
+    /**
+     * Guarda/actualiza los dispositivos HikVision
+     */
+    public function saveHikvisionDevices() {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/settings');
+            return;
+        }
+        
+        try {
+            $db = Database::getInstance();
+            $rows = [];
+            $skippedDevices = 0;
+            
+            // Procesar dispositivos enviados desde el formulario
+            if (isset($_POST['hikvision_devices']) && is_array($_POST['hikvision_devices'])) {
+                foreach ($_POST['hikvision_devices'] as $i => $d) {
+                    // Sanitizar y validar datos
+                    $apiUrl = trim($d['api_url'] ?? '');
+                    
+                    // Validar campos requeridos
+                    if (empty($apiUrl)) {
+                        $skippedDevices++;
+                        continue; // Saltar dispositivos con datos incompletos
+                    }
+                    
+                    $rows[] = [
+                        'id' => isset($d['id']) && $d['id'] !== '' ? (int)$d['id'] : null,
+                        'name' => trim($d['name'] ?? 'Dispositivo HikVision'),
+                        'device_type' => in_array($d['device_type'] ?? '', ['camera_lpr', 'barcode_reader']) 
+                            ? $d['device_type'] 
+                            : 'camera_lpr',
+                        'api_url' => $apiUrl,
+                        'username' => trim($d['username'] ?? ''),
+                        'password' => trim($d['password'] ?? ''),
+                        'verify_ssl' => isset($d['verify_ssl']) ? 1 : 0,
+                        'area' => trim($d['area'] ?? ''),
+                        'is_enabled' => isset($d['is_enabled']) ? 1 : 0,
+                        'sort_order' => (int)($d['sort_order'] ?? $i),
+                    ];
+                }
+            }
+            
+            // Guardar dispositivos en batch
+            HikvisionDevice::upsertBatch($db, $rows);
+            
+            // Mensaje de éxito con información de dispositivos omitidos
+            if ($skippedDevices > 0) {
+                $this->setFlash('warning', "Dispositivos HikVision guardados. Se omitieron $skippedDevices dispositivo(s) con datos incompletos.");
+            } else {
+                $this->setFlash('success', 'Dispositivos HikVision guardados exitosamente.');
+            }
+        } catch (Exception $e) {
+            error_log("Error al guardar dispositivos HikVision: " . $e->getMessage());
+            $this->setFlash('error', 'Error al guardar dispositivos HikVision: ' . $e->getMessage());
         }
         
         $this->redirect('/settings');

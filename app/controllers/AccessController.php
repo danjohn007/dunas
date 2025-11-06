@@ -527,4 +527,112 @@ class AccessController extends BaseController {
         
         $this->view('access/print_ticket', $data);
     }
+    
+    /**
+     * Endpoint para integración con lector de código de barras HikVision
+     * Abre la barrera automáticamente cuando se lee un código de barras válido
+     * 
+     * Método: POST
+     * Parámetros: 
+     *   - barcode: Código de barras leído (opcional si deviceId está presente)
+     *   - deviceId: ID del dispositivo HikVision (opcional)
+     */
+    public function barcodeReader() {
+        // Este endpoint puede ser llamado desde el dispositivo HikVision o desde la interfaz web
+        // No requiere autenticación estándar ya que puede venir del dispositivo
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        
+        try {
+            $barcode = $_POST['barcode'] ?? null;
+            $deviceId = isset($_POST['deviceId']) ? (int)$_POST['deviceId'] : null;
+            
+            // Si no se proporciona un código, intentar leer del dispositivo
+            if (empty($barcode)) {
+                $result = HikvisionAPI::readBarcode($deviceId);
+                if (!$result['success'] || empty($result['barcode'])) {
+                    $this->json([
+                        'success' => false,
+                        'message' => 'No se pudo leer el código de barras',
+                        'error' => $result['error'] ?? 'Sin lectura'
+                    ]);
+                    return;
+                }
+                $barcode = $result['barcode'];
+            }
+            
+            // Buscar acceso por código de ticket
+            $access = $this->accessModel->getByTicket($barcode);
+            
+            if (!$access) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Código de barras no válido o no encontrado',
+                    'barcode' => $barcode
+                ]);
+                return;
+            }
+            
+            // Verificar el estado del acceso
+            if ($access['status'] === 'completed') {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Este acceso ya fue completado',
+                    'access' => $access
+                ]);
+                return;
+            }
+            
+            if ($access['status'] === 'cancelled') {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Este acceso fue cancelado',
+                    'access' => $access
+                ]);
+                return;
+            }
+            
+            // Si el acceso está en progreso, es una salida - cerrar barrera
+            if ($access['status'] === 'in_progress') {
+                // Registrar salida con capacidad máxima
+                // NOTA: Se asume carga completa. Para cargas parciales, usar registro manual
+                $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
+                
+                // Cerrar barrera usando el nuevo servicio
+                $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close');
+                
+                $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
+                
+                if (!$shellyResult['success']) {
+                    $message .= ' Advertencia: No se pudo cerrar la barrera automáticamente.';
+                }
+                
+                $this->json([
+                    'success' => true,
+                    'message' => $message,
+                    'action' => 'exit',
+                    'barrier_closed' => $shellyResult['success'],
+                    'access' => $access
+                ]);
+                return;
+            }
+            
+            // Si llegamos aquí, hay un error de estado
+            $this->json([
+                'success' => false,
+                'message' => 'Estado de acceso no válido: ' . $access['status'],
+                'access' => $access
+            ]);
+            
+        } catch (Exception $e) {
+            error_log('Error en barcodeReader: ' . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'message' => 'Error del servidor: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

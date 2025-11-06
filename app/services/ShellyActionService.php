@@ -30,18 +30,20 @@ class ShellyActionService {
         
         $lastResult = null;
         foreach ($targets as $cfg) {
-            $channel = isset($cfg['action_channel']) && $cfg['action_channel'] !== null
-                ? (int)$cfg['action_channel']
-                : (int)$cfg['active_channel'];
+            // Determinar el canal a usar según el modo (entrada o salida)
+            $channel = self::getChannelForMode($cfg, $mode);
             
             $invert = isset($cfg['invert_sequence']) ? (int)$cfg['invert_sequence'] : 1;
+            $pulseDuration = isset($cfg['pulse_duration_ms']) ? (int)$cfg['pulse_duration_ms'] : 5000;
             
             $api = new ShellyAPI($cfg['auth_token'], $cfg['device_id'], $cfg['server_host']);
             
             switch ($cfg['action_kind']) {
                 case 'toggle':
+                    // Para entrada: pulso de 5 segundos en entry_channel
+                    // Para salida: activar exit_channel
                     if ($mode === 'open') {
-                        $lastResult = $invert ? $api->relayTurnOff($channel) : $api->relayTurnOn($channel);
+                        $lastResult = self::executePulse($api, $channel, $pulseDuration, $invert);
                     } else {
                         $lastResult = $invert ? $api->relayTurnOn($channel) : $api->relayTurnOff($channel);
                     }
@@ -56,17 +58,8 @@ class ShellyActionService {
                     break;
                 
                 case 'pulse':
-                    $durationMs = (int)($cfg['duration_ms'] ?? 500);
-                    $waitTime = $durationMs * 1000; // Convert ms to microseconds
-                    if ($invert) {
-                        $api->relayTurnOn($channel);
-                        usleep($waitTime);
-                        $lastResult = $api->relayTurnOff($channel);
-                    } else {
-                        $api->relayTurnOff($channel);
-                        usleep($waitTime);
-                        $lastResult = $api->relayTurnOn($channel);
-                    }
+                    $durationMs = (int)($cfg['duration_ms'] ?? $pulseDuration);
+                    $lastResult = self::executePulse($api, $channel, $durationMs, $invert);
                     break;
                 
                 default:
@@ -77,6 +70,63 @@ class ShellyActionService {
         }
         
         return $lastResult; // último resultado por conveniencia
+    }
+    
+    /**
+     * Determina el canal a usar según el modo de operación
+     * @param array $cfg Configuración del dispositivo
+     * @param string $mode Modo de operación ('open' o 'close')
+     * @return int Canal a usar
+     */
+    private static function getChannelForMode($cfg, $mode) {
+        if ($mode === 'open') {
+            // Para apertura, usar entry_channel si está disponible
+            if (isset($cfg['entry_channel']) && $cfg['entry_channel'] !== null) {
+                return (int)$cfg['entry_channel'];
+            }
+        } else {
+            // Para cierre, usar exit_channel si está disponible
+            if (isset($cfg['exit_channel']) && $cfg['exit_channel'] !== null) {
+                return (int)$cfg['exit_channel'];
+            }
+        }
+        
+        // Fallback: usar action_channel o active_channel
+        if (isset($cfg['action_channel']) && $cfg['action_channel'] !== null) {
+            return (int)$cfg['action_channel'];
+        }
+        
+        return (int)$cfg['active_channel'];
+    }
+    
+    /**
+     * Ejecuta un pulso en el canal especificado
+     * 
+     * Nota: Utiliza usleep() que es bloqueante. Esto es aceptable para control de hardware IoT
+     * donde la precisión del tiempo es crítica. El pulso típico es de 5 segundos.
+     * Para duraciones mayores a 10 segundos, considerar implementación asíncrona.
+     * 
+     * @param ShellyAPI $api Instancia de la API de Shelly
+     * @param int $channel Canal a activar
+     * @param int $durationMs Duración del pulso en milisegundos (máximo práctico: 10000ms)
+     * @param int $invert Si se debe invertir la secuencia
+     * @return array Resultado de la operación
+     */
+    private static function executePulse($api, $channel, $durationMs, $invert) {
+        // Limitar duración práctica para evitar timeouts largos
+        // Si se necesitan pulsos más largos, considerar implementación asíncrona
+        $durationMs = min($durationMs, 10000); // Máximo 10 segundos
+        $waitTime = $durationMs * 1000; // Convert ms to microseconds
+        
+        if ($invert) {
+            $api->relayTurnOn($channel);
+            usleep($waitTime);
+            return $api->relayTurnOff($channel);
+        } else {
+            $api->relayTurnOff($channel);
+            usleep($waitTime);
+            return $api->relayTurnOn($channel);
+        }
     }
     
     /**
