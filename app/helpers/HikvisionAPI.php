@@ -8,6 +8,247 @@
 class HikvisionAPI {
     
     /**
+     * Asegurar que el dispositivo tiene un token válido para API Cloud
+     * @param Database $db Instancia de base de datos
+     * @param array $device Datos del dispositivo
+     * @return array ['success' => bool, 'token' => string|null, 'error' => string|null]
+     */
+    public static function ensureToken($db, $device) {
+        require_once APP_PATH . '/models/HikvisionDevice.php';
+        
+        // Verificar si el dispositivo usa Cloud API
+        if (empty($device['api_key']) || empty($device['api_secret']) || empty($device['token_endpoint'])) {
+            return [
+                'success' => false,
+                'token' => null,
+                'error' => 'Dispositivo no configurado para Cloud API'
+            ];
+        }
+        
+        // Verificar si el token actual es válido
+        if (!HikvisionDevice::needsTokenRefresh($device)) {
+            return [
+                'success' => true,
+                'token' => $device['access_token'],
+                'error' => null
+            ];
+        }
+        
+        // Solicitar nuevo token
+        try {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $device['token_endpoint']);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            
+            // Configurar verificación SSL
+            $verifySSL = (bool)($device['verify_ssl'] ?? 1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
+            
+            // Payload para obtener token
+            $payload = json_encode([
+                'appKey' => $device['api_key'],
+                'secretKey' => $device['api_secret']
+            ]);
+            
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($payload)
+            ]);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curlError) {
+                return [
+                    'success' => false,
+                    'token' => null,
+                    'error' => 'Error de conexión: ' . $curlError
+                ];
+            }
+            
+            if ($httpCode !== 200) {
+                return [
+                    'success' => false,
+                    'token' => null,
+                    'error' => 'Error HTTP: ' . $httpCode
+                ];
+            }
+            
+            // Parsear respuesta
+            $data = json_decode($response, true);
+            
+            if (!$data || !isset($data['accessToken'])) {
+                return [
+                    'success' => false,
+                    'token' => null,
+                    'error' => 'Respuesta inválida del servidor'
+                ];
+            }
+            
+            $accessToken = $data['accessToken'];
+            $expireTime = $data['expireTime'] ?? (time() * 1000 + 7200000); // Default 2 horas
+            $areaDomain = $data['areaDomain'] ?? $device['area_domain'] ?? null;
+            
+            // Guardar token en base de datos
+            HikvisionDevice::saveAccessToken($db, $device['id'], $accessToken, $expireTime, $areaDomain);
+            
+            return [
+                'success' => true,
+                'token' => $accessToken,
+                'error' => null
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'token' => null,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    /**
+     * Obtener el último evento ANPR desde API Cloud
+     * @param Database $db Instancia de base de datos
+     * @param array $device Datos del dispositivo
+     * @return array ['success' => bool, 'plate' => string|null, 'confidence' => float|null, 'payload' => string|null, 'error' => string|null]
+     */
+    public static function fetchLatestAnprEvent($db, $device) {
+        // 1. Asegurar que tenemos un token válido
+        $tokenResult = self::ensureToken($db, $device);
+        if (!$tokenResult['success']) {
+            return [
+                'success' => false,
+                'plate' => null,
+                'confidence' => null,
+                'payload' => null,
+                'error' => $tokenResult['error']
+            ];
+        }
+        
+        $accessToken = $tokenResult['token'];
+        
+        // Recargar device para obtener area_domain actualizado
+        require_once APP_PATH . '/models/HikvisionDevice.php';
+        $device = HikvisionDevice::getById($db, $device['id']);
+        
+        if (empty($device['area_domain']) || empty($device['device_index_code'])) {
+            return [
+                'success' => false,
+                'plate' => null,
+                'confidence' => null,
+                'payload' => null,
+                'error' => 'area_domain o device_index_code no configurados'
+            ];
+        }
+        
+        // 2. Solicitar eventos ANPR
+        try {
+            $url = rtrim($device['area_domain'], '/') . '/api/hpcgw/v1/anpr/vehicleEvents';
+            
+            // Calcular ventana de tiempo (últimos 10 segundos)
+            $endTime = time() * 1000; // Milisegundos
+            $startTime = $endTime - 10000; // 10 segundos atrás
+            
+            $payload = json_encode([
+                'deviceIndexCode' => $device['device_index_code'],
+                'pageNo' => 1,
+                'pageSize' => 1,
+                'order' => 'desc',
+                'startTime' => $startTime,
+                'endTime' => $endTime
+            ]);
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            
+            // Configurar verificación SSL
+            $verifySSL = (bool)($device['verify_ssl'] ?? 1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
+            
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $accessToken,
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($payload)
+            ]);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curlError) {
+                return [
+                    'success' => false,
+                    'plate' => null,
+                    'confidence' => null,
+                    'payload' => null,
+                    'error' => 'Error de conexión: ' . $curlError
+                ];
+            }
+            
+            if ($httpCode !== 200) {
+                return [
+                    'success' => false,
+                    'plate' => null,
+                    'confidence' => null,
+                    'payload' => null,
+                    'error' => 'Error HTTP: ' . $httpCode
+                ];
+            }
+            
+            // 3. Parsear respuesta
+            $data = json_decode($response, true);
+            
+            if (!$data || !isset($data['list']) || empty($data['list'])) {
+                // No hay eventos recientes, pero no es un error
+                return [
+                    'success' => true,
+                    'plate' => null,
+                    'confidence' => null,
+                    'payload' => json_encode($data),
+                    'error' => null
+                ];
+            }
+            
+            // Obtener el primer evento (más reciente)
+            $event = $data['list'][0];
+            $plate = $event['vehicleInfo']['plateNo'] ?? null;
+            $confidence = isset($event['confidence']) ? (float)$event['confidence'] : null;
+            
+            return [
+                'success' => true,
+                'plate' => $plate,
+                'confidence' => $confidence,
+                'payload' => json_encode($event),
+                'error' => null
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'plate' => null,
+                'confidence' => null,
+                'payload' => null,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    /**
      * Obtener lectura de placa desde cámara Hikvision
      * Intenta leer de los dispositivos configurados en orden de prioridad
      * 
@@ -69,12 +310,48 @@ class HikvisionAPI {
     
     /**
      * Lee placa desde un dispositivo específico
+     * Soporta tanto ISAPI (local) como Cloud API
      * 
      * @param array $device Datos del dispositivo
      * @return array ['success' => bool, 'plate' => string, 'error' => string, 'device_id' => int]
      */
     private static function readFromDevice($device) {
         try {
+            // Determinar si es Cloud API o ISAPI
+            $isCloudAPI = !empty($device['api_key']) && !empty($device['device_index_code']);
+            
+            if ($isCloudAPI) {
+                // Usar Cloud API
+                $db = Database::getInstance();
+                $result = self::fetchLatestAnprEvent($db, $device);
+                
+                if (!$result['success']) {
+                    return [
+                        'success' => false,
+                        'plate' => null,
+                        'error' => $result['error'],
+                        'device_id' => $device['id']
+                    ];
+                }
+                
+                if ($result['plate']) {
+                    return [
+                        'success' => true,
+                        'plate' => strtoupper(trim($result['plate'])),
+                        'error' => null,
+                        'device_id' => $device['id']
+                    ];
+                } else {
+                    return [
+                        'success' => true,
+                        'plate' => null,
+                        'error' => 'No se detectó placa',
+                        'device_id' => $device['id']
+                    ];
+                }
+            }
+            
+            // Modo ISAPI (legacy)
             $apiUrl = $device['api_url'];
             $username = $device['username'];
             $password = $device['password'];

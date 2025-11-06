@@ -210,10 +210,12 @@ class SettingsController extends BaseController {
             if (isset($_POST['hikvision_devices']) && is_array($_POST['hikvision_devices'])) {
                 foreach ($_POST['hikvision_devices'] as $i => $d) {
                     // Sanitizar y validar datos
+                    // Para modo cloud, se requiere api_key. Para modo ISAPI, se requiere api_url
+                    $apiKey = trim($d['api_key'] ?? '');
                     $apiUrl = trim($d['api_url'] ?? '');
                     
-                    // Validar campos requeridos
-                    if (empty($apiUrl)) {
+                    // Validar campos requeridos (al menos uno de los dos modos debe estar configurado)
+                    if (empty($apiKey) && empty($apiUrl)) {
                         $skippedDevices++;
                         continue; // Saltar dispositivos con datos incompletos
                     }
@@ -227,8 +229,14 @@ class SettingsController extends BaseController {
                         'api_url' => $apiUrl,
                         'username' => trim($d['username'] ?? ''),
                         'password' => trim($d['password'] ?? ''),
+                        'api_key' => $apiKey,
+                        'api_secret' => trim($d['api_secret'] ?? ''),
+                        'token_endpoint' => trim($d['token_endpoint'] ?? ''),
+                        'area_domain' => trim($d['area_domain'] ?? ''),
+                        'device_index_code' => trim($d['device_index_code'] ?? ''),
                         'verify_ssl' => isset($d['verify_ssl']) ? 1 : 0,
                         'area' => trim($d['area'] ?? ''),
+                        'area_label' => trim($d['area_label'] ?? ''),
                         'is_enabled' => isset($d['is_enabled']) ? 1 : 0,
                         'sort_order' => (int)($d['sort_order'] ?? $i),
                     ];
