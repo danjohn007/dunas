@@ -51,10 +51,10 @@ class ShellyActionService {
             
             // Ejecutar con lock para evitar dobles pulsos
             $lastResult = ShellyLockHelper::withPortLock($db, $channel, function() use ($cfg, $channel, $pulseDuration, $invert, $db, $correlation, $action) {
-                // Intentar con el nuevo cliente JSON-RPC primero
-                $useJsonRpc = true; // Flag para controlar si usar JSON-RPC
+                // Usar el nuevo cliente mejorado que garantiza pulsos completos
+                $useNewClient = true; // Flag para controlar si usar el nuevo cliente
                 
-                if ($useJsonRpc) {
+                if ($useNewClient) {
                     $client = new ShellyCloudClient(
                         $cfg['server_host'],
                         $cfg['device_id'],
