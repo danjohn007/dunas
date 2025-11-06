@@ -332,23 +332,53 @@
                                 </div>
                             </div>
                             
-                            <!-- Puerto Activo (Radios) -->
-                            <div class="mb-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Puerto activo:
-                                </label>
-                                <div class="flex space-x-6">
-                                    <?php for ($ch = 0; $ch < 4; $ch++): ?>
-                                        <label class="flex items-center">
-                                            <input type="radio" name="devices[<?php echo $index; ?>][active_channel]" 
-                                                   value="<?php echo $ch; ?>"
-                                                   <?php echo ($device['active_channel'] == $ch) ? 'checked' : ''; ?>
-                                                   class="mr-2 text-orange-600 focus:ring-orange-500">
-                                            <span class="text-sm"><?php echo $ch; ?></span>
-                                        </label>
-                                    <?php endfor; ?>
+                            <!-- Canales de Entrada y Salida -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Canal de Entrada (Apertura)
+                                    </label>
+                                    <select name="devices[<?php echo $index; ?>][entry_channel]" 
+                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                        <?php for ($ch = 0; $ch < 4; $ch++): ?>
+                                            <option value="<?php echo $ch; ?>" 
+                                                    <?php echo (isset($device['entry_channel']) && $device['entry_channel'] == $ch) ? 'selected' : ''; ?>>
+                                                Canal <?php echo $ch; ?>
+                                            </option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Pulso de 5 segundos al entrar</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Canal de Salida (Cierre)
+                                    </label>
+                                    <select name="devices[<?php echo $index; ?>][exit_channel]" 
+                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                        <?php for ($ch = 0; $ch < 4; $ch++): ?>
+                                            <option value="<?php echo $ch; ?>" 
+                                                    <?php echo (isset($device['exit_channel']) && $device['exit_channel'] == $ch) ? 'selected' : ''; ?>>
+                                                Canal <?php echo $ch; ?>
+                                            </option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Activación al salir</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Duración Pulso (ms)
+                                    </label>
+                                    <input type="number" name="devices[<?php echo $index; ?>][pulse_duration_ms]" 
+                                           value="<?php echo isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000; ?>"
+                                           min="100" max="60000" step="100"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms (5 seg)</p>
                                 </div>
                             </div>
+                            
+                            <!-- Puerto Activo (legacy - oculto) -->
+                            <input type="hidden" name="devices[<?php echo $index; ?>][active_channel]" 
+                                   value="<?php echo $device['active_channel'] ?? 0; ?>">
                             
                             <!-- Habilitado -->
                             <div class="space-y-2">
@@ -464,33 +494,46 @@
                 </div>
             </div>
             
-            <div class="mb-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Puerto activo:
-                </label>
-                <div class="flex space-x-6">
-                    <label class="flex items-center">
-                        <input type="radio" name="devices[INDEX][active_channel]" value="0" checked
-                               class="mr-2 text-orange-600 focus:ring-orange-500">
-                        <span class="text-sm">0</span>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Canal de Entrada (Apertura)
                     </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="devices[INDEX][active_channel]" value="1"
-                               class="mr-2 text-orange-600 focus:ring-orange-500">
-                        <span class="text-sm">1</span>
+                    <select name="devices[INDEX][entry_channel]" 
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="0" selected>Canal 0</option>
+                        <option value="1">Canal 1</option>
+                        <option value="2">Canal 2</option>
+                        <option value="3">Canal 3</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Pulso de 5 segundos al entrar</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Canal de Salida (Cierre)
                     </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="devices[INDEX][active_channel]" value="2"
-                               class="mr-2 text-orange-600 focus:ring-orange-500">
-                        <span class="text-sm">2</span>
+                    <select name="devices[INDEX][exit_channel]" 
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="0">Canal 0</option>
+                        <option value="1" selected>Canal 1</option>
+                        <option value="2">Canal 2</option>
+                        <option value="3">Canal 3</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Activación al salir</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Duración Pulso (ms)
                     </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="devices[INDEX][active_channel]" value="3"
-                               class="mr-2 text-orange-600 focus:ring-orange-500">
-                        <span class="text-sm">3</span>
-                    </label>
+                    <input type="number" name="devices[INDEX][pulse_duration_ms]" 
+                           value="5000"
+                           min="100" max="60000" step="100"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms (5 seg)</p>
                 </div>
             </div>
+            
+            <input type="hidden" name="devices[INDEX][active_channel]" value="0">
             
             <div class="space-y-2">
                 <label class="flex items-center">
@@ -515,8 +558,256 @@
         </div>
     </template>
     
+    <!-- Configuración de Dispositivos HikVision -->
+    <form method="POST" action="<?php echo BASE_URL; ?>/settings/saveHikvisionDevices" id="hikvisionDevicesForm">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-camera text-indigo-600 mr-2"></i>Dispositivos HikVision
+                </h2>
+                <button type="button" onclick="addHikvisionDevice()" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i>Nuevo dispositivo +
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">
+                Configure dispositivos HikVision para lectura de placas (LPR) y lectores de código de barras. Los dispositivos se utilizarán para registro automático y control de acceso.
+            </p>
+            
+            <!-- Contenedor de dispositivos -->
+            <div id="hikvisionDevicesContainer" class="space-y-4">
+                <?php if (empty($hikvisionDevices)): ?>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500" data-no-devices>
+                        <i class="fas fa-info-circle text-2xl mb-2"></i>
+                        <p>No hay dispositivos HikVision configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($hikvisionDevices as $index => $device): ?>
+                        <div class="hikvision-device-card bg-gray-50 border border-gray-300 rounded-lg p-6 relative">
+                            <!-- Botón eliminar -->
+                            <button type="button" onclick="removeHikvisionDevice(this)" 
+                                    class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            
+                            <input type="hidden" name="hikvision_devices[<?php echo $index; ?>][id]" value="<?php echo $device['id']; ?>">
+                            <input type="hidden" name="hikvision_devices[<?php echo $index; ?>][sort_order]" value="<?php echo $index; ?>">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <!-- Nombre -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Nombre del Dispositivo
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][name]" 
+                                           value="<?php echo htmlspecialchars($device['name']); ?>"
+                                           placeholder="Cámara HikVision Principal"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                           required>
+                                </div>
+                                
+                                <!-- Tipo de Dispositivo -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tipo de Dispositivo
+                                    </label>
+                                    <select name="hikvision_devices[<?php echo $index; ?>][device_type]" 
+                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="camera_lpr" <?php echo $device['device_type'] === 'camera_lpr' ? 'selected' : ''; ?>>
+                                            Cámara LPR (Lectura de Placas)
+                                        </option>
+                                        <option value="barcode_reader" <?php echo $device['device_type'] === 'barcode_reader' ? 'selected' : ''; ?>>
+                                            Lector de Código de Barras
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <!-- URL de API -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        URL de API
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][api_url]" 
+                                           value="<?php echo htmlspecialchars($device['api_url']); ?>"
+                                           placeholder="http://192.168.1.100"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                           required>
+                                    <p class="mt-1 text-xs text-gray-500">URL base del dispositivo (ej: http://192.168.1.100 o https://camara.midominio.com)</p>
+                                </div>
+                                
+                                <!-- Usuario -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Usuario
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][username]" 
+                                           value="<?php echo htmlspecialchars($device['username'] ?? ''); ?>"
+                                           placeholder="admin"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                
+                                <!-- Contraseña -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Contraseña
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" name="hikvision_devices[<?php echo $index; ?>][password]" 
+                                               value="<?php echo htmlspecialchars($device['password'] ?? ''); ?>"
+                                               placeholder="••••••••"
+                                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                                        <button type="button" onclick="togglePasswordVisibility(this)" 
+                                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Área -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Área / Ubicación
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][area]" 
+                                           value="<?php echo htmlspecialchars($device['area'] ?? ''); ?>"
+                                           placeholder="Entrada Principal"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            
+                            <!-- Opciones -->
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="hikvision_devices[<?php echo $index; ?>][is_enabled]" 
+                                           value="1" <?php echo $device['is_enabled'] ? 'checked' : ''; ?>
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                    <span class="text-sm text-gray-700">Dispositivo habilitado</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="hikvision_devices[<?php echo $index; ?>][verify_ssl]" 
+                                           value="1" <?php echo isset($device['verify_ssl']) && $device['verify_ssl'] ? 'checked' : ''; ?>
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                    <span class="text-sm text-gray-700">Verificar certificado SSL</span>
+                                </label>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <!-- Botones para dispositivos HikVision -->
+        <div class="flex justify-end space-x-4 mb-6">
+            <a href="<?php echo BASE_URL; ?>/dashboard" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-save mr-2"></i>Guardar Dispositivos HikVision
+            </button>
+        </div>
+    </form>
+    
+    <!-- Template para nuevos dispositivos HikVision (oculto) -->
+    <template id="hikvisionDeviceTemplate">
+        <div class="hikvision-device-card bg-gray-50 border border-gray-300 rounded-lg p-6 relative">
+            <button type="button" onclick="removeHikvisionDevice(this)" 
+                    class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <input type="hidden" name="hikvision_devices[HIK_INDEX][id]" value="">
+            <input type="hidden" name="hikvision_devices[HIK_INDEX][sort_order]" value="HIK_INDEX">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre del Dispositivo
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][name]" 
+                           placeholder="Cámara HikVision Principal"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Dispositivo
+                    </label>
+                    <select name="hikvision_devices[HIK_INDEX][device_type]" 
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="camera_lpr" selected>Cámara LPR (Lectura de Placas)</option>
+                        <option value="barcode_reader">Lector de Código de Barras</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        URL de API
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][api_url]" 
+                           placeholder="http://192.168.1.100"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           required>
+                    <p class="mt-1 text-xs text-gray-500">URL base del dispositivo (ej: http://192.168.1.100 o https://camara.midominio.com)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Usuario
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][username]" 
+                           placeholder="admin"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Contraseña
+                    </label>
+                    <div class="relative">
+                        <input type="password" name="hikvision_devices[HIK_INDEX][password]" 
+                               placeholder="••••••••"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                        <button type="button" onclick="togglePasswordVisibility(this)" 
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Área / Ubicación
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][area]" 
+                           placeholder="Entrada Principal"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="flex items-center">
+                    <input type="checkbox" name="hikvision_devices[HIK_INDEX][is_enabled]" 
+                           value="1" checked
+                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                    <span class="text-sm text-gray-700">Dispositivo habilitado</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" name="hikvision_devices[HIK_INDEX][verify_ssl]" 
+                           value="1"
+                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                    <span class="text-sm text-gray-700">Verificar certificado SSL</span>
+                </label>
+            </div>
+        </div>
+    </template>
+    
     <script>
         let deviceIndex = <?php echo (int)count($shellyDevices); ?>;
+        let hikvisionIndex = <?php echo (int)count($hikvisionDevices); ?>;
         
         function addShellyDevice() {
             const container = document.getElementById('shellyDevicesContainer');
@@ -552,6 +843,46 @@
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500" data-no-devices>
                             <i class="fas fa-info-circle text-2xl mb-2"></i>
                             <p>No hay dispositivos Shelly configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function addHikvisionDevice() {
+            const container = document.getElementById('hikvisionDevicesContainer');
+            const template = document.getElementById('hikvisionDeviceTemplate');
+            
+            // Remover mensaje de "no hay dispositivos" si existe
+            const noDevicesMsg = container.querySelector('[data-no-devices]');
+            if (noDevicesMsg) {
+                noDevicesMsg.remove();
+            }
+            
+            // Clonar template
+            const clone = template.content.cloneNode(true);
+            const html = clone.querySelector('.hikvision-device-card').outerHTML;
+            
+            // Reemplazar HIK_INDEX con el índice actual
+            const newHtml = html.replace(/HIK_INDEX/g, hikvisionIndex);
+            
+            // Insertar al final
+            container.insertAdjacentHTML('beforeend', newHtml);
+            hikvisionIndex++;
+        }
+        
+        function removeHikvisionDevice(btn) {
+            if (confirm('¿Está seguro de eliminar este dispositivo?')) {
+                const card = btn.closest('.hikvision-device-card');
+                card.remove();
+                
+                // Si no quedan dispositivos, mostrar mensaje
+                const container = document.getElementById('hikvisionDevicesContainer');
+                if (container.querySelectorAll('.hikvision-device-card').length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500" data-no-devices>
+                            <i class="fas fa-info-circle text-2xl mb-2"></i>
+                            <p>No hay dispositivos HikVision configurados. Haga clic en "Nuevo dispositivo +" para agregar uno.</p>
                         </div>
                     `;
                 }

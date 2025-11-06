@@ -54,7 +54,7 @@ class ShellyDevice {
                     $seen[] = $id;
                     // Actualizar dispositivo existente
                     $db->execute(
-                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, area=?, active_channel=?, channel_count=?, invert_sequence=?, is_simultaneous=?, is_enabled=?, updated_at=NOW() WHERE id=?",
+                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, area=?, active_channel=?, entry_channel=?, exit_channel=?, pulse_duration_ms=?, channel_count=?, invert_sequence=?, is_simultaneous=?, is_enabled=?, updated_at=NOW() WHERE id=?",
                         [
                             $r['name'],
                             $r['auth_token'],
@@ -62,6 +62,9 @@ class ShellyDevice {
                             $r['server_host'],
                             $r['area'],
                             (int)$r['active_channel'],
+                            (int)($r['entry_channel'] ?? 0),
+                            (int)($r['exit_channel'] ?? 1),
+                            (int)($r['pulse_duration_ms'] ?? 5000),
                             (int)$r['channel_count'],
                             isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
                             isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,
@@ -72,7 +75,7 @@ class ShellyDevice {
                 } else {
                     // Insertar nuevo dispositivo
                     $db->execute(
-                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, area, active_channel, channel_count, invert_sequence, is_simultaneous, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, area, active_channel, entry_channel, exit_channel, pulse_duration_ms, channel_count, invert_sequence, is_simultaneous, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         [
                             $r['name'],
                             $r['auth_token'],
@@ -80,6 +83,9 @@ class ShellyDevice {
                             $r['server_host'],
                             $r['area'],
                             (int)$r['active_channel'],
+                            (int)($r['entry_channel'] ?? 0),
+                            (int)($r['exit_channel'] ?? 1),
+                            (int)($r['pulse_duration_ms'] ?? 5000),
                             (int)$r['channel_count'],
                             isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
                             isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,

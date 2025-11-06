@@ -9,22 +9,83 @@ class HikvisionAPI {
     
     /**
      * Obtener lectura de placa desde cámara Hikvision
+     * Intenta leer de los dispositivos configurados en orden de prioridad
      * 
-     * @return array ['success' => bool, 'plate' => string, 'error' => string]
+     * @param int|null $deviceId ID específico del dispositivo (opcional)
+     * @return array ['success' => bool, 'plate' => string, 'error' => string, 'device_id' => int|null]
      */
-    public static function readLicensePlate() {
+    public static function readLicensePlate($deviceId = null) {
         try {
-            $settings = new Settings();
-            $apiUrl = $settings->get('hikvision_api_url');
-            $username = $settings->get('hikvision_username');
-            $password = $settings->get('hikvision_password');
+            require_once APP_PATH . '/models/HikvisionDevice.php';
+            $db = Database::getInstance();
+            
+            // Si se especifica un dispositivo, usar solo ese
+            if ($deviceId) {
+                $device = HikvisionDevice::getById($db, $deviceId);
+                if ($device && $device['device_type'] === 'camera_lpr') {
+                    return self::readFromDevice($device);
+                }
+                return [
+                    'success' => false,
+                    'plate' => null,
+                    'error' => 'Dispositivo no encontrado o no es una cámara LPR',
+                    'device_id' => null
+                ];
+            }
+            
+            // Obtener todas las cámaras LPR habilitadas
+            $cameras = HikvisionDevice::allEnabled($db, 'camera_lpr');
+            
+            // Si no hay cámaras configuradas, verificar configuración legacy
+            if (empty($cameras)) {
+                return self::readLicensePlateLegacy();
+            }
+            
+            // Intentar leer de cada cámara en orden
+            foreach ($cameras as $camera) {
+                $result = self::readFromDevice($camera);
+                if ($result['success'] && !empty($result['plate'])) {
+                    return $result;
+                }
+            }
+            
+            // Si ninguna cámara pudo leer, retornar sin error pero sin lectura
+            return [
+                'success' => true,
+                'plate' => null,
+                'error' => null,
+                'device_id' => null
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'plate' => null,
+                'error' => $e->getMessage(),
+                'device_id' => null
+            ];
+        }
+    }
+    
+    /**
+     * Lee placa desde un dispositivo específico
+     * 
+     * @param array $device Datos del dispositivo
+     * @return array ['success' => bool, 'plate' => string, 'error' => string, 'device_id' => int]
+     */
+    private static function readFromDevice($device) {
+        try {
+            $apiUrl = $device['api_url'];
+            $username = $device['username'];
+            $password = $device['password'];
             
             // Si no hay configuración, retornar sin error pero sin lectura
             if (empty($apiUrl)) {
                 return [
                     'success' => true,
                     'plate' => null,
-                    'error' => null
+                    'error' => null,
+                    'device_id' => $device['id']
                 ];
             }
             
@@ -46,9 +107,8 @@ class HikvisionAPI {
                 curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
             }
             
-            // Configurar verificación SSL basada en entorno
-            // En producción, se recomienda configurar certificados apropiados
-            $verifySSL = $settings->get('hikvision_verify_ssl', 'false') === 'true';
+            // Configurar verificación SSL
+            $verifySSL = (bool)$device['verify_ssl'];
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
             
@@ -61,7 +121,8 @@ class HikvisionAPI {
                 return [
                     'success' => false,
                     'plate' => null,
-                    'error' => 'Error de conexión: ' . $curlError
+                    'error' => 'Error de conexión: ' . $curlError,
+                    'device_id' => $device['id']
                 ];
             }
             
@@ -69,7 +130,8 @@ class HikvisionAPI {
                 return [
                     'success' => false,
                     'plate' => null,
-                    'error' => 'Error HTTP: ' . $httpCode
+                    'error' => 'Error HTTP: ' . $httpCode,
+                    'device_id' => $device['id']
                 ];
             }
             
@@ -80,13 +142,15 @@ class HikvisionAPI {
                 return [
                     'success' => true,
                     'plate' => strtoupper(trim($plate)),
-                    'error' => null
+                    'error' => null,
+                    'device_id' => $device['id']
                 ];
             } else {
                 return [
                     'success' => true,
                     'plate' => null,
-                    'error' => 'No se detectó placa'
+                    'error' => 'No se detectó placa',
+                    'device_id' => $device['id']
                 ];
             }
             
@@ -94,7 +158,52 @@ class HikvisionAPI {
             return [
                 'success' => false,
                 'plate' => null,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'device_id' => isset($device['id']) ? $device['id'] : null
+            ];
+        }
+    }
+    
+    /**
+     * Método legacy para leer placa desde configuración antigua
+     * Mantiene compatibilidad con sistemas que aún usan settings
+     * 
+     * @return array ['success' => bool, 'plate' => string, 'error' => string, 'device_id' => null]
+     */
+    private static function readLicensePlateLegacy() {
+        try {
+            $settings = new Settings();
+            $apiUrl = $settings->get('hikvision_api_url');
+            $username = $settings->get('hikvision_username');
+            $password = $settings->get('hikvision_password');
+            
+            // Si no hay configuración, retornar sin error pero sin lectura
+            if (empty($apiUrl)) {
+                return [
+                    'success' => true,
+                    'plate' => null,
+                    'error' => null,
+                    'device_id' => null
+                ];
+            }
+            
+            // Simular estructura de dispositivo para reutilizar readFromDevice
+            $device = [
+                'id' => null,
+                'api_url' => $apiUrl,
+                'username' => $username,
+                'password' => $password,
+                'verify_ssl' => $settings->get('hikvision_verify_ssl', 'false') === 'true' ? 1 : 0
+            ];
+            
+            return self::readFromDevice($device);
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'plate' => null,
+                'error' => $e->getMessage(),
+                'device_id' => null
             ];
         }
     }
@@ -168,6 +277,198 @@ class HikvisionAPI {
         }
         
         return null;
+    }
+    
+    /**
+     * Lee código de barras desde lector HikVision
+     * 
+     * @param int|null $deviceId ID específico del dispositivo (opcional)
+     * @return array ['success' => bool, 'barcode' => string, 'error' => string, 'device_id' => int|null]
+     */
+    public static function readBarcode($deviceId = null) {
+        try {
+            require_once APP_PATH . '/models/HikvisionDevice.php';
+            $db = Database::getInstance();
+            
+            // Si se especifica un dispositivo, usar solo ese
+            if ($deviceId) {
+                $device = HikvisionDevice::getById($db, $deviceId);
+                if ($device && $device['device_type'] === 'barcode_reader') {
+                    return self::readBarcodeFromDevice($device);
+                }
+                return [
+                    'success' => false,
+                    'barcode' => null,
+                    'error' => 'Dispositivo no encontrado o no es un lector de código de barras',
+                    'device_id' => null
+                ];
+            }
+            
+            // Obtener todos los lectores de código de barras habilitados
+            $readers = HikvisionDevice::allEnabled($db, 'barcode_reader');
+            
+            if (empty($readers)) {
+                return [
+                    'success' => true,
+                    'barcode' => null,
+                    'error' => 'No hay lectores de código de barras configurados',
+                    'device_id' => null
+                ];
+            }
+            
+            // Intentar leer de cada lector en orden
+            foreach ($readers as $reader) {
+                $result = self::readBarcodeFromDevice($reader);
+                if ($result['success'] && !empty($result['barcode'])) {
+                    return $result;
+                }
+            }
+            
+            // Si ningún lector pudo leer, retornar sin error pero sin lectura
+            return [
+                'success' => true,
+                'barcode' => null,
+                'error' => null,
+                'device_id' => null
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'barcode' => null,
+                'error' => $e->getMessage(),
+                'device_id' => null
+            ];
+        }
+    }
+    
+    /**
+     * Lee código de barras desde un dispositivo específico
+     * 
+     * @param array $device Datos del dispositivo
+     * @return array ['success' => bool, 'barcode' => string, 'error' => string, 'device_id' => int]
+     */
+    private static function readBarcodeFromDevice($device) {
+        try {
+            $apiUrl = $device['api_url'];
+            $username = $device['username'];
+            $password = $device['password'];
+            
+            if (empty($apiUrl)) {
+                return [
+                    'success' => true,
+                    'barcode' => null,
+                    'error' => null,
+                    'device_id' => $device['id']
+                ];
+            }
+            
+            // Endpoint para obtener la última lectura de código de barras
+            $endpoint = '/ISAPI/AccessControl/AcsEvent?format=json';
+            $url = rtrim($apiUrl, '/') . $endpoint;
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            
+            if (!empty($username) && !empty($password)) {
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+                curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+            }
+            
+            $verifySSL = (bool)$device['verify_ssl'];
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curlError) {
+                return [
+                    'success' => false,
+                    'barcode' => null,
+                    'error' => 'Error de conexión: ' . $curlError,
+                    'device_id' => $device['id']
+                ];
+            }
+            
+            if ($httpCode !== 200) {
+                return [
+                    'success' => false,
+                    'barcode' => null,
+                    'error' => 'Error HTTP: ' . $httpCode,
+                    'device_id' => $device['id']
+                ];
+            }
+            
+            // Parsear respuesta JSON/XML
+            $barcode = self::parseBarcodeResponse($response);
+            
+            if ($barcode) {
+                return [
+                    'success' => true,
+                    'barcode' => trim($barcode),
+                    'error' => null,
+                    'device_id' => $device['id']
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'barcode' => null,
+                    'error' => 'No se detectó código de barras',
+                    'device_id' => $device['id']
+                ];
+            }
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'barcode' => null,
+                'error' => $e->getMessage(),
+                'device_id' => isset($device['id']) ? $device['id'] : null
+            ];
+        }
+    }
+    
+    /**
+     * Parsear respuesta de código de barras desde HikVision
+     * 
+     * @param string $response Respuesta del dispositivo
+     * @return string|null Código de barras o null
+     */
+    private static function parseBarcodeResponse($response) {
+        try {
+            // Intentar primero como JSON
+            $json = json_decode($response, true);
+            if ($json && isset($json['AcsEvent']['cardNo'])) {
+                return (string)$json['AcsEvent']['cardNo'];
+            }
+            
+            // Si no es JSON, intentar como XML
+            $previousValue = libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($response);
+            
+            if ($xml !== false) {
+                if (isset($xml->cardNo)) {
+                    libxml_use_internal_errors($previousValue);
+                    return (string)$xml->cardNo;
+                }
+                if (isset($xml->AcsEvent->cardNo)) {
+                    libxml_use_internal_errors($previousValue);
+                    return (string)$xml->AcsEvent->cardNo;
+                }
+            }
+            
+            libxml_use_internal_errors($previousValue);
+            return null;
+            
+        } catch (Exception $e) {
+            return null;
+        }
     }
     
     /**
