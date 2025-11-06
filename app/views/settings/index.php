@@ -598,11 +598,11 @@
                                 <!-- Nombre -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Nombre del Dispositivo
+                                        Nombre del Dispositivo <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" name="hikvision_devices[<?php echo $index; ?>][name]" 
                                            value="<?php echo htmlspecialchars($device['name']); ?>"
-                                           placeholder="Cámara HikVision Principal"
+                                           placeholder="Cámara Placas"
                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                                            required>
                                 </div>
@@ -610,7 +610,7 @@
                                 <!-- Tipo de Dispositivo -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Tipo de Dispositivo
+                                        Tipo de Dispositivo <span class="text-red-500">*</span>
                                     </label>
                                     <select name="hikvision_devices[<?php echo $index; ?>][device_type]" 
                                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
@@ -618,45 +618,32 @@
                                             Cámara LPR (Lectura de Placas)
                                         </option>
                                         <option value="barcode_reader" <?php echo $device['device_type'] === 'barcode_reader' ? 'selected' : ''; ?>>
-                                            Lector de Código de Barras
+                                            Lector de Códigos
                                         </option>
                                     </select>
                                 </div>
                                 
-                                <!-- URL de API -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        URL de API
-                                    </label>
-                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][api_url]" 
-                                           value="<?php echo htmlspecialchars($device['api_url']); ?>"
-                                           placeholder="http://192.168.1.100"
-                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                           required>
-                                    <p class="mt-1 text-xs text-gray-500">URL base del dispositivo (ej: http://192.168.1.100 o https://camara.midominio.com)</p>
-                                </div>
-                                
-                                <!-- Usuario -->
+                                <!-- Api Key -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Usuario
+                                        Api Key
                                     </label>
-                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][username]" 
-                                           value="<?php echo htmlspecialchars($device['username'] ?? ''); ?>"
-                                           placeholder="admin"
-                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][api_key]" 
+                                           value="<?php echo htmlspecialchars($device['api_key'] ?? ''); ?>"
+                                           placeholder="ErfVjgzq0y"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
                                 </div>
                                 
-                                <!-- Contraseña -->
+                                <!-- Api Secret -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Contraseña
+                                        Api Secret
                                     </label>
                                     <div class="relative">
-                                        <input type="password" name="hikvision_devices[<?php echo $index; ?>][password]" 
-                                               value="<?php echo htmlspecialchars($device['password'] ?? ''); ?>"
-                                               placeholder="••••••••"
-                                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                                        <input type="password" name="hikvision_devices[<?php echo $index; ?>][api_secret]" 
+                                               value="<?php echo htmlspecialchars($device['api_secret'] ?? ''); ?>"
+                                               placeholder="••••••••••"
+                                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm pr-10">
                                         <button type="button" onclick="togglePasswordVisibility(this)" 
                                                 class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                                             <i class="fas fa-eye"></i>
@@ -664,15 +651,119 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Área -->
+                                <!-- Endpoint -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Endpoint (Token)
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][token_endpoint]" 
+                                           value="<?php echo htmlspecialchars($device['token_endpoint'] ?? ''); ?>"
+                                           placeholder="https://isaapi.hik-partner.com/api/hpcgw/v1/token/get"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                                    <p class="mt-1 text-xs text-gray-500">URL para obtener token de autenticación</p>
+                                </div>
+                                
+                                <!-- Area Domain -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Area Domain
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][area_domain]" 
+                                           value="<?php echo htmlspecialchars($device['area_domain'] ?? ''); ?>"
+                                           placeholder="https://iusapi.hik-partner.com"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                                    <p class="mt-1 text-xs text-gray-500">Dominio del área para consultas API</p>
+                                </div>
+                                
+                                <!-- Device Index Code / Serial -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Device Index Code / Serial
+                                    </label>
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][device_index_code]" 
+                                           value="<?php echo htmlspecialchars($device['device_index_code'] ?? ''); ?>"
+                                           placeholder="GA8817570"
+                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono">
+                                </div>
+                                
+                                <!-- Área / Ubicación -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
                                         Área / Ubicación
                                     </label>
-                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][area]" 
-                                           value="<?php echo htmlspecialchars($device['area'] ?? ''); ?>"
+                                    <input type="text" name="hikvision_devices[<?php echo $index; ?>][area_label]" 
+                                           value="<?php echo htmlspecialchars($device['area_label'] ?? ''); ?>"
                                            placeholder="Entrada Principal"
                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                
+                                <!-- Access Token (read-only) -->
+                                <?php if (!empty($device['access_token'])): ?>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Access Token (automático)
+                                    </label>
+                                    <input type="text" 
+                                           value="<?php echo substr($device['access_token'], 0, 50) . '...'; ?>"
+                                           class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-600 font-mono text-xs"
+                                           readonly>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Expira: <?php echo $device['token_expires_at'] ?? 'N/A'; ?>
+                                    </p>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Separador para campos ISAPI legacy -->
+                            <div class="border-t border-gray-300 my-4 pt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3">
+                                    <i class="fas fa-network-wired text-gray-500 mr-2"></i>Configuración ISAPI Local (Opcional)
+                                </h4>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <!-- URL de API ISAPI -->
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            URL de API (ISAPI)
+                                        </label>
+                                        <input type="text" name="hikvision_devices[<?php echo $index; ?>][api_url]" 
+                                               value="<?php echo htmlspecialchars($device['api_url'] ?? ''); ?>"
+                                               placeholder="http://192.168.1.100"
+                                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                        <p class="mt-1 text-xs text-gray-500">Solo para modo ISAPI local (no usar con Cloud)</p>
+                                    </div>
+                                    
+                                    <!-- Usuario ISAPI -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Usuario (ISAPI)
+                                        </label>
+                                        <input type="text" name="hikvision_devices[<?php echo $index; ?>][username]" 
+                                               value="<?php echo htmlspecialchars($device['username'] ?? ''); ?>"
+                                               placeholder="admin"
+                                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                    
+                                    <!-- Contraseña ISAPI -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Contraseña (ISAPI)
+                                        </label>
+                                        <div class="relative">
+                                            <input type="password" name="hikvision_devices[<?php echo $index; ?>][password]" 
+                                                   value="<?php echo htmlspecialchars($device['password'] ?? ''); ?>"
+                                                   placeholder="••••••••"
+                                                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                                            <button type="button" onclick="togglePasswordVisibility(this)" 
+                                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Área legacy - mantener para compatibilidad con código anterior -->
+                                    <input type="hidden" name="hikvision_devices[<?php echo $index; ?>][area]" 
+                                           value="<?php echo htmlspecialchars($device['area'] ?? ''); ?>">
                                 </div>
                             </div>
                             
@@ -724,53 +815,42 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre del Dispositivo
+                        Nombre del Dispositivo <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="hikvision_devices[HIK_INDEX][name]" 
-                           placeholder="Cámara HikVision Principal"
+                           placeholder="Cámara Placas"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            required>
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Dispositivo
+                        Tipo de Dispositivo <span class="text-red-500">*</span>
                     </label>
                     <select name="hikvision_devices[HIK_INDEX][device_type]" 
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="camera_lpr" selected>Cámara LPR (Lectura de Placas)</option>
-                        <option value="barcode_reader">Lector de Código de Barras</option>
+                        <option value="barcode_reader">Lector de Códigos</option>
                     </select>
                 </div>
                 
-                <div class="md:col-span-2">
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        URL de API
+                        Api Key
                     </label>
-                    <input type="text" name="hikvision_devices[HIK_INDEX][api_url]" 
-                           placeholder="http://192.168.1.100"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           required>
-                    <p class="mt-1 text-xs text-gray-500">URL base del dispositivo (ej: http://192.168.1.100 o https://camara.midominio.com)</p>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][api_key]" 
+                           placeholder="ErfVjgzq0y"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Usuario
-                    </label>
-                    <input type="text" name="hikvision_devices[HIK_INDEX][username]" 
-                           placeholder="admin"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Contraseña
+                        Api Secret
                     </label>
                     <div class="relative">
-                        <input type="password" name="hikvision_devices[HIK_INDEX][password]" 
-                               placeholder="••••••••"
-                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                        <input type="password" name="hikvision_devices[HIK_INDEX][api_secret]" 
+                               placeholder="••••••••••"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm pr-10">
                         <button type="button" onclick="togglePasswordVisibility(this)" 
                                 class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                             <i class="fas fa-eye"></i>
@@ -778,13 +858,86 @@
                     </div>
                 </div>
                 
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Endpoint (Token)
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][token_endpoint]" 
+                           value="https://isaapi.hik-partner.com/api/hpcgw/v1/token/get"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    <p class="mt-1 text-xs text-gray-500">URL para obtener token de autenticación</p>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Area Domain
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][area_domain]" 
+                           value="https://iusapi.hik-partner.com"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    <p class="mt-1 text-xs text-gray-500">Dominio del área para consultas API</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Device Index Code / Serial
+                    </label>
+                    <input type="text" name="hikvision_devices[HIK_INDEX][device_index_code]" 
+                           placeholder="GA8817570"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono">
+                </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Área / Ubicación
                     </label>
-                    <input type="text" name="hikvision_devices[HIK_INDEX][area]" 
+                    <input type="text" name="hikvision_devices[HIK_INDEX][area_label]" 
                            placeholder="Entrada Principal"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-300 my-4 pt-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-network-wired text-gray-500 mr-2"></i>Configuración ISAPI Local (Opcional)
+                </h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            URL de API (ISAPI)
+                        </label>
+                        <input type="text" name="hikvision_devices[HIK_INDEX][api_url]" 
+                               placeholder="http://192.168.1.100"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Solo para modo ISAPI local (no usar con Cloud)</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Usuario (ISAPI)
+                        </label>
+                        <input type="text" name="hikvision_devices[HIK_INDEX][username]" 
+                               placeholder="admin"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Contraseña (ISAPI)
+                        </label>
+                        <div class="relative">
+                            <input type="password" name="hikvision_devices[HIK_INDEX][password]" 
+                                   placeholder="••••••••"
+                                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                            <button type="button" onclick="togglePasswordVisibility(this)" 
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="hikvision_devices[HIK_INDEX][area]" value="">
                 </div>
             </div>
             
@@ -797,7 +950,7 @@
                 </label>
                 <label class="flex items-center">
                     <input type="checkbox" name="hikvision_devices[HIK_INDEX][verify_ssl]" 
-                           value="1"
+                           value="1" checked
                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
                     <span class="text-sm text-gray-700">Verificar certificado SSL</span>
                 </label>

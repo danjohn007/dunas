@@ -76,15 +76,21 @@ class HikvisionDevice {
                     $seen[] = $id;
                     // Actualizar dispositivo existente
                     $db->execute(
-                        "UPDATE hikvision_devices SET name=?, device_type=?, api_url=?, username=?, password=?, verify_ssl=?, area=?, is_enabled=?, updated_at=NOW() WHERE id=?",
+                        "UPDATE hikvision_devices SET name=?, device_type=?, api_url=?, username=?, password=?, verify_ssl=?, area=?, area_label=?, api_key=?, api_secret=?, token_endpoint=?, area_domain=?, device_index_code=?, is_enabled=?, updated_at=NOW() WHERE id=?",
                         [
                             $r['name'],
                             $r['device_type'],
-                            $r['api_url'],
+                            $r['api_url'] ?? null,
                             $r['username'] ?? null,
                             $r['password'] ?? null,
                             (int)($r['verify_ssl'] ?? 0),
                             $r['area'] ?? null,
+                            $r['area_label'] ?? null,
+                            $r['api_key'] ?? null,
+                            $r['api_secret'] ?? null,
+                            $r['token_endpoint'] ?? null,
+                            $r['area_domain'] ?? null,
+                            $r['device_index_code'] ?? null,
                             (int)($r['is_enabled'] ?? 1),
                             $id
                         ]
@@ -92,15 +98,21 @@ class HikvisionDevice {
                 } else {
                     // Insertar nuevo dispositivo
                     $db->execute(
-                        "INSERT INTO hikvision_devices (name, device_type, api_url, username, password, verify_ssl, area, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?,?)",
+                        "INSERT INTO hikvision_devices (name, device_type, api_url, username, password, verify_ssl, area, area_label, api_key, api_secret, token_endpoint, area_domain, device_index_code, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         [
                             $r['name'],
                             $r['device_type'],
-                            $r['api_url'],
+                            $r['api_url'] ?? null,
                             $r['username'] ?? null,
                             $r['password'] ?? null,
                             (int)($r['verify_ssl'] ?? 0),
                             $r['area'] ?? null,
+                            $r['area_label'] ?? null,
+                            $r['api_key'] ?? null,
+                            $r['api_secret'] ?? null,
+                            $r['token_endpoint'] ?? null,
+                            $r['area_domain'] ?? null,
+                            $r['device_index_code'] ?? null,
                             (int)($r['is_enabled'] ?? 1),
                             (int)($r['sort_order'] ?? 0)
                         ]
@@ -123,6 +135,67 @@ class HikvisionDevice {
         } catch (\Throwable $e) {
             $db->rollBack();
             throw $e;
+        }
+    }
+    
+    /**
+     * Verifica si el token de acceso necesita renovarse
+     * @param array $device Datos del dispositivo
+     * @return bool true si necesita renovación
+     */
+    public static function needsTokenRefresh($device) {
+        // Si no hay token o fecha de expiración, necesita renovación
+        if (empty($device['access_token']) || empty($device['token_expires_at'])) {
+            return true;
+        }
+        
+        // Obtener fecha de expiración
+        $expiresAt = strtotime($device['token_expires_at']);
+        
+        // Si la fecha es inválida, necesita renovación
+        if ($expiresAt === false) {
+            return true;
+        }
+        
+        // Renovar si faltan menos de 2 minutos para expirar
+        $now = time();
+        $twoMinutes = 120;
+        
+        return ($expiresAt - $now) < $twoMinutes;
+    }
+    
+    /**
+     * Guarda el token de acceso y su fecha de expiración
+     * @param Database $db Instancia de base de datos
+     * @param int $deviceId ID del dispositivo
+     * @param string $token Token de acceso
+     * @param int $expireTs Timestamp de expiración en milisegundos
+     * @param string|null $areaDomain Dominio del área (opcional)
+     * @return bool true si se guardó correctamente
+     */
+    public static function saveAccessToken($db, $deviceId, $token, $expireTs, $areaDomain = null) {
+        try {
+            // Convertir timestamp de milisegundos a segundos
+            $expireSeconds = $expireTs / 1000;
+            $expireDateTime = date('Y-m-d H:i:s', $expireSeconds);
+            
+            // Actualizar token y fecha de expiración
+            if ($areaDomain !== null) {
+                $db->execute(
+                    "UPDATE hikvision_devices SET access_token=?, token_expires_at=?, area_domain=?, updated_at=NOW() WHERE id=?",
+                    [$token, $expireDateTime, $areaDomain, $deviceId]
+                );
+            } else {
+                $db->execute(
+                    "UPDATE hikvision_devices SET access_token=?, token_expires_at=?, updated_at=NOW() WHERE id=?",
+                    [$token, $expireDateTime, $deviceId]
+                );
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error al guardar token de acceso: " . $e->getMessage());
+            return false;
         }
     }
     
