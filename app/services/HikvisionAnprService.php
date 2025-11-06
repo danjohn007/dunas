@@ -12,6 +12,10 @@ require_once APP_PATH . '/models/Unit.php';
 
 class HikvisionAnprService {
     
+    // Constantes para estados de detección
+    const STATUS_NEW = 'new';
+    const STATUS_PROCESSED = 'processed';
+    
     private $db;
     
     public function __construct() {
@@ -137,14 +141,15 @@ class HikvisionAnprService {
     private function saveDetection($plateText, $confidence, $deviceId, $unitId, $isMatch, $payloadJson) {
         try {
             $this->db->execute(
-                "INSERT INTO detected_plates (plate_text, confidence, captured_at, device_id, unit_id, is_match, payload_json, status) VALUES (?, ?, NOW(), ?, ?, ?, ?, 'new')",
+                "INSERT INTO detected_plates (plate_text, confidence, captured_at, device_id, unit_id, is_match, payload_json, status) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?)",
                 [
                     $plateText,
                     $confidence,
                     $deviceId,
                     $unitId,
                     $isMatch,
-                    $payloadJson
+                    $payloadJson,
+                    self::STATUS_NEW
                 ]
             );
             

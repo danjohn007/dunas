@@ -761,7 +761,7 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Área legacy -->
+                                    <!-- Área legacy - mantener para compatibilidad con código anterior -->
                                     <input type="hidden" name="hikvision_devices[<?php echo $index; ?>][area]" 
                                            value="<?php echo htmlspecialchars($device['area'] ?? ''); ?>">
                                 </div>

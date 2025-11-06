@@ -214,7 +214,7 @@ async function loadPlateDetection() {
     
     try {
         // Llamar a la API
-        const response = await fetch('<?php echo BASE_URL; ?>/api/anpr/latest.php');
+        const response = await fetch(<?php echo json_encode(BASE_URL); ?> + '/api/anpr/latest.php');
         
         if (!response.ok) {
             throw new Error('Error al consultar API: ' + response.status);

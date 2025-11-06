@@ -7,6 +7,10 @@
  */
 class HikvisionAPI {
     
+    // Constantes para configuración de tokens
+    const DEFAULT_TOKEN_EXPIRY_MS = 7200000; // 2 horas en milisegundos
+    const TOKEN_REFRESH_THRESHOLD_SECONDS = 120; // Renovar 2 minutos antes
+    
     /**
      * Asegurar que el dispositivo tiene un token válido para API Cloud
      * @param Database $db Instancia de base de datos
@@ -93,7 +97,7 @@ class HikvisionAPI {
             }
             
             $accessToken = $data['accessToken'];
-            $expireTime = $data['expireTime'] ?? (time() * 1000 + 7200000); // Default 2 horas
+            $expireTime = $data['expireTime'] ?? (time() * 1000 + self::DEFAULT_TOKEN_EXPIRY_MS);
             $areaDomain = $data['areaDomain'] ?? $device['area_domain'] ?? null;
             
             // Guardar token en base de datos
