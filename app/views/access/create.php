@@ -34,13 +34,70 @@
                     <option value="">-- Seleccione una unidad --</option>
                     <?php foreach ($units as $unit): ?>
                         <option value="<?php echo $unit['id']; ?>" 
-                                data-capacity="<?php echo $unit['capacity_liters']; ?>">
+                                data-capacity="<?php echo $unit['capacity_liters']; ?>"
+                                data-plate="<?php echo htmlspecialchars($unit['plate_number']); ?>">
                             <?php echo htmlspecialchars($unit['plate_number']); ?> 
                             (<?php echo $unit['brand']; ?> <?php echo $unit['model']; ?> - 
                             <?php echo number_format($unit['capacity_liters']); ?> L)
                         </option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            
+            <!-- Comparación de Placas (ANPR) -->
+            <div id="plateComparisonContainer" class="mb-6 hidden">
+                <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-camera text-indigo-600 mr-2"></i>Comparación de Placas
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Placa Guardada -->
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="text-xs text-gray-500 uppercase font-semibold mb-2">
+                                Placa de Unidad Guardada
+                            </div>
+                            <div id="savedPlate" class="text-2xl font-bold text-gray-900 font-mono tracking-wider">
+                                ---
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Según registro del sistema
+                            </div>
+                        </div>
+                        
+                        <!-- Placa Detectada -->
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="text-xs text-gray-500 uppercase font-semibold mb-2">
+                                Placa de Unidad Detectada
+                            </div>
+                            <div id="detectedPlate" class="text-2xl font-bold text-gray-900 font-mono tracking-wider">
+                                <span class="text-gray-400">Cargando...</span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                <span id="detectionInfo">Consultando cámara LPR...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Estado de Comparación -->
+                    <div id="comparisonResult" class="mt-4 hidden">
+                        <div id="matchResult" class="p-4 rounded-lg flex items-center">
+                            <i id="matchIcon" class="fas fa-circle-check text-3xl mr-3"></i>
+                            <div>
+                                <div id="matchTitle" class="font-semibold text-lg"></div>
+                                <div id="matchMessage" class="text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón Refrescar -->
+                    <div class="mt-4 text-center">
+                        <button type="button" id="refreshDetectionBtn" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">
+                            <i class="fas fa-sync-alt mr-2"></i>Detectar Placa Nuevamente
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- Selección de Chofer -->
@@ -113,14 +170,126 @@
 </style>
 
 <script>
-// Mostrar capacidad de la unidad seleccionada
-document.getElementById('unitSelect').addEventListener('change', function() {
+// Variables globales
+let currentDetection = null;
+
+// Mostrar capacidad de la unidad seleccionada y cargar detección de placa
+document.getElementById('unitSelect').addEventListener('change', async function() {
     const selectedOption = this.options[this.selectedIndex];
     const capacity = selectedOption.getAttribute('data-capacity');
+    const plate = selectedOption.getAttribute('data-plate');
+    
     if (capacity) {
         console.log('Capacidad de la unidad: ' + capacity + ' litros');
     }
+    
+    // Si se seleccionó una unidad, mostrar comparación y cargar detección
+    if (plate && this.value) {
+        document.getElementById('plateComparisonContainer').classList.remove('hidden');
+        document.getElementById('savedPlate').textContent = plate;
+        await loadPlateDetection();
+    } else {
+        document.getElementById('plateComparisonContainer').classList.add('hidden');
+        document.getElementById('savedPlate').textContent = '---';
+    }
 });
+
+// Botón refrescar detección
+document.getElementById('refreshDetectionBtn').addEventListener('click', async function() {
+    await loadPlateDetection();
+});
+
+// Función para cargar detección de placa
+async function loadPlateDetection() {
+    const detectedPlateEl = document.getElementById('detectedPlate');
+    const detectionInfoEl = document.getElementById('detectionInfo');
+    const comparisonResultEl = document.getElementById('comparisonResult');
+    const refreshBtn = document.getElementById('refreshDetectionBtn');
+    
+    // Mostrar estado de carga
+    detectedPlateEl.innerHTML = '<span class="text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Detectando...</span>';
+    detectionInfoEl.textContent = 'Consultando cámara LPR...';
+    comparisonResultEl.classList.add('hidden');
+    refreshBtn.disabled = true;
+    
+    try {
+        // Llamar a la API
+        const response = await fetch('<?php echo BASE_URL; ?>/api/anpr/latest.php');
+        
+        if (!response.ok) {
+            throw new Error('Error al consultar API: ' + response.status);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Error desconocido');
+        }
+        
+        currentDetection = data.detection;
+        
+        // Actualizar UI
+        if (currentDetection && currentDetection.plate_text) {
+            detectedPlateEl.innerHTML = `<span class="text-gray-900">${currentDetection.plate_text}</span>`;
+            
+            // Información de confianza
+            let confidenceText = '';
+            if (currentDetection.confidence) {
+                const confidencePct = Math.round(currentDetection.confidence);
+                confidenceText = ` (${confidencePct}% confianza)`;
+            }
+            detectionInfoEl.innerHTML = `Detectado por cámara LPR${confidenceText}`;
+            
+            // Comparar placas
+            const savedPlate = document.getElementById('savedPlate').textContent;
+            const isMatch = currentDetection.is_match || (savedPlate === currentDetection.plate_text);
+            
+            showComparisonResult(isMatch);
+            
+        } else {
+            detectedPlateEl.innerHTML = '<span class="text-gray-400">Sin detección</span>';
+            detectionInfoEl.textContent = 'No se detectó placa en los últimos segundos';
+            comparisonResultEl.classList.add('hidden');
+        }
+        
+    } catch (error) {
+        console.error('Error al cargar detección:', error);
+        detectedPlateEl.innerHTML = '<span class="text-red-500">Error</span>';
+        detectionInfoEl.textContent = 'No se pudo consultar la cámara LPR';
+        comparisonResultEl.classList.add('hidden');
+    } finally {
+        refreshBtn.disabled = false;
+    }
+}
+
+// Función para mostrar resultado de comparación
+function showComparisonResult(isMatch) {
+    const comparisonResultEl = document.getElementById('comparisonResult');
+    const matchResultEl = document.getElementById('matchResult');
+    const matchIconEl = document.getElementById('matchIcon');
+    const matchTitleEl = document.getElementById('matchTitle');
+    const matchMessageEl = document.getElementById('matchMessage');
+    
+    comparisonResultEl.classList.remove('hidden');
+    
+    if (isMatch) {
+        // Match - verde
+        matchResultEl.className = 'p-4 rounded-lg flex items-center bg-green-50 border-2 border-green-500';
+        matchIconEl.className = 'fas fa-circle-check text-3xl mr-3 text-green-600';
+        matchTitleEl.className = 'font-semibold text-lg text-green-800';
+        matchTitleEl.textContent = '¡Placas coinciden!';
+        matchMessageEl.className = 'text-sm text-green-700';
+        matchMessageEl.textContent = 'La placa detectada por la cámara coincide con la unidad seleccionada.';
+    } else {
+        // No match - amarillo/gris
+        matchResultEl.className = 'p-4 rounded-lg flex items-center bg-yellow-50 border-2 border-yellow-500';
+        matchIconEl.className = 'fas fa-circle-exclamation text-3xl mr-3 text-yellow-600';
+        matchTitleEl.className = 'font-semibold text-lg text-yellow-800';
+        matchTitleEl.textContent = 'Las placas no coinciden';
+        matchMessageEl.className = 'text-sm text-yellow-700';
+        matchMessageEl.textContent = 'La placa detectada difiere de la unidad seleccionada. Verifique la información.';
+    }
+}
 
 // Interceptar el envío del formulario para abrir la barrera
 document.getElementById('accessForm').addEventListener('submit', async function(e) {
