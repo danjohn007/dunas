@@ -101,14 +101,23 @@ class ShellyActionService {
     
     /**
      * Ejecuta un pulso en el canal especificado
+     * 
+     * Nota: Utiliza usleep() que es bloqueante. Esto es aceptable para control de hardware IoT
+     * donde la precisión del tiempo es crítica. El pulso típico es de 5 segundos.
+     * Para duraciones mayores a 10 segundos, considerar implementación asíncrona.
+     * 
      * @param ShellyAPI $api Instancia de la API de Shelly
      * @param int $channel Canal a activar
-     * @param int $durationMs Duración del pulso en milisegundos
+     * @param int $durationMs Duración del pulso en milisegundos (máximo práctico: 10000ms)
      * @param int $invert Si se debe invertir la secuencia
      * @return array Resultado de la operación
      */
     private static function executePulse($api, $channel, $durationMs, $invert) {
+        // Limitar duración práctica para evitar timeouts largos
+        // Si se necesitan pulsos más largos, considerar implementación asíncrona
+        $durationMs = min($durationMs, 10000); // Máximo 10 segundos
         $waitTime = $durationMs * 1000; // Convert ms to microseconds
+        
         if ($invert) {
             $api->relayTurnOn($channel);
             usleep($waitTime);

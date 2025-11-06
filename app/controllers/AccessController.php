@@ -598,6 +598,7 @@ class AccessController extends BaseController {
             // Si el acceso está en progreso, es una salida - cerrar barrera
             if ($access['status'] === 'in_progress') {
                 // Registrar salida con capacidad máxima
+                // NOTA: Se asume carga completa. Para cargas parciales, usar registro manual
                 $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
                 
                 // Cerrar barrera usando el nuevo servicio

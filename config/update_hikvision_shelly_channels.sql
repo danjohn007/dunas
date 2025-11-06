@@ -40,14 +40,10 @@ ADD COLUMN exit_channel TINYINT NOT NULL DEFAULT 1 COMMENT 'Canal para cierre (s
 ADD COLUMN pulse_duration_ms INT NOT NULL DEFAULT 5000 COMMENT 'Duración del pulso en milisegundos' AFTER exit_channel;
 
 -- Migrar datos existentes: usar active_channel como entry_channel
+-- exit_channel se calcula como (active_channel + 1) % 4 para distribución balanceada
 UPDATE shelly_devices
 SET entry_channel = active_channel,
-    exit_channel = CASE 
-        WHEN active_channel = 0 THEN 1 
-        WHEN active_channel = 1 THEN 0
-        WHEN active_channel = 2 THEN 3
-        ELSE 0
-    END
+    exit_channel = (active_channel + 1) % 4
 WHERE entry_channel = 0 AND exit_channel = 1;
 
 -- ============================================================

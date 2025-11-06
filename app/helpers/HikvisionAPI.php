@@ -370,8 +370,8 @@ class HikvisionAPI {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Timeout más largo para lectores de código de barras
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); // 5 segundos para conectar
             
             if (!empty($username) && !empty($password)) {
                 curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);

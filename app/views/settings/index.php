@@ -370,9 +370,9 @@
                                     </label>
                                     <input type="number" name="devices[<?php echo $index; ?>][pulse_duration_ms]" 
                                            value="<?php echo isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000; ?>"
-                                           min="100" max="60000" step="100"
+                                           min="100" max="10000" step="100"
                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms (5 seg)</p>
+                                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms. Máximo: 10 seg</p>
                                 </div>
                             </div>
                             
@@ -527,9 +527,9 @@
                     </label>
                     <input type="number" name="devices[INDEX][pulse_duration_ms]" 
                            value="5000"
-                           min="100" max="60000" step="100"
+                           min="100" max="10000" step="100"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms (5 seg)</p>
+                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms. Máximo: 10 seg</p>
                 </div>
             </div>
             

@@ -126,7 +126,7 @@ class SettingsController extends BaseController {
                         'active_channel' => max(0, min(3, (int)($d['active_channel'] ?? 0))),
                         'entry_channel' => max(0, min(3, (int)($d['entry_channel'] ?? 0))),
                         'exit_channel' => max(0, min(3, (int)($d['exit_channel'] ?? 1))),
-                        'pulse_duration_ms' => max(100, min(60000, (int)($d['pulse_duration_ms'] ?? 5000))),
+                        'pulse_duration_ms' => max(100, min(10000, (int)($d['pulse_duration_ms'] ?? 5000))),
                         'channel_count' => max(1, min(4, (int)($d['channel_count'] ?? 4))),
                         'invert_sequence' => isset($d['invert_sequence']) ? 1 : 0,
                         'is_simultaneous' => isset($d['is_simultaneous']) ? 1 : 0,
