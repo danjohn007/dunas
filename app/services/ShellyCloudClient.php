@@ -1,13 +1,16 @@
 <?php
 /**
- * ShellyCloudClient - Cliente JSON-RPC para Shelly Cloud API
+ * ShellyCloudClient - Cliente mejorado para Shelly Cloud API
  * 
- * Implementa comunicación con Shelly Cloud usando JSON-RPC según la especificación oficial.
- * Proporciona métodos atómicos para control de relays con soporte para toggle_after.
+ * Implementa comunicación con Shelly Cloud usando el REST API oficial.
+ * Proporciona métodos atómicos para control de relays con gestión de pulsos.
+ * 
+ * Nota: Este cliente usa el Shelly Cloud REST API (form-urlencoded) ya que
+ * el Cloud no expone el JSON-RPC directamente. Para JSON-RPC se requeriría
+ * conexión directa IP, que no es posible en servidor remoto.
  */
 class ShellyCloudClient {
     private string $server;
-    private int $port;
     private string $authKey;
     private string $deviceId;
     
@@ -18,81 +21,53 @@ class ShellyCloudClient {
      * Constructor
      * @param string $server Servidor Cloud (ej: 'shelly-208-eu.shelly.cloud')
      * @param string $deviceId ID del dispositivo Shelly
-     * @param string $authKey Clave de autenticación (opcional según configuración)
-     * @param int $port Puerto del servidor (default: 6022)
+     * @param string $authKey Clave de autenticación
      */
-    public function __construct(string $server, string $deviceId, string $authKey = '', int $port = 6022) {
+    public function __construct(string $server, string $deviceId, string $authKey = '') {
         $this->server = $server;
-        $this->port = $port;
         $this->authKey = $authKey;
         $this->deviceId = $deviceId;
     }
     
     /**
-     * Ejecuta un pulso atómico en el relay usando toggle_after
-     * Este método enciende el relay y automáticamente lo apaga después del tiempo especificado.
+     * Ejecuta un pulso completo en el relay (enciende y apaga)
+     * 
+     * Implementación: Dado que Shelly Cloud REST API no expone toggle_after,
+     * usamos dos llamadas separadas con sleep entre ellas. Aunque esto es bloqueante,
+     * es aceptable para control de hardware IoT donde la precisión es crítica.
      * 
      * @param int $relayId ID del relay (canal 0-3)
      * @param int $durationMs Duración del pulso en milisegundos
+     * @param bool $invertSequence Si true: ON→OFF, si false: OFF→ON
      * @return array ['ok' => bool, 'result' => mixed, 'error' => string]
      */
-    public function pulse(int $relayId, int $durationMs): array {
-        // Convertir ms a segundos (Shelly espera segundos en toggle_after)
-        $toggleAfterSec = max(1, (int)ceil($durationMs / 1000.0));
+    public function pulse(int $relayId, int $durationMs, bool $invertSequence = false): array {
+        error_log("ShellyCloudClient::pulse() - Relay {$relayId}, duration {$durationMs}ms, invert=" . ($invertSequence ? 'true' : 'false'));
         
-        $payload = [
-            'id' => (int)round(microtime(true) * 1000),
-            'src' => 'dunas',
-            'method' => 'Switch.Set',
-            'params' => [
-                'id' => $relayId,
-                'on' => true,
-                'toggle_after' => $toggleAfterSec
-            ]
-        ];
+        // Limitar duración para evitar timeouts excesivos
+        $durationMs = min($durationMs, 10000); // Máximo 10 segundos
         
-        error_log("ShellyCloudClient::pulse() - Relay {$relayId}, duration {$durationMs}ms ({$toggleAfterSec}s)");
-        
-        return $this->sendJsonRpc($payload);
-    }
-    
-    /**
-     * Fallback: ejecuta pulso con dos llamadas separadas (ON → sleep → OFF)
-     * Usar solo si el dispositivo no soporta toggle_after correctamente.
-     * 
-     * ADVERTENCIA: Este método bloquea el servidor durante la duración del pulso.
-     * 
-     * @param int $relayId ID del relay (canal 0-3)
-     * @param int $durationMs Duración del pulso en milisegundos
-     * @return array Resultado de la operación
-     */
-    public function pulseWithFallback(int $relayId, int $durationMs): array {
-        error_log("ShellyCloudClient::pulseWithFallback() - Relay {$relayId}, duration {$durationMs}ms");
-        
-        // Encender
-        $r1 = $this->sendJsonRpc([
-            'id' => 1,
-            'src' => 'dunas',
-            'method' => 'Switch.Set',
-            'params' => ['id' => $relayId, 'on' => true]
-        ]);
-        
-        if (!$r1['ok']) {
-            return $r1;
+        if ($invertSequence) {
+            // Secuencia invertida: ON → esperar → OFF
+            $r1 = $this->turnOn($relayId);
+            if (!$r1['ok']) {
+                return $r1;
+            }
+            
+            usleep($durationMs * 1000);
+            
+            return $this->turnOff($relayId);
+        } else {
+            // Secuencia normal: OFF → esperar → ON
+            $r1 = $this->turnOff($relayId);
+            if (!$r1['ok']) {
+                return $r1;
+            }
+            
+            usleep($durationMs * 1000);
+            
+            return $this->turnOn($relayId);
         }
-        
-        // Esperar (bloqueante)
-        usleep($durationMs * 1000);
-        
-        // Apagar
-        $r2 = $this->sendJsonRpc([
-            'id' => 2,
-            'src' => 'dunas',
-            'method' => 'Switch.Set',
-            'params' => ['id' => $relayId, 'on' => false]
-        ]);
-        
-        return $r2;
     }
     
     /**
@@ -101,12 +76,7 @@ class ShellyCloudClient {
      * @return array Resultado de la operación
      */
     public function turnOn(int $relayId): array {
-        return $this->sendJsonRpc([
-            'id' => (int)round(microtime(true) * 1000),
-            'src' => 'dunas',
-            'method' => 'Switch.Set',
-            'params' => ['id' => $relayId, 'on' => true]
-        ]);
+        return $this->controlRelay($relayId, 'on');
     }
     
     /**
@@ -115,38 +85,31 @@ class ShellyCloudClient {
      * @return array Resultado de la operación
      */
     public function turnOff(int $relayId): array {
-        return $this->sendJsonRpc([
-            'id' => (int)round(microtime(true) * 1000),
-            'src' => 'dunas',
-            'method' => 'Switch.Set',
-            'params' => ['id' => $relayId, 'on' => false]
-        ]);
+        return $this->controlRelay($relayId, 'off');
     }
     
     /**
-     * Envía una solicitud JSON-RPC al servidor Shelly Cloud
-     * @param array $payload Payload JSON-RPC
-     * @return array ['ok' => bool, 'result' => mixed, 'error' => string, 'raw' => string]
+     * Controla un relay del dispositivo Shelly
+     * @param int $channel Canal del relay (0-3)
+     * @param string $turn 'on' o 'off'
+     * @return array ['ok' => bool, 'result' => mixed, 'error' => string]
      */
-    private function sendJsonRpc(array $payload): array {
-        $url = "https://{$this->server}:{$this->port}/device/relay/rpc";
+    private function controlRelay(int $channel, string $turn): array {
+        $url = "https://{$this->server}/device/relay/control";
         
-        // Agregar auth_key si está configurado
-        if (!empty($this->authKey)) {
-            $payload['auth'] = ['key' => $this->authKey];
-        }
+        $postData = [
+            'auth_key' => $this->authKey,
+            'id' => $this->deviceId,
+            'channel' => $channel,
+            'turn' => $turn
+        ];
         
-        $jsonPayload = json_encode($payload);
-        
-        $ch = curl_init($url);
+        $ch = curl_init();
         curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($jsonPayload)
-            ],
-            CURLOPT_POSTFIELDS => $jsonPayload,
+            CURLOPT_POSTFIELDS => http_build_query($postData),
             CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
             CURLOPT_TIMEOUT => self::TIMEOUT,
             CURLOPT_SSL_VERIFYPEER => true,
@@ -160,7 +123,7 @@ class ShellyCloudClient {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
-        error_log("ShellyCloudClient - HTTP {$httpCode} in {$elapsed}ms");
+        error_log("ShellyCloudClient - HTTP {$httpCode} in {$elapsed}ms - channel={$channel}, turn={$turn}");
         
         if ($err) {
             error_log("ShellyCloudClient - cURL error: {$err}");
@@ -175,18 +138,23 @@ class ShellyCloudClient {
         $json = json_decode($res, true);
         if (!$json) {
             error_log("ShellyCloudClient - Invalid JSON response: {$res}");
-            return ['ok' => false, 'error' => 'Invalid JSON-RPC response', 'raw' => $res];
+            return ['ok' => false, 'error' => 'Invalid JSON response', 'raw' => $res];
         }
         
-        // Shelly responde con "result" en caso de éxito o "error" en caso de fallo
-        if (isset($json['error'])) {
-            $errorMsg = is_array($json['error']) 
-                ? ($json['error']['message'] ?? json_encode($json['error']))
-                : $json['error'];
-            error_log("ShellyCloudClient - RPC error: {$errorMsg}");
-            return ['ok' => false, 'error' => $errorMsg, 'rpc_error' => $json['error']];
+        // Shelly Cloud responde con "isok" en el formato REST
+        if (isset($json['isok'])) {
+            if ($json['isok']) {
+                return ['ok' => true, 'result' => $json['data'] ?? $json, 'raw' => $res];
+            } else {
+                $errorMsg = is_array($json['errors'] ?? null) 
+                    ? json_encode($json['errors'])
+                    : ($json['errors'] ?? 'Unknown error');
+                error_log("ShellyCloudClient - API error: {$errorMsg}");
+                return ['ok' => false, 'error' => $errorMsg, 'api_response' => $json];
+            }
         }
         
-        return ['ok' => true, 'result' => $json['result'] ?? $json, 'raw' => $res];
+        // Si no hay 'isok', asumir éxito
+        return ['ok' => true, 'result' => $json, 'raw' => $res];
     }
 }

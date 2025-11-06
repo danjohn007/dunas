@@ -65,7 +65,7 @@ class ShellyActionService {
                         case 'toggle':
                         case 'pulse':
                             $durationMs = (int)($cfg['duration_ms'] ?? $pulseDuration);
-                            $result = $client->pulse($channel, $durationMs);
+                            $result = $client->pulse($channel, $durationMs, (bool)$invert);
                             
                             // Registrar en log de pulsos
                             ShellyLockHelper::logPulse($db, $action, $channel, $correlation, [
