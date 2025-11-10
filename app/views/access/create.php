@@ -195,8 +195,43 @@ document.getElementById('unitSelect').addEventListener('change', async function(
 });
 
 // Botón refrescar detección
-document.getElementById('refreshDetectionBtn').addEventListener('click', async function() {
-    await loadPlateDetection();
+document.getElementById('refreshDetectionBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    const btn = this;
+    const originalHtml = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Ejecutando...';
+    
+    try {
+        // 1) Ejecutar el mover del FTP
+        const ftpResponse = await fetch(<?php echo json_encode(BASE_URL); ?> + '/api/run_mover_ftp.php', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+        });
+        const ftpData = await ftpResponse.json();
+        
+        if (!ftpData.success) {
+            throw new Error(ftpData.error || 'Fallo al mover imágenes');
+        }
+        
+        // 2) Lanzar la validación que ya teníamos
+        await loadPlateDetection();
+        
+    } catch (err) {
+        console.error('Error en el proceso:', err);
+        const detectedPlateEl = document.getElementById('detectedPlate');
+        const detectionInfoEl = document.getElementById('detectionInfo');
+        if (detectedPlateEl) {
+            detectedPlateEl.innerHTML = '<span class="text-red-500">Error</span>';
+        }
+        if (detectionInfoEl) {
+            detectionInfoEl.textContent = err.message || 'No se pudo completar la operación';
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
 });
 
 // Función para cargar detección de placa
@@ -204,13 +239,11 @@ async function loadPlateDetection() {
     const detectedPlateEl = document.getElementById('detectedPlate');
     const detectionInfoEl = document.getElementById('detectionInfo');
     const comparisonResultEl = document.getElementById('comparisonResult');
-    const refreshBtn = document.getElementById('refreshDetectionBtn');
     
     // Mostrar estado de carga
     detectedPlateEl.innerHTML = '<span class="text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Detectando...</span>';
     detectionInfoEl.textContent = 'Consultando cámara LPR...';
     comparisonResultEl.classList.add('hidden');
-    refreshBtn.disabled = true;
     
     try {
         // Llamar a la API
@@ -257,8 +290,6 @@ async function loadPlateDetection() {
         detectedPlateEl.innerHTML = '<span class="text-red-500">Error</span>';
         detectionInfoEl.textContent = 'No se pudo consultar la cámara LPR';
         comparisonResultEl.classList.add('hidden');
-    } finally {
-        refreshBtn.disabled = false;
     }
 }
 
