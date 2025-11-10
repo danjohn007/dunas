@@ -308,3 +308,31 @@ document.getElementById('accessForm').addEventListener('submit', function(e) {
     // El servidor manejará la apertura de la barrera con idempotencia
 });
 </script>
+
+<script>
+// === Autoejecutar mover_ftp_a_public.php cada 10 segundos ===
+
+// URL pública del script
+const moverUrl = "https://fix360.app/dunas/Imagenes/mover_ftp_a_public.php";
+
+// función que llama al script (sin interrumpir al usuario)
+async function autoRunMoverFTP() {
+  try {
+    // hacemos una petición GET silenciosa
+    const res = await fetch(moverUrl, { method: "GET", cache: "no-store" });
+    if (!res.ok) {
+      console.warn("⚠️ mover_ftp_a_public.php devolvió un error:", res.status);
+      return;
+    }
+    console.log("🔁 mover_ftp_a_public.php ejecutado correctamente");
+  } catch (err) {
+    console.error("❌ Error ejecutando mover_ftp_a_public.php:", err);
+  }
+}
+
+// ejecuta inmediatamente al cargar
+autoRunMoverFTP();
+
+// luego repite cada 10 segundos (10000 ms)
+setInterval(autoRunMoverFTP, 10000);
+</script>
