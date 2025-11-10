@@ -12,6 +12,7 @@ Sistema integral para gestionar el acceso de pipas de agua a tomas autorizadas, 
 - ✅ **Registro Rápido** con búsqueda de unidad y creación automática de registros
 - ✅ **Escaneo de Código de Barras** para salida automática con capacidad máxima
 - ✅ **Integración IoT** con Shelly Relay SHELLPRO4PM para control de barreras vehiculares
+- ✅ **Sincronización FTP** para imágenes de cámaras ANPR con detección automática
 - ✅ **Transacciones y Pagos** (Efectivo, Vales, Transferencias)
 - ✅ **Reportes** con exportación a Excel y PDF
 - ✅ **Dashboard** con estadísticas en tiempo real y gráficas optimizadas
@@ -28,6 +29,7 @@ Sistema integral para gestionar el acceso de pipas de agua a tomas autorizadas, 
   - curl
   - gd (para manejo de imágenes)
   - mbstring
+  - ftp (para sincronización de imágenes ANPR)
 
 ## 🔧 Instalación
 
@@ -233,6 +235,9 @@ El sistema implementa las siguientes medidas de seguridad:
 - Generación de tickets con QR y códigos de barras
 - Control de barreras con Shelly Relay
 - Validación de accesos autorizados
+- Detección automática de placas (ANPR) con Hikvision
+- Sincronización FTP de imágenes vehiculares
+- Comparación automática de placas detectadas vs. registradas
 
 ### 7. Transacciones y Pagos
 - Registro de transacciones
@@ -285,6 +290,38 @@ ShellyAPI::closeBarrier();  // Cerrar barrera
 ShellyAPI::getStatus();     // Obtener estado del dispositivo
 ```
 
+## 📷 Sincronización FTP para Imágenes ANPR
+
+El sistema incluye sincronización automática de imágenes vehiculares desde servidores FTP.
+
+### Características
+
+- Sincronización de imágenes desde cámaras ANPR Hikvision
+- Detección automática de placas vehiculares
+- Comparación de placas detectadas vs. registradas
+- Botón de recarga manual para obtener imágenes actualizadas
+
+### Configuración
+
+1. Ejecutar la migración SQL:
+```bash
+mysql -u root -p dunas_access_control < config/migrations/add_ftp_settings.sql
+```
+
+2. Configurar los parámetros FTP en la tabla `settings`:
+   - `ftp_host` - Servidor FTP
+   - `ftp_port` - Puerto (predeterminado: 21)
+   - `ftp_user` - Usuario
+   - `ftp_pass` - Contraseña
+   - `ftp_images_path` - Ruta de imágenes
+   - `ftp_image_pattern` - Patrón de archivos
+
+### Documentación
+
+Para información detallada, consulte:
+- **[FTP_IMAGE_SYNC_GUIDE.md](FTP_IMAGE_SYNC_GUIDE.md)** - Guía completa de configuración
+- **[IMPLEMENTATION_RELOAD_BUTTON.md](IMPLEMENTATION_RELOAD_BUTTON.md)** - Documentación técnica
+
 ## 🛠️ Tecnologías Utilizadas
 
 - **Backend:** PHP puro (sin frameworks)
@@ -295,6 +332,7 @@ ShellyAPI::getStatus();     // Obtener estado del dispositivo
 - **Iconos:** Font Awesome
 - **Arquitectura:** MVC (Model-View-Controller)
 - **IoT:** Shelly Relay API
+- **ANPR:** Hikvision Cloud API
 
 ## 📊 Exportación de Reportes
 
