@@ -194,12 +194,12 @@ document.getElementById('unitSelect').addEventListener('change', async function(
     }
 });
 
-// Botón refrescar detección
+// Botón refrescar detección - ejecuta script FTP y detecta placa
 document.getElementById('refreshDetectionBtn').addEventListener('click', async function() {
-    await loadPlateDetection();
+    await loadPlateDetectionWithRefresh();
 });
 
-// Función para cargar detección de placa
+// Función para cargar detección de placa (desde API normal)
 async function loadPlateDetection() {
     const detectedPlateEl = document.getElementById('detectedPlate');
     const detectionInfoEl = document.getElementById('detectionInfo');
@@ -256,6 +256,62 @@ async function loadPlateDetection() {
         console.error('Error al cargar detección:', error);
         detectedPlateEl.innerHTML = '<span class="text-red-500">Error</span>';
         detectionInfoEl.textContent = 'No se pudo consultar la cámara LPR';
+        comparisonResultEl.classList.add('hidden');
+    } finally {
+        refreshBtn.disabled = false;
+    }
+}
+
+// Función para detectar placa con refresh (ejecuta script FTP y lee archivos)
+async function loadPlateDetectionWithRefresh() {
+    const detectedPlateEl = document.getElementById('detectedPlate');
+    const detectionInfoEl = document.getElementById('detectionInfo');
+    const comparisonResultEl = document.getElementById('comparisonResult');
+    const refreshBtn = document.getElementById('refreshDetectionBtn');
+    
+    // Mostrar estado de carga
+    detectedPlateEl.innerHTML = '<span class="text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Detectando...</span>';
+    detectionInfoEl.textContent = 'Ejecutando detección y consultando archivos...';
+    comparisonResultEl.classList.add('hidden');
+    refreshBtn.disabled = true;
+    
+    try {
+        // Llamar al nuevo endpoint que ejecuta el script FTP
+        const response = await fetch(<?php echo json_encode(BASE_URL); ?> + '/api/detect_plate.php');
+        
+        if (!response.ok) {
+            throw new Error('Error al consultar API: ' + response.status);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Error desconocido');
+        }
+        
+        // Actualizar UI con la placa detectada
+        if (data.plate_detected) {
+            detectedPlateEl.innerHTML = `<span class="text-gray-900">${data.plate_detected}</span>`;
+            detectionInfoEl.innerHTML = `Detectado desde archivo de imagen`;
+            
+            // Comparar placas
+            const savedPlate = document.getElementById('savedPlate').textContent;
+            const normalizedSaved = savedPlate.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            const normalizedDetected = data.plate_detected.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            const isMatch = data.is_match || (normalizedSaved === normalizedDetected);
+            
+            showComparisonResult(isMatch);
+            
+        } else {
+            detectedPlateEl.innerHTML = '<span class="text-gray-400">Sin detección</span>';
+            detectionInfoEl.textContent = 'No se detectó placa en las imágenes';
+            comparisonResultEl.classList.add('hidden');
+        }
+        
+    } catch (error) {
+        console.error('Error al cargar detección:', error);
+        detectedPlateEl.innerHTML = '<span class="text-red-500">Error</span>';
+        detectionInfoEl.textContent = data?.error || 'No se pudo consultar la cámara LPR';
         comparisonResultEl.classList.add('hidden');
     } finally {
         refreshBtn.disabled = false;
