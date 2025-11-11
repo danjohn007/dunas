@@ -29,6 +29,44 @@
         </div>
         
         <div id="searchResult" class="mt-4 hidden"></div>
+        
+        <!-- Comparación de Placas -->
+        <div id="plateComparisonQuick" class="mt-4 hidden">
+            <div id="plate-compare-box" class="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-4">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">
+                    <i class="fas fa-camera text-indigo-600 mr-2"></i>Comparación de Placas
+                </h3>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Placa Ingresada -->
+                    <div class="bg-white rounded p-3 border border-gray-200">
+                        <div class="text-xs text-gray-500 uppercase font-semibold mb-1">
+                            Placa Ingresada
+                        </div>
+                        <div id="plate-saved-text" class="text-lg font-bold text-gray-900 font-mono">
+                            ---
+                        </div>
+                    </div>
+                    
+                    <!-- Placa Detectada -->
+                    <div class="bg-white rounded p-3 border border-gray-200">
+                        <div class="text-xs text-gray-500 uppercase font-semibold mb-1">
+                            Placa Detectada
+                        </div>
+                        <div id="plate-detected-text" class="text-lg font-bold text-gray-900 font-mono">
+                            <span class="text-gray-400">...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estado -->
+                <div class="mt-3 p-2 rounded bg-gray-50 border border-gray-200">
+                    <div class="text-xs font-semibold text-gray-600">
+                        Estado: <span id="plate-compare-status">Esperando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Formulario de Registro -->
@@ -424,4 +462,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+</script>
+
+<script src="<?php echo BASE_URL; ?>/assets/js/plate-compare.js"></script>
+<script>
+(function(){
+  const compareUrl   = "<?php echo BASE_URL; ?>/api/compare_plate.php";
+  const plateInput   = document.querySelector('#plateSearch');
+  const detectedEl   = document.querySelector('#plate-detected-text');
+  const statusEl     = document.querySelector('#plate-compare-status');
+  const containerEl  = document.querySelector('#plate-compare-box');
+  const savedPlateEl = document.querySelector('#plate-saved-text');
+  const comparisonBox = document.querySelector('#plateComparisonQuick');
+
+  function normalizePlate(p) {
+    return (p || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  async function doCompareQuick() {
+    const unitPlate = normalizePlate(plateInput ? plateInput.value : '');
+    if (!unitPlate) return;
+
+    try {
+      const data = await PlateCompare.comparePlate({ unitPlate, compareUrl });
+      if (data.success) {
+        const isMatch = (normalizePlate(data.detected) === unitPlate) && !!data.detected;
+        PlateCompare.renderPlateComparison({
+          detected: data.detected,
+          unitPlate,
+          isMatch,
+          detectedEl, statusEl, containerEl
+        });
+      }
+    } catch (e) {
+      if (detectedEl) detectedEl.textContent = "Error";
+      if (statusEl)   statusEl.textContent = "No se pudo comparar";
+      console.warn(e);
+    }
+  }
+
+  // 1) Ejecuta cuando el usuario escribe la placa
+  if (plateInput) {
+    plateInput.addEventListener('input', () => {
+      const plate = normalizePlate(plateInput.value);
+      
+      // Show comparison box if plate is entered
+      if (plate && plate.length >= 3) {
+        comparisonBox.classList.remove('hidden');
+        savedPlateEl.textContent = plateInput.value.toUpperCase();
+        
+        // Pequeño debounce
+        clearTimeout(window.__qr_t);
+        window.__qr_t = setTimeout(doCompareQuick, 500);
+      } else {
+        comparisonBox.classList.add('hidden');
+      }
+    });
+  }
+
+  // 2) Ejecuta al cargar (por si ya viene prellenado)
+  if (plateInput && plateInput.value) {
+    const plate = normalizePlate(plateInput.value);
+    if (plate && plate.length >= 3) {
+      comparisonBox.classList.remove('hidden');
+      savedPlateEl.textContent = plateInput.value.toUpperCase();
+      doCompareQuick();
+    }
+  }
+
+  // 3) Opcional: refrescar cada 8 segundos
+  setInterval(() => {
+    const plate = normalizePlate(plateInput ? plateInput.value : '');
+    if (plate && plate.length >= 3) {
+      doCompareQuick();
+    }
+  }, 8000);
+})();
 </script>
