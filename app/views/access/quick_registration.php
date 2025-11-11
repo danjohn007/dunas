@@ -276,6 +276,18 @@
     </form>
 </div>
 
+<style>
+#plate-compare-box.match-ok {
+    border-color: #16a34a !important;
+    background: linear-gradient(to right, #dcfce7, #dbeafe) !important;
+}
+
+#plate-compare-box.match-bad {
+    border-color: #9ca3af !important;
+    background: linear-gradient(to right, #f3f4f6, #e5e7eb) !important;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const plateSearch = document.getElementById('plateSearch');
@@ -475,36 +487,51 @@ document.addEventListener('DOMContentLoaded', function() {
   const savedPlateEl = document.querySelector('#plate-saved-text');
   const comparisonBox = document.querySelector('#plateComparisonQuick');
 
-  function normalizePlate(p) {
-    return (p || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  function normalize(p){ return (p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  
+  function setUI({detected, ok, msg}) {
+    if (detectedEl) detectedEl.textContent = detected ?? 'Error';
+    if (statusEl)   statusEl.textContent   = msg ?? (ok ? 'Coincide' : 'No coincide');
+    if (containerEl){
+      containerEl.classList.remove('match-ok','match-bad');
+      containerEl.classList.add(ok ? 'match-ok' : 'match-bad');
+    }
   }
 
   async function doCompareQuick() {
-    const unitPlate = normalizePlate(plateInput ? plateInput.value : '');
-    if (!unitPlate) return;
+    const plate = normalize(plateInput?.value);
+    if (!plate) return;
 
     try {
-      const data = await PlateCompare.comparePlate({ unitPlate, compareUrl });
+      const fd = new FormData();
+      fd.append('unit_plate', plate);
+
+      const res = await fetch(compareUrl, { method:'POST', body: fd, cache:'no-store' });
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        const text = await res.text();
+        console.warn('compare non-JSON:', text.slice(0,200));
+        setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
+        return;
+      }
+
+      const data = await res.json();
       if (data.success) {
-        const isMatch = (normalizePlate(data.detected) === unitPlate) && !!data.detected;
-        PlateCompare.renderPlateComparison({
-          detected: data.detected,
-          unitPlate,
-          isMatch,
-          detectedEl, statusEl, containerEl
-        });
+        const ok = normalize(data.detected) === plate && !!data.detected;
+        setUI({detected: data.detected, ok});
+      } else {
+        setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
       }
     } catch (e) {
-      if (detectedEl) detectedEl.textContent = "Error";
-      if (statusEl)   statusEl.textContent = "No se pudo comparar";
       console.warn(e);
+      setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
     }
   }
 
   // 1) Ejecuta cuando el usuario escribe la placa
   if (plateInput) {
     plateInput.addEventListener('input', () => {
-      const plate = normalizePlate(plateInput.value);
+      const plate = normalize(plateInput.value);
       
       // Show comparison box if plate is entered
       if (plate && plate.length >= 3) {
@@ -513,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Pequeño debounce
         clearTimeout(window.__qr_t);
-        window.__qr_t = setTimeout(doCompareQuick, 500);
+        window.__qr_t = setTimeout(doCompareQuick, 400);
       } else {
         comparisonBox.classList.add('hidden');
       }
@@ -522,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 2) Ejecuta al cargar (por si ya viene prellenado)
   if (plateInput && plateInput.value) {
-    const plate = normalizePlate(plateInput.value);
+    const plate = normalize(plateInput.value);
     if (plate && plate.length >= 3) {
       comparisonBox.classList.remove('hidden');
       savedPlateEl.textContent = plateInput.value.toUpperCase();
@@ -532,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 3) Opcional: refrescar cada 8 segundos
   setInterval(() => {
-    const plate = normalizePlate(plateInput ? plateInput.value : '');
+    const plate = normalize(plateInput ? plateInput.value : '');
     if (plate && plate.length >= 3) {
       doCompareQuick();
     }
