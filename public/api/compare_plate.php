@@ -1,19 +1,21 @@
 <?php
 /**
- * compare_plate.php — Match determinístico por placa normalizada (sin ventana de tiempo).
- * - Si recibe unit_id: toma plate_number de esa unidad.
- * - Si recibe unit_plate: usa esa placa.
- * - Busca en detected_plates la última fila cuyo plate_text normalizado == placa objetivo normalizada.
- * - Si hay, marca is_match=1 y unit_id en ESA fila y la devuelve.
- * - Si no hay, devuelve la última global con is_match=false (no toca otras filas).
+ * compare_plate.php — Match determinístico por placa normalizada (con diagnóstico)
  *
- * Depende de MySQL 8+ para REGEXP_REPLACE; si no tienes 8+, ver notas al final.
+ * POST:
+ *  - unit_id    (preferido)
+ *  - unit_plate (alternativa si no hay unit_id)
+ *
+ * GET:
+ *  - diag=1     (devuelve info extra para depurar)
  */
 
 header('Content-Type: application/json; charset=utf-8');
-ini_set('display_errors', '0'); // evita HTML en la salida
+ini_set('display_errors', '0');
 error_reporting(E_ALL);
 ob_start();
+
+$diag = isset($_GET['diag']);
 
 try {
     require_once __DIR__ . '/../config/config.php';
@@ -22,13 +24,12 @@ try {
     $database = Database::getInstance();
     $db       = $database->getConnection();
 
-    // 0) Normalizador en PHP (por si la BD no es 8.0)
-    $phpNormalize = function (?string $s) {
+    $normalize = function (?string $s): string {
         $s = strtoupper(trim($s ?? ''));
         return preg_replace('/[^A-Z0-9]/', '', $s);
     };
 
-    // 1) Cargar placa objetivo
+    // 1) Leer unidad objetivo
     $unitId    = isset($_POST['unit_id']) ? (int)$_POST['unit_id'] : null;
     $unitPlate = null;
 
@@ -40,11 +41,13 @@ try {
         $unitPlate = (string)$_POST['unit_plate'];
     }
 
-    // Última global (para fallback)
-    $lastGlobal = $db->query("SELECT id, plate_text, captured_at
-                              FROM detected_plates
-                              ORDER BY captured_at DESC, id DESC
-                              LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    // 2) Última global (para fallback)
+    $lastGlobal = $db->query("
+        SELECT id, plate_text, captured_at
+        FROM detected_plates
+        ORDER BY captured_at DESC, id DESC
+        LIMIT 1
+    ")->fetch(PDO::FETCH_ASSOC);
 
     if (!$lastGlobal) {
         ob_clean();
@@ -52,81 +55,95 @@ try {
         exit;
     }
 
-    // Si no hay placa objetivo, solo regresamos la global
+    // 3) Si no hay placa de unidad, devolver global
     if ($unitPlate === null) {
-        ob_clean();
-        echo json_encode([
+        $out = [
             'success'     => true,
             'detected'    => $lastGlobal['plate_text'],
             'unit_plate'  => null,
             'is_match'    => false,
             'captured_at' => $lastGlobal['captured_at']
-        ]);
-        exit;
+        ];
+        if ($diag) $out['_diag'] = ['reason' => 'no-unit-plate'];
+        ob_clean(); echo json_encode($out); exit;
     }
 
-    $targetNorm = $phpNormalize($unitPlate);
+    $targetNorm = $normalize($unitPlate);
 
-    // 2) Buscar última detección cuya placa normalizada == targetNorm
-    //    Intentar con REGEXP_REPLACE (MySQL 8+), si falla usar PHP
+    // 4) ¿Tenemos MySQL 8?
+    $ver = $db->query("SELECT VERSION()")->fetchColumn();
+    $isMy8 = preg_match('/^8\./', $ver ?? '') === 1;
+
+    // 5) Buscar coincidencia por placa normalizada
     $row = null;
-    
-    try {
-        // Opción MySQL 8+ con REGEXP_REPLACE (quita todo lo no alfanumérico):
-        $sql = "
+
+    if ($isMy8) {
+        $stmt = $db->prepare("
             SELECT id, plate_text, captured_at
             FROM detected_plates
-            WHERE REGEXP_REPLACE(UPPER(plate_text), '[^A-Z0-9]', '') = :targetNorm
+            WHERE REGEXP_REPLACE(UPPER(plate_text), '[^A-Z0-9]', '') = :t
             ORDER BY captured_at DESC, id DESC
             LIMIT 1
-        ";
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':targetNorm' => $targetNorm]);
+        ");
+        $stmt->execute([':t' => $targetNorm]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        // Si REGEXP_REPLACE no está disponible (MySQL < 8.0), usar fallback PHP
-        error_log("REGEXP_REPLACE not available, using PHP fallback: " . $e->getMessage());
-        
-        $stmtAll = $db->query("SELECT id, plate_text, captured_at 
-                               FROM detected_plates 
-                               ORDER BY captured_at DESC, id DESC 
-                               LIMIT 500");
-        $all = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
-        
+    } else {
+        // Fallback PHP: traer últimas 500 y filtrar
+        $stmt = $db->query("
+            SELECT id, plate_text, captured_at
+            FROM detected_plates
+            ORDER BY captured_at DESC, id DESC
+            LIMIT 500
+        ");
+        $all = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($all as $r) {
-            if ($phpNormalize($r['plate_text']) === $targetNorm) {
-                $row = $r;
-                break;
+            if ($normalize($r['plate_text']) === $targetNorm) {
+                $row = $r; break;
             }
         }
     }
 
     if ($row) {
-        // 3) Hay match → marcar solo ESA fila
-        $upd = $db->prepare("UPDATE detected_plates SET is_match = 1, unit_id = :unitId WHERE id = :id");
-        $upd->execute([':unitId' => $unitId, ':id' => (int)$row['id']]);
+        // 6) Match → marcar esa fila
+        $upd = $db->prepare("UPDATE detected_plates SET is_match = 1, unit_id = :u WHERE id = :id");
+        $upd->execute([':u' => $unitId, ':id' => (int)$row['id']]);
 
-        ob_clean();
-        echo json_encode([
+        $out = [
             'success'     => true,
             'detected'    => $row['plate_text'],
             'unit_plate'  => $unitPlate,
             'is_match'    => true,
             'captured_at' => $row['captured_at']
-        ]);
-        exit;
+        ];
+        if ($diag) $out['_diag'] = [
+            'mode'          => $isMy8 ? 'mysql8' : 'php-filter',
+            'unit_id'       => $unitId,
+            'unit_plate'    => $unitPlate,
+            'targetNorm'    => $targetNorm,
+            'matched_id'    => (int)$row['id'],
+            'matched_norm'  => $normalize($row['plate_text']),
+            'db_version'    => $ver,
+        ];
+        ob_clean(); echo json_encode($out); exit;
     }
 
-    // 4) No hay match → devolver la global, sin tocar flags
-    ob_clean();
-    echo json_encode([
+    // 7) Sin match → devolver global (no tocar flags)
+    $out = [
         'success'     => true,
         'detected'    => $lastGlobal['plate_text'],
         'unit_plate'  => $unitPlate,
         'is_match'    => false,
         'captured_at' => $lastGlobal['captured_at'],
         'message'     => 'No se encontró coincidencia exacta por placa normalizada'
-    ]);
+    ];
+    if ($diag) $out['_diag'] = [
+        'mode'          => $isMy8 ? 'mysql8' : 'php-filter',
+        'unit_id'       => $unitId,
+        'unit_plate'    => $unitPlate,
+        'targetNorm'    => $targetNorm,
+        'db_version'    => $ver,
+    ];
+    ob_clean(); echo json_encode($out); exit;
 
 } catch (Throwable $e) {
     error_log("compare_plate error: ".$e->getMessage());

@@ -479,7 +479,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="<?php echo BASE_URL; ?>/assets/js/plate-compare.js"></script>
 <script>
 (function(){
-  const compareUrl   = "<?php echo BASE_URL; ?>/api/compare_plate.php";
+  // Use absolute URL with module number (adjust '5' if using different instance)
+  const COMPARE_URL = "https://fix360.app/dunas/dunasshelly/5/api/compare_plate.php";
   const plateInput   = document.querySelector('#plateSearch');
   const detectedEl   = document.querySelector('#plate-detected-text');
   const statusEl     = document.querySelector('#plate-compare-status');
@@ -506,12 +507,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const fd = new FormData();
       fd.append('unit_plate', plate);
 
-      const res = await fetch(compareUrl, { method:'POST', body: fd, cache:'no-store' });
+      const res = await fetch(COMPARE_URL, { method:'POST', body: fd, cache:'no-store' });
+      
+      // Check content-type before parsing JSON to detect if server returned HTML
       const ct = res.headers.get('content-type') || '';
       if (!ct.includes('application/json')) {
         const text = await res.text();
-        console.warn('compare non-JSON:', text.slice(0,200));
-        setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
+        console.warn('COMPARE non-JSON:', { url: COMPARE_URL, status: res.status, ct, sample: text.slice(0, 400) });
+        setUI({detected:'Error', ok:false, msg:'No se pudo comparar (respuesta no JSON)'});
         return;
       }
 
