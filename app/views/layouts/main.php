@@ -29,6 +29,10 @@
         .text-accent { color: var(--color-accent) !important; }
         .border-primary { border-color: var(--color-primary) !important; }
         .hover\:bg-primary:hover { background-color: var(--color-secondary) !important; }
+        
+        /* Plate comparison styles */
+        #plate-compare-box.match-ok  { border-color: #16a34a !important; }
+        #plate-compare-box.match-bad { border-color: #9ca3af !important; }
     </style>
 </head>
 <body class="bg-gray-50">

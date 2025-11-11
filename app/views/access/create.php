@@ -46,7 +46,7 @@
             
             <!-- Comparación de Placas (ANPR) -->
             <div id="plateComparisonContainer" class="mb-6 hidden">
-                <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-6">
+                <div id="plate-compare-box" class="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">
                         <i class="fas fa-camera text-indigo-600 mr-2"></i>Comparación de Placas
                     </h3>
@@ -57,7 +57,7 @@
                             <div class="text-xs text-gray-500 uppercase font-semibold mb-2">
                                 Placa de Unidad Guardada
                             </div>
-                            <div id="savedPlate" class="text-2xl font-bold text-gray-900 font-mono tracking-wider">
+                            <div id="plate-saved-text" class="text-2xl font-bold text-gray-900 font-mono tracking-wider">
                                 ---
                             </div>
                             <div class="text-xs text-gray-500 mt-1">
@@ -70,7 +70,7 @@
                             <div class="text-xs text-gray-500 uppercase font-semibold mb-2">
                                 Placa de Unidad Detectada
                             </div>
-                            <div id="detectedPlate" class="text-2xl font-bold text-gray-900 font-mono tracking-wider">
+                            <div id="plate-detected-text" class="text-2xl font-bold text-gray-900 font-mono tracking-wider">
                                 <span class="text-gray-400">Cargando...</span>
                             </div>
                             <div class="text-xs text-gray-500 mt-1">
@@ -80,12 +80,12 @@
                     </div>
                     
                     <!-- Estado de Comparación -->
-                    <div id="comparisonResult" class="mt-4 hidden">
-                        <div id="matchResult" class="p-4 rounded-lg flex items-center">
-                            <i id="matchIcon" class="fas fa-circle-check text-3xl mr-3"></i>
+                    <div id="comparisonResult" class="mt-4">
+                        <div class="p-4 rounded-lg flex items-center bg-gray-50 border border-gray-200">
+                            <i class="fas fa-info-circle text-2xl mr-3 text-gray-500"></i>
                             <div>
-                                <div id="matchTitle" class="font-semibold text-lg"></div>
-                                <div id="matchMessage" class="text-sm"></div>
+                                <div class="font-semibold text-gray-700">Estado de Comparación</div>
+                                <div id="plate-compare-status" class="text-sm text-gray-600">Esperando comparación...</div>
                             </div>
                         </div>
                     </div>
@@ -169,127 +169,75 @@
 }
 </style>
 
+<script src="<?php echo BASE_URL; ?>/assets/js/plate-compare.js"></script>
 <script>
-// Variables globales
-let currentDetection = null;
+(function(){
+  const compareUrl = "<?php echo BASE_URL; ?>/api/compare_plate.php";
 
-// Mostrar capacidad de la unidad seleccionada y cargar detección de placa
-document.getElementById('unitSelect').addEventListener('change', async function() {
+  const unitSelect    = document.querySelector('#unitSelect');
+  const detectedEl    = document.querySelector('#plate-detected-text');
+  const statusEl      = document.querySelector('#plate-compare-status');
+  const containerEl   = document.querySelector('#plate-compare-box');
+  const savedPlateEl  = document.querySelector('#plate-saved-text');
+  const detectionInfo = document.querySelector('#detectionInfo');
+  const refreshBtn    = document.querySelector('#refreshDetectionBtn');
+  const comparisonContainer = document.querySelector('#plateComparisonContainer');
+
+  async function doCompare() {
+    const unitId = unitSelect ? unitSelect.value : null;
+    if (!unitId) return;
+
+    try {
+      const data = await PlateCompare.comparePlate({ unitId, compareUrl });
+      if (data.success) {
+        PlateCompare.renderPlateComparison({
+          detected: data.detected,
+          unitPlate: data.unit_plate,
+          isMatch: data.is_match,
+          detectedEl, statusEl, containerEl
+        });
+        
+        // Update detection info
+        if (detectionInfo && data.detected) {
+          detectionInfo.textContent = 'Detectado por cámara LPR';
+        } else if (detectionInfo) {
+          detectionInfo.textContent = 'Sin detección reciente';
+        }
+      }
+    } catch (e) {
+      if (detectedEl) detectedEl.textContent = "Error";
+      if (statusEl)   statusEl.textContent = "No se pudo comparar";
+      console.warn(e);
+    }
+  }
+
+  // Mostrar capacidad de la unidad seleccionada y cargar detección de placa
+  unitSelect.addEventListener('change', async function() {
     const selectedOption = this.options[this.selectedIndex];
     const capacity = selectedOption.getAttribute('data-capacity');
     const plate = selectedOption.getAttribute('data-plate');
     
     if (capacity) {
-        console.log('Capacidad de la unidad: ' + capacity + ' litros');
+      console.log('Capacidad de la unidad: ' + capacity + ' litros');
     }
     
     // Si se seleccionó una unidad, mostrar comparación y cargar detección
     if (plate && this.value) {
-        document.getElementById('plateComparisonContainer').classList.remove('hidden');
-        document.getElementById('savedPlate').textContent = plate;
-        await loadPlateDetection();
+      comparisonContainer.classList.remove('hidden');
+      savedPlateEl.textContent = plate;
+      await doCompare();
     } else {
-        document.getElementById('plateComparisonContainer').classList.add('hidden');
-        document.getElementById('savedPlate').textContent = '---';
+      comparisonContainer.classList.add('hidden');
+      savedPlateEl.textContent = '---';
     }
-});
+  });
 
-// Botón refrescar detección
-document.getElementById('refreshDetectionBtn').addEventListener('click', async function() {
-    await loadPlateDetection();
-});
+  // Botón refrescar detección
+  if (refreshBtn) refreshBtn.addEventListener('click', doCompare);
 
-// Función para cargar detección de placa
-async function loadPlateDetection() {
-    const detectedPlateEl = document.getElementById('detectedPlate');
-    const detectionInfoEl = document.getElementById('detectionInfo');
-    const comparisonResultEl = document.getElementById('comparisonResult');
-    const refreshBtn = document.getElementById('refreshDetectionBtn');
-    
-    // Mostrar estado de carga
-    detectedPlateEl.innerHTML = '<span class="text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Detectando...</span>';
-    detectionInfoEl.textContent = 'Consultando cámara LPR...';
-    comparisonResultEl.classList.add('hidden');
-    refreshBtn.disabled = true;
-    
-    try {
-        // Llamar a la API
-        const response = await fetch(<?php echo json_encode(BASE_URL); ?> + '/api/anpr/latest.php');
-        
-        if (!response.ok) {
-            throw new Error('Error al consultar API: ' + response.status);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error(data.error || 'Error desconocido');
-        }
-        
-        currentDetection = data.detection;
-        
-        // Actualizar UI
-        if (currentDetection && currentDetection.plate_text) {
-            detectedPlateEl.innerHTML = `<span class="text-gray-900">${currentDetection.plate_text}</span>`;
-            
-            // Información de confianza
-            let confidenceText = '';
-            if (currentDetection.confidence) {
-                const confidencePct = Math.round(currentDetection.confidence);
-                confidenceText = ` (${confidencePct}% confianza)`;
-            }
-            detectionInfoEl.innerHTML = `Detectado por cámara LPR${confidenceText}`;
-            
-            // Comparar placas
-            const savedPlate = document.getElementById('savedPlate').textContent;
-            const isMatch = currentDetection.is_match || (savedPlate === currentDetection.plate_text);
-            
-            showComparisonResult(isMatch);
-            
-        } else {
-            detectedPlateEl.innerHTML = '<span class="text-gray-400">Sin detección</span>';
-            detectionInfoEl.textContent = 'No se detectó placa en los últimos segundos';
-            comparisonResultEl.classList.add('hidden');
-        }
-        
-    } catch (error) {
-        console.error('Error al cargar detección:', error);
-        detectedPlateEl.innerHTML = '<span class="text-red-500">Error</span>';
-        detectionInfoEl.textContent = 'No se pudo consultar la cámara LPR';
-        comparisonResultEl.classList.add('hidden');
-    } finally {
-        refreshBtn.disabled = false;
-    }
-}
-
-// Función para mostrar resultado de comparación
-function showComparisonResult(isMatch) {
-    const comparisonResultEl = document.getElementById('comparisonResult');
-    const matchResultEl = document.getElementById('matchResult');
-    const matchIconEl = document.getElementById('matchIcon');
-    const matchTitleEl = document.getElementById('matchTitle');
-    const matchMessageEl = document.getElementById('matchMessage');
-    
-    comparisonResultEl.classList.remove('hidden');
-    
-    if (isMatch) {
-        // Match - verde
-        matchResultEl.className = 'p-4 rounded-lg flex items-center bg-green-50 border-2 border-green-500';
-        matchIconEl.className = 'fas fa-circle-check text-3xl mr-3 text-green-600';
-        matchTitleEl.className = 'font-semibold text-lg text-green-800';
-        matchTitleEl.textContent = '¡Placas coinciden!';
-        matchMessageEl.className = 'text-sm text-green-700';
-        matchMessageEl.textContent = 'La placa detectada por la cámara coincide con la unidad seleccionada.';
-    } else {
-        // No match - amarillo/gris
-        matchResultEl.className = 'p-4 rounded-lg flex items-center bg-yellow-50 border-2 border-yellow-500';
-        matchIconEl.className = 'fas fa-circle-exclamation text-3xl mr-3 text-yellow-600';
-        matchTitleEl.className = 'font-semibold text-lg text-yellow-800';
-        matchTitleEl.textContent = 'Las placas no coinciden';
-        matchMessageEl.className = 'text-sm text-yellow-700';
-        matchMessageEl.textContent = 'La placa detectada difiere de la unidad seleccionada. Verifique la información.';
-    }
-}
+  // Ejecuta cada 8 segundos
+  setInterval(doCompare, 8000);
+})();
 
 // Interceptar el envío del formulario para deshabilitar botón y evitar doble clic
 document.getElementById('accessForm').addEventListener('submit', function(e) {
