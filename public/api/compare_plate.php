@@ -68,17 +68,38 @@ try {
     $targetNorm = $phpNormalize($unitPlate);
 
     // 2) Buscar última detección cuya placa normalizada == targetNorm
-    //    Opción MySQL 8+ con REGEXP_REPLACE (quita todo lo no alfanumérico):
-    $sql = "
-        SELECT id, plate_text, captured_at
-        FROM detected_plates
-        WHERE REGEXP_REPLACE(UPPER(plate_text), '[^A-Z0-9]', '') = :targetNorm
-        ORDER BY captured_at DESC, id DESC
-        LIMIT 1
-    ";
-    $stmt = $db->prepare($sql);
-    $stmt->execute([':targetNorm' => $targetNorm]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    //    Intentar con REGEXP_REPLACE (MySQL 8+), si falla usar PHP
+    $row = null;
+    
+    try {
+        // Opción MySQL 8+ con REGEXP_REPLACE (quita todo lo no alfanumérico):
+        $sql = "
+            SELECT id, plate_text, captured_at
+            FROM detected_plates
+            WHERE REGEXP_REPLACE(UPPER(plate_text), '[^A-Z0-9]', '') = :targetNorm
+            ORDER BY captured_at DESC, id DESC
+            LIMIT 1
+        ";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':targetNorm' => $targetNorm]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        // Si REGEXP_REPLACE no está disponible (MySQL < 8.0), usar fallback PHP
+        error_log("REGEXP_REPLACE not available, using PHP fallback: " . $e->getMessage());
+        
+        $stmtAll = $db->query("SELECT id, plate_text, captured_at 
+                               FROM detected_plates 
+                               ORDER BY captured_at DESC, id DESC 
+                               LIMIT 500");
+        $all = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($all as $r) {
+            if ($phpNormalize($r['plate_text']) === $targetNorm) {
+                $row = $r;
+                break;
+            }
+        }
+    }
 
     if ($row) {
         // 3) Hay match → marcar solo ESA fila
