@@ -8,6 +8,10 @@ public/uploads/*
 !public/uploads/units/.gitkeep
 !public/uploads/drivers/.gitkeep
 
+# Imagenes (plate detection images)
+public/Imagenes/*
+!public/Imagenes/.gitkeep
+
 # Sistema operativo
 .DS_Store
 Thumbs.db

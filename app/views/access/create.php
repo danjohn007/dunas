@@ -310,12 +310,13 @@ document.getElementById('accessForm').addEventListener('submit', function(e) {
 </script>
 
 <script>
-// === Autoejecutar mover_ftp_a_public.php cada 10 segundos ===
+// === Autoejecutar mover_ftp_a_public.php y register_new_plates.php cada 10 segundos ===
 
-// URL pública del script
+// URLs
 const moverUrl = "https://fix360.app/dunas/Imagenes/mover_ftp_a_public.php";
+const registrarUrl = "<?php echo BASE_URL; ?>/api/register_new_plates.php";
 
-// función que llama al script (sin interrumpir al usuario)
+// función que llama al script de mover imágenes (sin interrumpir al usuario)
 async function autoRunMoverFTP() {
   try {
     // hacemos una petición GET silenciosa
@@ -330,9 +331,44 @@ async function autoRunMoverFTP() {
   }
 }
 
-// ejecuta inmediatamente al cargar
-autoRunMoverFTP();
+// función que llama al endpoint de registro de placas
+async function autoRegisterNewPlates() {
+  try {
+    const res = await fetch(registrarUrl, { 
+      method: "POST", 
+      headers: { "Accept": "application/json" },
+      cache: "no-store"
+    });
+    
+    if (!res.ok) {
+      console.warn("⚠️ register_new_plates.php devolvió un error:", res.status);
+      return;
+    }
+    
+    const data = await res.json();
+    if (!data.success) {
+      console.warn("⚠️ Error registrando placas:", data.error);
+      return;
+    }
+    
+    // Log opcional: solo mostrar cuando se inserten placas
+    if (data.inserted > 0) {
+      console.log(`✅ Detectadas/insertadas: ${data.inserted} placas`);
+    }
+  } catch (err) {
+    console.error("❌ Error registrando placas:", err);
+  }
+}
 
-// luego repite cada 10 segundos (10000 ms)
-setInterval(autoRunMoverFTP, 10000);
+// Ejecutar secuencialmente al cargar la página
+(async () => {
+  await autoRunMoverFTP();
+  await autoRegisterNewPlates();
+})();
+
+// Repetir cada 10 segundos (10000 ms)
+setInterval(async () => {
+  await autoRunMoverFTP();
+  await autoRegisterNewPlates();
+}, 10000);
 </script>
