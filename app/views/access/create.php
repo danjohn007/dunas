@@ -167,6 +167,16 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+#plate-compare-box.match-ok {
+    border-color: #16a34a !important;
+    background: linear-gradient(to right, #dcfce7, #dbeafe) !important;
+}
+
+#plate-compare-box.match-bad {
+    border-color: #9ca3af !important;
+    background: linear-gradient(to right, #f3f4f6, #e5e7eb) !important;
+}
 </style>
 
 <script src="<?php echo BASE_URL; ?>/assets/js/plate-compare.js"></script>
@@ -183,19 +193,36 @@
   const refreshBtn    = document.querySelector('#refreshDetectionBtn');
   const comparisonContainer = document.querySelector('#plateComparisonContainer');
 
+  function setCompareUI({detected, ok, msg}) {
+    if (detectedEl) detectedEl.textContent = detected ?? 'Error';
+    if (statusEl)   statusEl.textContent   = msg ?? (ok ? 'Coincide' : 'No coincide');
+    if (containerEl) {
+      containerEl.classList.remove('match-ok','match-bad');
+      containerEl.classList.add(ok ? 'match-ok' : 'match-bad');
+    }
+  }
+
   async function doCompare() {
     const unitId = unitSelect ? unitSelect.value : null;
     if (!unitId) return;
 
     try {
-      const data = await PlateCompare.comparePlate({ unitId, compareUrl });
+      const fd = new FormData();
+      fd.append('unit_id', unitId);
+      const res = await fetch(compareUrl, { method: 'POST', body: fd, cache: 'no-store' });
+
+      // Si el servidor devolviera HTML por error, evita el crash
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        const text = await res.text();
+        console.warn('compare returned non-JSON:', text.slice(0,200));
+        setCompareUI({detected: 'Error', ok:false, msg: 'No se pudo comparar'});
+        return;
+      }
+
+      const data = await res.json();
       if (data.success) {
-        PlateCompare.renderPlateComparison({
-          detected: data.detected,
-          unitPlate: data.unit_plate,
-          isMatch: data.is_match,
-          detectedEl, statusEl, containerEl
-        });
+        setCompareUI({detected: data.detected, ok: !!data.is_match});
         
         // Update detection info
         if (detectionInfo && data.detected) {
@@ -203,11 +230,12 @@
         } else if (detectionInfo) {
           detectionInfo.textContent = 'Sin detección reciente';
         }
+      } else {
+        setCompareUI({detected: 'Error', ok:false, msg: 'No se pudo comparar'});
       }
-    } catch (e) {
-      if (detectedEl) detectedEl.textContent = "Error";
-      if (statusEl)   statusEl.textContent = "No se pudo comparar";
-      console.warn(e);
+    } catch (err) {
+      console.error(err);
+      setCompareUI({detected: 'Error', ok:false, msg: 'No se pudo comparar'});
     }
   }
 
