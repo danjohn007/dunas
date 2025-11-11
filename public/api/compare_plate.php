@@ -1,45 +1,34 @@
 <?php
 /**
- * compare_plate.php (match por unidad + ventana de tiempo)
- * - Si recibe unit_id: busca la ULTIMA detección cuyo plate normalizado
- *   COINCIDA con la placa de esa unidad en los últimos X segundos.
- * - Si hay match: devuelve esa detección, marca is_match=1 y unit_id en esa fila.
- * - Si NO hay match reciente: devuelve la última detección global, sin marcar is_match.
+ * compare_plate.php — Match determinístico por placa normalizada (sin ventana de tiempo).
+ * - Si recibe unit_id: toma plate_number de esa unidad.
+ * - Si recibe unit_plate: usa esa placa.
+ * - Busca en detected_plates la última fila cuyo plate_text normalizado == placa objetivo normalizada.
+ * - Si hay, marca is_match=1 y unit_id en ESA fila y la devuelve.
+ * - Si no hay, devuelve la última global con is_match=false (no toca otras filas).
+ *
+ * Depende de MySQL 8+ para REGEXP_REPLACE; si no tienes 8+, ver notas al final.
  */
 
 header('Content-Type: application/json; charset=utf-8');
-ini_set('display_errors', '0'); // no imprimir warnings/notice al output
+ini_set('display_errors', '0'); // evita HTML en la salida
 error_reporting(E_ALL);
-
-ob_start(); // buffer por si algo escribe antes
+ob_start();
 
 try {
-    // Configuración de rutas
-    define('APP_PATH', dirname(__FILE__) . '/../../app');
-    define('ROOT_PATH', dirname(__FILE__) . '/../..');
-
-    require_once ROOT_PATH . '/config/config.php';
-    require_once APP_PATH . '/helpers/TextUtils.php';
-    require_once APP_PATH . '/helpers/Session.php';
-    require_once APP_PATH . '/helpers/Auth.php';
-
-    // Iniciar sesión
-    Session::start();
-
-    // Verificar autenticación
-    if (!Auth::isLoggedIn()) {
-        ob_clean();
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'No autenticado']);
-        exit;
-    }
-
-    $WINDOW_SECONDS = 90; // ventana para considerar válida la coincidencia
+    require_once __DIR__ . '/../config/config.php';
+    require_once __DIR__ . '/../../app/helpers/TextUtils.php';
 
     $database = Database::getInstance();
-    $db = $database->getConnection();
+    $db       = $database->getConnection();
 
-    // 1) Lee unidad objetivo (id o placa directa)
+    // 0) Normalizador en PHP (por si la BD no es 8.0)
+    $phpNormalize = function (?string $s) {
+        $s = strtoupper(trim($s ?? ''));
+        return preg_replace('/[^A-Z0-9]/', '', $s);
+    };
+
+    // 1) Cargar placa objetivo
     $unitId    = isset($_POST['unit_id']) ? (int)$_POST['unit_id'] : null;
     $unitPlate = null;
 
@@ -51,10 +40,10 @@ try {
         $unitPlate = (string)$_POST['unit_plate'];
     }
 
-    // 2) Última detección global (para mostrar algo aun si no hay match)
-    $lastGlobal = $db->query("SELECT id, plate_text, captured_at 
-                              FROM detected_plates 
-                              ORDER BY captured_at DESC, id DESC 
+    // Última global (para fallback)
+    $lastGlobal = $db->query("SELECT id, plate_text, captured_at
+                              FROM detected_plates
+                              ORDER BY captured_at DESC, id DESC
                               LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 
     if (!$lastGlobal) {
@@ -63,70 +52,59 @@ try {
         exit;
     }
 
-    $globalDetId   = (int)$lastGlobal['id'];
-    $globalDetText = $lastGlobal['plate_text'];
-    $globalAt      = $lastGlobal['captured_at'];
-
-    // Si no tenemos placa de unidad, sólo devolvemos la global
+    // Si no hay placa objetivo, solo regresamos la global
     if ($unitPlate === null) {
         ob_clean();
         echo json_encode([
             'success'     => true,
-            'detected'    => $globalDetText,
+            'detected'    => $lastGlobal['plate_text'],
             'unit_plate'  => null,
             'is_match'    => false,
-            'captured_at' => $globalAt
+            'captured_at' => $lastGlobal['captured_at']
         ]);
         exit;
     }
 
-    $targetNorm = TextUtils::normalizePlate($unitPlate);
+    $targetNorm = $phpNormalize($unitPlate);
 
-    // 3) Cargamos las detecciones recientes dentro de la ventana
-    $recentStmt = $db->prepare("
+    // 2) Buscar última detección cuya placa normalizada == targetNorm
+    //    Opción MySQL 8+ con REGEXP_REPLACE (quita todo lo no alfanumérico):
+    $sql = "
         SELECT id, plate_text, captured_at
         FROM detected_plates
-        WHERE captured_at >= (NOW() - INTERVAL ? SECOND)
+        WHERE REGEXP_REPLACE(UPPER(plate_text), '[^A-Z0-9]', '') = :targetNorm
         ORDER BY captured_at DESC, id DESC
-        LIMIT 50
-    ");
-    $recentStmt->execute([$WINDOW_SECONDS]);
-    $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
+        LIMIT 1
+    ";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':targetNorm' => $targetNorm]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $matched = null;
-    foreach ($recent as $row) {
-        $detNorm = TextUtils::normalizePlate($row['plate_text']);
-        if ($detNorm !== '' && $detNorm === $targetNorm) {
-            $matched = $row; // primera más reciente que coincide
-            break;
-        }
-    }
-
-    if ($matched) {
-        // 4) Marcamos sólo la fila matcheada (no tocamos otras filas)
-        $upd = $db->prepare("UPDATE detected_plates SET is_match = 1, unit_id = ? WHERE id = ?");
-        $upd->execute([$unitId, (int)$matched['id']]);
+    if ($row) {
+        // 3) Hay match → marcar solo ESA fila
+        $upd = $db->prepare("UPDATE detected_plates SET is_match = 1, unit_id = :unitId WHERE id = :id");
+        $upd->execute([':unitId' => $unitId, ':id' => (int)$row['id']]);
 
         ob_clean();
         echo json_encode([
             'success'     => true,
-            'detected'    => $matched['plate_text'],
+            'detected'    => $row['plate_text'],
             'unit_plate'  => $unitPlate,
             'is_match'    => true,
-            'captured_at' => $matched['captured_at']
+            'captured_at' => $row['captured_at']
         ]);
         exit;
     }
 
-    // 5) Sin match reciente → devolvemos la última global sólo como referencia
+    // 4) No hay match → devolver la global, sin tocar flags
     ob_clean();
     echo json_encode([
         'success'     => true,
-        'detected'    => $globalDetText,
+        'detected'    => $lastGlobal['plate_text'],
         'unit_plate'  => $unitPlate,
         'is_match'    => false,
-        'captured_at' => $globalAt,
-        'message'     => 'No hay coincidencia reciente'
+        'captured_at' => $lastGlobal['captured_at'],
+        'message'     => 'No se encontró coincidencia exacta por placa normalizada'
     ]);
 
 } catch (Throwable $e) {
