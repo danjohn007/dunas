@@ -183,7 +183,10 @@
 <script>
 (function(){
   const compareUrl = "<?php echo BASE_URL; ?>/api/compare_plate.php";
-
+  
+  console.log('Compare URL configured as:', compareUrl);
+  console.log('BASE_URL is:', "<?php echo BASE_URL; ?>");
+  
   const unitSelect    = document.querySelector('#unitSelect');
   const detectedEl    = document.querySelector('#plate-detected-text');
   const statusEl      = document.querySelector('#plate-compare-status');
@@ -194,48 +197,152 @@
   const comparisonContainer = document.querySelector('#plateComparisonContainer');
 
   function setCompareUI({detected, ok, msg}) {
-    if (detectedEl) detectedEl.textContent = detected ?? 'Error';
-    if (statusEl)   statusEl.textContent   = msg ?? (ok ? 'Coincide' : 'No coincide');
+    console.log('Updating UI with:', { detected, ok, msg });
+    
+    if (detectedEl) {
+      detectedEl.textContent = detected ?? 'Error';
+    }
+    
+    if (statusEl) {
+      statusEl.textContent = msg ?? (ok ? 'Coincide' : 'No coincide');
+    }
+    
     if (containerEl) {
-      containerEl.classList.remove('match-ok','match-bad');
+      containerEl.classList.remove('match-ok', 'match-bad');
       containerEl.classList.add(ok ? 'match-ok' : 'match-bad');
+    }
+    
+    // Agregar indicador visual adicional
+    const comparisonResult = document.getElementById('comparisonResult');
+    if (comparisonResult) {
+      const resultDiv = comparisonResult.querySelector('.p-4');
+      if (resultDiv) {
+        resultDiv.className = `p-4 rounded-lg flex items-center ${
+          ok ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+        }`;
+        
+        const icon = resultDiv.querySelector('i');
+        if (icon) {
+          icon.className = `fas ${
+            ok ? 'fa-check-circle text-green-600' : 'fa-exclamation-triangle text-red-600'
+          } text-2xl mr-3`;
+        }
+      }
     }
   }
 
   async function doCompare() {
     const unitId = unitSelect ? unitSelect.value : null;
-    if (!unitId) return;
+    if (!unitId) {
+      console.log('No unit selected, skipping comparison');
+      return;
+    }
 
     try {
-      const fd = new FormData();
-      fd.append('unit_id', unitId);
-      const res = await fetch(compareUrl, { method: 'POST', body: fd, cache: 'no-store' });
+      console.log('Starting plate comparison for unit:', unitId);
+      
+      // Actualizar UI mientras se carga
+      if (detectedEl) detectedEl.textContent = 'Cargando...';
+      if (detectionInfo) detectionInfo.textContent = 'Consultando detecciones...';
+      
+      const formData = new FormData();
+      formData.append('unit_id', unitId);
+      
+      const response = await fetch(compareUrl, { 
+        method: 'POST', 
+        body: formData,
+        cache: 'no-cache',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
 
-      // Si el servidor devolviera HTML por error, evita el crash
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) {
-        const text = await res.text();
-        console.warn('compare returned non-JSON:', text.slice(0,200));
-        setCompareUI({detected: 'Error', ok:false, msg: 'No se pudo comparar'});
-        return;
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers.get('content-type'));
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await res.json();
+      // Verificar content-type
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response received:', text.slice(0, 500));
+        throw new Error('Respuesta no válida del servidor');
+      }
+
+      const data = await response.json();
+      console.log('Comparison result:', data);
+
       if (data.success) {
-        setCompareUI({detected: data.detected, ok: !!data.is_match});
+        const detected = data.detected || 'Sin detección';
+        const isMatch = data.is_match || false;
         
-        // Update detection info
-        if (detectionInfo && data.detected) {
-          detectionInfo.textContent = 'Detectado por cámara LPR';
-        } else if (detectionInfo) {
-          detectionInfo.textContent = 'Sin detección reciente';
+        // Personalizar el mensaje según el caso
+        let message;
+        if (detected === 'Placa no encontrada') {
+          message = 'Placa de la unidad no encontrada';
+        } else if (isMatch) {
+          message = 'Las placas coinciden';
+        } else {
+          message = 'Las placas no coinciden';
+        }
+        
+        console.log('API Response Details:', {
+          detected: detected,
+          unitPlate: data.unit_plate,
+          isMatch: isMatch,
+          normalizedDetected: data.normalized_detected,
+          normalizedUnit: data.normalized_unit,
+          message: message,
+          apiMessage: data.message
+        });
+        
+        setCompareUI({
+          detected: detected,
+          ok: isMatch,
+          msg: message
+        });
+        
+        // Actualizar información de detección
+        if (detectionInfo) {
+          if (data.detected === 'Placa no encontrada') {
+            detectionInfo.innerHTML = `<span style="color: #dc3545;">Placa de la unidad no detectada recientemente</span>`;
+          } else if (data.detected) {
+            const capturedAt = data.captured_at ? new Date(data.captured_at).toLocaleString() : 'Fecha desconocida';
+            detectionInfo.innerHTML = `Detectado: ${capturedAt}`;
+            if (data.confidence) {
+              detectionInfo.innerHTML += ` (${data.confidence}% confianza)`;
+            }
+          } else {
+            detectionInfo.textContent = 'Sin detecciones recientes';
+          }
         }
       } else {
-        setCompareUI({detected: 'Error', ok:false, msg: 'No se pudo comparar'});
+        console.error('API returned error:', data.error);
+        setCompareUI({
+          detected: 'Error',
+          ok: false,
+          msg: data.error || 'Error en la comparación'
+        });
+        
+        if (detectionInfo) {
+          detectionInfo.textContent = 'Error al consultar detecciones';
+        }
       }
-    } catch (err) {
-      console.error(err);
-      setCompareUI({detected: 'Error', ok:false, msg: 'No se pudo comparar'});
+      
+    } catch (error) {
+      console.error('Comparison failed:', error);
+      setCompareUI({
+        detected: 'Error',
+        ok: false,
+        msg: 'No se pudo consultar las detecciones'
+      });
+      
+      if (detectionInfo) {
+        detectionInfo.textContent = 'Error de conexión';
+      }
     }
   }
 
@@ -245,6 +352,12 @@
     const capacity = selectedOption.getAttribute('data-capacity');
     const plate = selectedOption.getAttribute('data-plate');
     
+    console.log('Unit selection changed:', {
+      unitId: this.value,
+      plate: plate,
+      capacity: capacity
+    });
+    
     if (capacity) {
       console.log('Capacidad de la unidad: ' + capacity + ' litros');
     }
@@ -253,8 +366,16 @@
     if (plate && this.value) {
       comparisonContainer.classList.remove('hidden');
       savedPlateEl.textContent = plate;
+      
+      // Limpiar estado anterior
+      if (detectedEl) detectedEl.textContent = 'Cargando...';
+      if (statusEl) statusEl.textContent = 'Consultando...';
+      if (detectionInfo) detectionInfo.textContent = 'Buscando detecciones...';
+      
+      // Realizar comparación
       await doCompare();
     } else {
+      console.log('No plate or unit selected, hiding comparison');
       comparisonContainer.classList.add('hidden');
       savedPlateEl.textContent = '---';
     }

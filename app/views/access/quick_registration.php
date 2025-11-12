@@ -479,90 +479,166 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="<?php echo BASE_URL; ?>/assets/js/plate-compare.js"></script>
 <script>
 (function(){
-  const compareUrl   = "<?php echo BASE_URL; ?>/api/compare_plate.php";
-  const plateInput   = document.querySelector('#plateSearch');
-  const detectedEl   = document.querySelector('#plate-detected-text');
-  const statusEl     = document.querySelector('#plate-compare-status');
-  const containerEl  = document.querySelector('#plate-compare-box');
+  const compareUrl = "<?php echo BASE_URL; ?>/api/compare_plate.php";
+  
+  console.log('Quick Registration - Compare URL:', compareUrl);
+  
+  const plateInput = document.querySelector('#plateSearch');
+  const detectedEl = document.querySelector('#plate-detected-text');
+  const statusEl = document.querySelector('#plate-compare-status');
+  const containerEl = document.querySelector('#plate-compare-box');
   const savedPlateEl = document.querySelector('#plate-saved-text');
   const comparisonBox = document.querySelector('#plateComparisonQuick');
 
-  function normalize(p){ return (p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  function normalize(plate) { 
+    if (!plate) return '';
+    return plate.toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+  }
   
-  function setUI({detected, ok, msg}) {
-    if (detectedEl) detectedEl.textContent = detected ?? 'Error';
-    if (statusEl)   statusEl.textContent   = msg ?? (ok ? 'Coincide' : 'No coincide');
-    if (containerEl){
-      containerEl.classList.remove('match-ok','match-bad');
+  function setCompareUI({detected, ok, msg}) {
+    console.log('Quick Registration - Updating UI:', { detected, ok, msg });
+    
+    if (detectedEl) {
+      detectedEl.textContent = detected ?? 'Error';
+    }
+    
+    if (statusEl) {
+      statusEl.textContent = msg ?? (ok ? 'Coincide' : 'No coincide');
+    }
+    
+    if (containerEl) {
+      containerEl.classList.remove('match-ok', 'match-bad');
       containerEl.classList.add(ok ? 'match-ok' : 'match-bad');
     }
   }
 
   async function doCompareQuick() {
-    const plate = normalize(plateInput?.value);
-    if (!plate) return;
+    const plateValue = plateInput?.value?.trim();
+    if (!plateValue || plateValue.length < 3) {
+      console.log('Quick Registration - Plate too short or empty');
+      return;
+    }
 
     try {
-      const fd = new FormData();
-      fd.append('unit_plate', plate);
+      console.log('Quick Registration - Starting comparison for plate:', plateValue);
+      
+      // Actualizar UI mientras se carga
+      if (detectedEl) detectedEl.textContent = 'Cargando...';
+      if (statusEl) statusEl.textContent = 'Consultando...';
+      
+      const formData = new FormData();
+      formData.append('unit_plate', plateValue);
+      
+      const response = await fetch(compareUrl, {
+        method: 'POST',
+        body: formData,
+        cache: 'no-cache',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
 
-      const res = await fetch(compareUrl, { method:'POST', body: fd, cache:'no-store' });
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) {
-        const text = await res.text();
-        console.warn('compare non-JSON:', text.slice(0,200));
-        setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
-        return;
+      console.log('Quick Registration - Response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await res.json();
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Quick Registration - Non-JSON response:', text.slice(0, 500));
+        throw new Error('Respuesta no válida del servidor');
+      }
+
+      const data = await response.json();
+      console.log('Quick Registration - API Response:', data);
+
       if (data.success) {
-        const ok = normalize(data.detected) === plate && !!data.detected;
-        setUI({detected: data.detected, ok});
+        const detected = data.detected || 'Sin detección';
+        const isMatch = data.is_match || false;
+        
+        // Personalizar el mensaje según el caso
+        let message;
+        if (detected === 'Placa no encontrada') {
+          message = 'Placa no encontrada';
+        } else if (isMatch) {
+          message = 'Las placas coinciden';
+        } else {
+          message = 'Las placas no coinciden';
+        }
+        
+        setCompareUI({
+          detected: detected,
+          ok: isMatch,
+          msg: message
+        });
       } else {
-        setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
+        console.error('Quick Registration - API error:', data.error);
+        setCompareUI({
+          detected: 'Error',
+          ok: false,
+          msg: data.error || 'Error en la comparación'
+        });
       }
-    } catch (e) {
-      console.warn(e);
-      setUI({detected:'Error', ok:false, msg:'No se pudo comparar'});
+      
+    } catch (error) {
+      console.error('Quick Registration - Comparison failed:', error);
+      setCompareUI({
+        detected: 'Error',
+        ok: false,
+        msg: 'No se pudo consultar las detecciones'
+      });
     }
   }
 
-  // 1) Ejecuta cuando el usuario escribe la placa
+  // Ejecuta cuando el usuario escribe en el campo de placa
   if (plateInput) {
-    plateInput.addEventListener('input', () => {
-      const plate = normalize(plateInput.value);
+    plateInput.addEventListener('input', function() {
+      const plateValue = this.value.trim().toUpperCase();
       
-      // Show comparison box if plate is entered
-      if (plate && plate.length >= 3) {
+      console.log('Quick Registration - Input changed:', plateValue);
+      
+      // Actualizar el campo visual de la placa ingresada
+      if (savedPlateEl) {
+        savedPlateEl.textContent = plateValue || '---';
+      }
+      
+      // Mostrar/ocultar la caja de comparación
+      if (plateValue && plateValue.length >= 3) {
         comparisonBox.classList.remove('hidden');
-        savedPlateEl.textContent = plateInput.value.toUpperCase();
         
-        // Pequeño debounce
-        clearTimeout(window.__qr_t);
-        window.__qr_t = setTimeout(doCompareQuick, 400);
+        // Limpiar estado anterior
+        if (detectedEl) detectedEl.textContent = 'Cargando...';
+        if (statusEl) statusEl.textContent = 'Consultando...';
+        
+        // Debounce para evitar muchas llamadas
+        clearTimeout(window.__qr_compare_timeout);
+        window.__qr_compare_timeout = setTimeout(doCompareQuick, 600);
       } else {
         comparisonBox.classList.add('hidden');
+        clearTimeout(window.__qr_compare_timeout);
       }
     });
   }
 
-  // 2) Ejecuta al cargar (por si ya viene prellenado)
+  // Ejecutar al cargar si ya hay un valor
   if (plateInput && plateInput.value) {
-    const plate = normalize(plateInput.value);
-    if (plate && plate.length >= 3) {
+    const plateValue = plateInput.value.trim();
+    if (plateValue.length >= 3) {
+      if (savedPlateEl) savedPlateEl.textContent = plateValue.toUpperCase();
       comparisonBox.classList.remove('hidden');
-      savedPlateEl.textContent = plateInput.value.toUpperCase();
       doCompareQuick();
     }
   }
 
-  // 3) Opcional: refrescar cada 8 segundos
+  // Refrescar automáticamente cada 10 segundos
   setInterval(() => {
-    const plate = normalize(plateInput ? plateInput.value : '');
-    if (plate && plate.length >= 3) {
+    const plateValue = plateInput?.value?.trim();
+    if (plateValue && plateValue.length >= 3 && !comparisonBox.classList.contains('hidden')) {
+      console.log('Quick Registration - Auto refresh comparison');
       doCompareQuick();
     }
-  }, 8000);
+  }, 10000);
 })();
 </script>
