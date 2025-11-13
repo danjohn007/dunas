@@ -74,13 +74,21 @@ class AccessLog {
         $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, license_plate_reading, plate_discrepancy, status) 
                 VALUES (NOW(), ?, ?, ?, ?, ?, ?, 'in_progress')";
         
+        // Convertir plate_discrepancy a 1 o 0 explícitamente
+        $plateDiscrepancy = isset($data['plate_discrepancy']) ? (int)$data['plate_discrepancy'] : 0;
+        
+        // Log para debug en el modelo
+        error_log("=== MODEL DEBUG ===");
+        error_log("plate_discrepancy recibido: " . var_export($data['plate_discrepancy'] ?? 'NO SET', true));
+        error_log("plateDiscrepancy a guardar: " . var_export($plateDiscrepancy, true));
+        
         $params = [
             $data['driver_id'],
             $data['unit_id'],
             $data['client_id'],
             $ticketCode,
             $data['license_plate_reading'] ?? null,
-            $data['plate_discrepancy'] ?? false
+            $plateDiscrepancy
         ];
         
         $this->db->execute($sql, $params);
@@ -105,16 +113,16 @@ class AccessLog {
     }
     
     private function generateTicketCode() {
-        // Generar código de 4 dígitos único
+        // Generar código de 4 dígitos único (solo números)
         $attempts = 0;
         $maxAttempts = 100;
         
         do {
-            // rand(1000, 9999) ya genera 4 dígitos, no necesita str_pad
+            // Generar 4 dígitos aleatorios entre 1000 y 9999
             $code = (string)rand(1000, 9999);
-            // Verificar si el código ya existe hoy
-            $sql = "SELECT COUNT(*) as count FROM access_logs 
-                    WHERE ticket_code = ? AND DATE(entry_datetime) = CURDATE()";
+            
+            // Verificar si el código ya existe (sin restricción de fecha)
+            $sql = "SELECT COUNT(*) as count FROM access_logs WHERE ticket_code = ?";
             $result = $this->db->fetchOne($sql, [$code]);
             
             if ($result['count'] == 0) {
@@ -124,8 +132,8 @@ class AccessLog {
             $attempts++;
         } while ($attempts < $maxAttempts);
         
-        // Si no se encontró código único en 100 intentos, usar fallback que garantiza 4 dígitos
-        return substr(date('His'), -2) . str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
+        // Si no se encontró código único en 100 intentos, usar timestamp
+        return (string)rand(1000, 9999);
     }
     
     private function generateCodes($id, $ticketCode) {
@@ -163,5 +171,37 @@ class AccessLog {
                 LIMIT 1";
         
         return $this->db->fetchOne($sql, [$plateNumber]);
+    }
+    
+    public function getPlateDiscrepancies($filters = []) {
+        $sql = "SELECT al.*, 
+                d.full_name as driver_name, d.phone as driver_phone,
+                u.plate_number, u.capacity_liters,
+                c.business_name as client_name, c.phone as client_phone
+                FROM access_logs al
+                JOIN drivers d ON al.driver_id = d.id
+                JOIN units u ON al.unit_id = u.id
+                JOIN clients c ON al.client_id = c.id
+                WHERE al.plate_discrepancy = 1";
+        $params = [];
+        
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND DATE(al.entry_datetime) >= ?";
+            $params[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND DATE(al.entry_datetime) <= ?";
+            $params[] = $filters['date_to'];
+        }
+        
+        if (!empty($filters['status'])) {
+            $sql .= " AND al.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        $sql .= " ORDER BY al.entry_datetime DESC";
+        
+        return $this->db->fetchAll($sql, $params);
     }
 }

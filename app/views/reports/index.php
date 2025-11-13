@@ -6,14 +6,14 @@
     </div>
     
     <!-- Tarjetas de Reportes -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Reporte de Accesos -->
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
             <div class="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
                 <i class="fas fa-door-open text-blue-600 text-3xl"></i>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">Reporte de Accesos</h3>
-            <p class="text-gray-600 text-center mb-4">Entradas y salidas por período, accesos por cliente/unidad/chofer, horarios pico</p>
+            <p class="text-gray-600 text-center mb-4">Entradas y salidas por período</p>
             <a href="<?php echo BASE_URL; ?>/reports/access" 
                class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-semibold py-2 px-4 rounded-lg">
                 Ver Reporte
@@ -26,7 +26,7 @@
                 <i class="fas fa-dollar-sign text-green-600 text-3xl"></i>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">Reporte Financiero</h3>
-            <p class="text-gray-600 text-center mb-4">Litros suministrados, ingresos por método de pago, clientes con mayor consumo</p>
+            <p class="text-gray-600 text-center mb-4">Litros e ingresos por período</p>
             <a href="<?php echo BASE_URL; ?>/reports/financial" 
                class="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-2 px-4 rounded-lg">
                 Ver Reporte
@@ -39,9 +39,22 @@
                 <i class="fas fa-chart-line text-purple-600 text-3xl"></i>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">Reporte Operativo</h3>
-            <p class="text-gray-600 text-center mb-4">Eficiencia de unidades, rendimiento de choferes, consumo por tipo de cliente</p>
+            <p class="text-gray-600 text-center mb-4">Eficiencia de unidades y choferes</p>
             <a href="<?php echo BASE_URL; ?>/reports/operational" 
                class="block w-full bg-purple-600 hover:bg-purple-700 text-white text-center font-semibold py-2 px-4 rounded-lg">
+                Ver Reporte
+            </a>
+        </div>
+        
+        <!-- Reporte de Discrepancias de Placas -->
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4 mx-auto">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">Discrepancias</h3>
+            <p class="text-gray-600 text-center mb-4">Placas que no coincidieron</p>
+            <a href="<?php echo BASE_URL; ?>/reports/plateDiscrepancies" 
+               class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white text-center font-semibold py-2 px-4 rounded-lg">
                 Ver Reporte
             </a>
         </div>

@@ -1,8 +1,8 @@
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Encabezado -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Registrar Salida</h1>
-        <p class="text-gray-600">Registrar salida de unidad</p>
+        <h1 class="text-3xl font-bold text-gray-900">Confirmar Entrada</h1>
+        <p class="text-gray-600">Confirmar entrada de unidad y abrir barrera</p>
     </div>
     
     <!-- Información del Acceso -->
@@ -44,10 +44,10 @@
         </div>
     </div>
     
-    <!-- Formulario de Salida -->
+    <!-- Formulario de Entrada -->
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">
-            <i class="fas fa-sign-out-alt text-red-600 mr-2"></i>Registro de Salida
+            <i class="fas fa-door-open text-green-600 mr-2"></i>Confirmación de Entrada
         </h2>
         
         <form method="POST" action="<?php echo BASE_URL; ?>/access/registerExit/<?php echo $access['id']; ?>" id="exitForm">
@@ -67,7 +67,7 @@
                 </div>
                 <p class="mt-2 text-sm text-gray-500">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Ingrese la cantidad de litros que se suministraron al cliente. 
+                    Ingrese la cantidad de litros que se suministrarán al cliente. 
                     Máximo: <?php echo number_format($access['capacity_liters']); ?> L
                 </p>
             </div>
@@ -76,7 +76,7 @@
             <div id="barrierStatus" class="hidden mb-6 p-4 rounded-lg">
                 <div class="flex items-center">
                     <div class="loading-spinner mr-3"></div>
-                    <span id="barrierStatusText">Cerrando barrera...</span>
+                    <span id="barrierStatusText">Abriendo barrera...</span>
                 </div>
             </div>
             
@@ -87,8 +87,8 @@
                     <i class="fas fa-times mr-2"></i>Cancelar
                 </a>
                 <button type="submit" id="submitBtn"
-                        class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg">
-                    <i class="fas fa-sign-out-alt mr-2"></i>Registrar Salida
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg">
+                    <i class="fas fa-door-open mr-2"></i>Confirmar Entrada
                 </button>
             </div>
         </form>
@@ -128,9 +128,9 @@ document.getElementById('exitForm').addEventListener('submit', function(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
     barrierStatus.classList.remove('hidden');
     barrierStatus.className = 'mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200';
-    barrierStatusText.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>Registrando salida y cerrando barrera...';
+    barrierStatusText.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>Confirmando entrada y abriendo barrera...';
     
     // Permitir que el formulario se envíe normalmente
-    // El servidor manejará el cierre de la barrera con idempotencia
+    // El servidor manejará la apertura de la barrera con idempotencia
 });
 </script>

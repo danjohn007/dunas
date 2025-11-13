@@ -111,41 +111,47 @@ class AccessController extends BaseController {
                         // Obtener placa de la unidad seleccionada
                         $unit = $this->unitModel->getById($data['unit_id']);
                         if ($unit) {
-                            $data['plate_discrepancy'] = HikvisionAPI::hasDiscrepancy(
-                                $unit['plate_number'], 
-                                $cameraReading['plate']
-                            );
+                            // Normalizar placas para comparación
+                            $registeredPlate = strtoupper(preg_replace('/[\s\-]/', '', $unit['plate_number']));
+                            $detectedPlate = strtoupper(preg_replace('/[\s\-]/', '', $cameraReading['plate']));
+                            
+                            // Comparar directamente
+                            $platesMatch = ($registeredPlate === $detectedPlate);
+                            
+                            // Si NO coinciden = 1 (discrepancia), si coinciden = 0
+                            $data['plate_discrepancy'] = $platesMatch ? 0 : 1;
+                            
+                            // Log para debug
+                            error_log("=== DEBUG PLATE DISCREPANCY ===");
+                            error_log("Placa Registrada Original: {$unit['plate_number']}");
+                            error_log("Placa Registrada Normalizada: {$registeredPlate}");
+                            error_log("Placa Detectada Original: {$cameraReading['plate']}");
+                            error_log("Placa Detectada Normalizada: {$detectedPlate}");
+                            error_log("¿Coinciden? " . ($platesMatch ? 'SÍ' : 'NO'));
+                            error_log("plate_discrepancy: " . $data['plate_discrepancy'] . " (0=coinciden, 1=NO coinciden)");
                         }
+                    } else {
+                        // Si no se detectó placa, marcar como 1 (discrepancia - no se pudo verificar)
+                        $data['license_plate_reading'] = 'Placa no encontrada';
+                        $data['plate_discrepancy'] = 1;
+                        
+                        error_log("=== PLACA NO DETECTADA ===");
+                        error_log("La cámara no pudo detectar la placa");
+                        error_log("Marcando plate_discrepancy = 1");
                     }
                     
                     $accessId = $this->accessModel->create($data);
                     
-                    // Abrir barrera con Shelly Relay usando el nuevo servicio
-                    // Usar ID de acceso para correlación e idempotencia
-                    $correlationId = "access:{$accessId}:entry";
-                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
-                    
-                    $message = 'Acceso registrado exitosamente';
+                    // No abrir barrera automáticamente, solo generar ticket
+                    $message = 'Ticket generado exitosamente';
                     if (!empty($data['license_plate_reading'])) {
                         $message .= '. Placa leída por cámara: ' . $data['license_plate_reading'];
-                        if (!empty($data['plate_discrepancy'])) {
+                        if (isset($data['plate_discrepancy']) && $data['plate_discrepancy'] == 1) {
                             $message .= ' (⚠️ DISCREPANCIA DETECTADA)';
                         }
                     }
                     
-                    if (!$shellyResult['success']) {
-                        $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
-                        $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
-                        $message .= ' pero no se pudo abrir la barrera automáticamente. ';
-                        $message .= 'Error: ' . $errorDetails . $errorUrl;
-                        $message .= '. Por favor, verifique que el dispositivo Shelly esté encendido y conectado a la red, ';
-                        $message .= 'y que la URL configurada sea correcta en Configuraciones del Sistema.';
-                        $this->setFlash('warning', $message);
-                    } else {
-                        $message .= ' y barrera abierta exitosamente.';
-                        $this->setFlash('success', $message);
-                    }
-                    
+                    $this->setFlash('success', $message);
                     $this->redirect('/access/detail/' . $accessId);
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al registrar el acceso: ' . $e->getMessage());
@@ -196,21 +202,21 @@ class AccessController extends BaseController {
                 try {
                     $this->accessModel->registerExit($id, $_POST['liters_supplied']);
                     
-                    // Cerrar barrera con Shelly Relay usando el nuevo servicio
+                    // Abrir barrera con Shelly Relay usando el nuevo servicio (en lugar de cerrar)
                     // Usar ID de acceso para correlación e idempotencia
-                    $correlationId = "access:{$id}:exit";
-                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
+                    $correlationId = "access:{$id}:entry";
+                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
                     
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
                         $errorUrl = isset($shellyResult['url']) ? ' (URL: ' . $shellyResult['url'] . ')' : '';
-                        $message = 'Salida registrada pero no se pudo cerrar la barrera automáticamente. ';
+                        $message = 'Entrada registrada pero no se pudo abrir la barrera automáticamente. ';
                         $message .= 'Error: ' . $errorDetails . $errorUrl;
                         $message .= '. Por favor, verifique que el dispositivo Shelly esté encendido y conectado a la red, ';
                         $message .= 'y que la URL configurada sea correcta en Configuraciones del Sistema.';
                         $this->setFlash('warning', $message);
                     } else {
-                        $this->setFlash('success', 'Salida registrada y barrera cerrada exitosamente.');
+                        $this->setFlash('success', 'Entrada registrada y barrera abierta exitosamente.');
                     }
                     
                     $this->redirect('/access/detail/' . $id);
@@ -416,10 +422,30 @@ class AccessController extends BaseController {
             $cameraReading = HikvisionAPI::readLicensePlate();
             if ($cameraReading['success'] && !empty($cameraReading['plate'])) {
                 $accessData['license_plate_reading'] = $cameraReading['plate'];
-                $accessData['plate_discrepancy'] = HikvisionAPI::hasDiscrepancy(
-                    $plateNumber, 
-                    $cameraReading['plate']
-                );
+                
+                // Normalizar placas para comparación
+                $registeredPlate = strtoupper(preg_replace('/[\s\-]/', '', $plateNumber));
+                $detectedPlate = strtoupper(preg_replace('/[\s\-]/', '', $cameraReading['plate']));
+                
+                // Comparar directamente
+                $platesMatch = ($registeredPlate === $detectedPlate);
+                
+                // Si NO coinciden = 1 (discrepancia), si coinciden = 0
+                $accessData['plate_discrepancy'] = $platesMatch ? 0 : 1;
+                
+                // Log para debug
+                error_log("=== QuickEntry DEBUG ===");
+                error_log("Placa Registrada: {$plateNumber} -> Normalizada: {$registeredPlate}");
+                error_log("Placa Detectada: {$cameraReading['plate']} -> Normalizada: {$detectedPlate}");
+                error_log("¿Coinciden? " . ($platesMatch ? 'SÍ' : 'NO'));
+                error_log("plate_discrepancy: " . $accessData['plate_discrepancy']);
+            } else {
+                // Si no se detectó placa, marcar como 1 (discrepancia - no se pudo verificar)
+                $accessData['license_plate_reading'] = 'Placa no encontrada';
+                $accessData['plate_discrepancy'] = 1;
+                
+                error_log("=== QuickEntry - PLACA NO DETECTADA ===");
+                error_log("Marcando plate_discrepancy = 1");
             }
             
             $accessId = $this->accessModel->create($accessData);
@@ -431,7 +457,7 @@ class AccessController extends BaseController {
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
                 $message .= '. Placa leída por cámara: ' . $accessData['license_plate_reading'];
-                if (!empty($accessData['plate_discrepancy'])) {
+                if (isset($accessData['plate_discrepancy']) && $accessData['plate_discrepancy'] == 1) {
                     $message .= ' (⚠️ DISCREPANCIA DETECTADA)';
                 }
             }

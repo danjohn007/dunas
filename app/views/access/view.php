@@ -5,9 +5,16 @@
             <h1 class="text-3xl font-bold text-gray-900">Detalle de Acceso</h1>
             <p class="text-gray-600">Información del registro de acceso</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/access" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
-            <i class="fas fa-arrow-left mr-2"></i>Volver
-        </a>
+        <div class="flex space-x-3">
+            <a href="<?php echo BASE_URL; ?>/access/printTicket/<?php echo $access['id']; ?>" 
+               target="_blank"
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-print mr-2"></i>Imprimir PDF
+            </a>
+            <a href="<?php echo BASE_URL; ?>/access" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-arrow-left mr-2"></i>Volver
+            </a>
+        </div>
     </div>
     
     <!-- Tarjeta de Estado -->
@@ -132,7 +139,7 @@
         <div class="flex space-x-3">
             <a href="<?php echo BASE_URL; ?>/access/registerExit/<?php echo $access['id']; ?>" 
                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
-                <i class="fas fa-sign-out-alt mr-2"></i>Registrar Salida
+                <i class="fas fa-door-open mr-2"></i>Registrar Entrada
             </a>
             <a href="<?php echo BASE_URL; ?>/access/cancel/<?php echo $access['id']; ?>" 
                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"

@@ -146,7 +146,7 @@
                 </a>
                 <button type="submit" id="submitBtn"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
-                    <i class="fas fa-door-open mr-2"></i>Registrar Entrada
+                    <i class="fas fa-ticket-alt mr-2"></i>Generar Ticket
                 </button>
             </div>
         </form>

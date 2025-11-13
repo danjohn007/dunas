@@ -237,6 +237,16 @@ class ReportController extends BaseController {
                 $filename = "reporte_acceso_{$dateFrom}_{$dateTo}.csv";
                 $headers = ['Fecha Entrada', 'Fecha Salida', 'Unidad', 'Chofer', 'Cliente', 'Litros', 'Estado'];
                 break;
+            case 'discrepancies':
+                $filters = [
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo,
+                    'plate_discrepancy' => true
+                ];
+                $data = $this->accessModel->getPlateDiscrepancies($filters);
+                $filename = "reporte_discrepancias_{$dateFrom}_{$dateTo}.csv";
+                $headers = ['Ticket', 'Fecha Entrada', 'Cliente', 'Placa Registrada', 'Placa Detectada', 'Chofer', 'Estado'];
+                break;
             default:
                 $this->setFlash('error', 'Tipo de reporte no válido.');
                 $this->redirect('/reports');
@@ -285,6 +295,23 @@ class ReportController extends BaseController {
                     $row['driver_name'],
                     $row['client_name'],
                     $row['liters_supplied'] ? number_format($row['liters_supplied']) : '-',
+                    $statusLabels[$row['status']]
+                ]);
+            }
+        } elseif ($type === 'discrepancies') {
+            foreach ($data as $row) {
+                $statusLabels = [
+                    'in_progress' => 'En Progreso',
+                    'completed' => 'Completado',
+                    'cancelled' => 'Cancelado'
+                ];
+                fputcsv($output, [
+                    $row['ticket_code'],
+                    date('d/m/Y H:i', strtotime($row['entry_datetime'])),
+                    $row['client_name'],
+                    $row['plate_number'],
+                    $row['license_plate_reading'] ?? 'N/A',
+                    $row['driver_name'],
                     $statusLabels[$row['status']]
                 ]);
             }
@@ -344,5 +371,45 @@ class ReportController extends BaseController {
             $this->setFlash('error', 'Exportación PDF disponible solo para reporte financiero.');
             $this->redirect('/reports/' . $type);
         }
+    }
+    
+    public function plateDiscrepancies() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        $filters = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'plate_discrepancy' => true
+        ];
+        
+        $discrepancies = $this->accessModel->getPlateDiscrepancies($filters);
+        
+        // Calcular estadísticas
+        $stats = [
+            'total_discrepancies' => count($discrepancies),
+            'by_status' => [
+                'in_progress' => 0,
+                'completed' => 0,
+                'cancelled' => 0
+            ]
+        ];
+        
+        foreach ($discrepancies as $log) {
+            $stats['by_status'][$log['status']]++;
+        }
+        
+        $data = [
+            'title' => 'Reporte de Discrepancias de Placas',
+            'discrepancies' => $discrepancies,
+            'stats' => $stats,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'showNav' => true
+        ];
+        
+        $this->view('reports/plate_discrepancies', $data);
     }
 }
