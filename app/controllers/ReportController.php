@@ -247,6 +247,15 @@ class ReportController extends BaseController {
                 $filename = "reporte_discrepancias_{$dateFrom}_{$dateTo}.csv";
                 $headers = ['Ticket', 'Fecha Entrada', 'Cliente', 'Placa Registrada', 'Placa Detectada', 'Chofer', 'Estado'];
                 break;
+            case 'plateVerification':
+                $filters = [
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo
+                ];
+                $data = $this->accessModel->getAll($filters);
+                $filename = "reporte_verificacion_placas_{$dateFrom}_{$dateTo}.csv";
+                $headers = ['Ticket', 'Fecha Entrada', 'Cliente', 'Placa Registrada', 'Placa Detectada', 'Verificación', 'Chofer', 'Estado'];
+                break;
             default:
                 $this->setFlash('error', 'Tipo de reporte no válido.');
                 $this->redirect('/reports');
@@ -315,6 +324,34 @@ class ReportController extends BaseController {
                     $statusLabels[$row['status']]
                 ]);
             }
+        } elseif ($type === 'plateVerification') {
+            foreach ($data as $row) {
+                $statusLabels = [
+                    'in_progress' => 'En Progreso',
+                    'completed' => 'Completado',
+                    'cancelled' => 'Cancelado'
+                ];
+                
+                // Determinar estado de verificación
+                if (empty($row['license_plate_reading'])) {
+                    $verification = 'No Detectada';
+                } elseif ($row['plate_discrepancy'] == 1) {
+                    $verification = 'No Coincide';
+                } else {
+                    $verification = 'Coincide';
+                }
+                
+                fputcsv($output, [
+                    $row['ticket_code'],
+                    date('d/m/Y H:i', strtotime($row['entry_datetime'])),
+                    $row['client_name'],
+                    $row['plate_number'],
+                    $row['license_plate_reading'] ?? 'N/A',
+                    $verification,
+                    $row['driver_name'],
+                    $statusLabels[$row['status']]
+                ]);
+            }
         }
         
         fclose($output);
@@ -367,8 +404,42 @@ class ReportController extends BaseController {
             ];
             
             $this->view('reports/financial_print', $data);
+        } elseif ($type === 'discrepancies') {
+            $filters = [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'plate_discrepancy' => true
+            ];
+            
+            $discrepancies = $this->accessModel->getPlateDiscrepancies($filters);
+            
+            // Calcular estadísticas
+            $stats = [
+                'total_discrepancies' => count($discrepancies),
+                'by_status' => [
+                    'in_progress' => 0,
+                    'completed' => 0,
+                    'cancelled' => 0
+                ]
+            ];
+            
+            foreach ($discrepancies as $log) {
+                $stats['by_status'][$log['status']]++;
+            }
+            
+            $data = [
+                'title' => 'Reporte de Discrepancias de Placas - Impresión',
+                'discrepancies' => $discrepancies,
+                'stats' => $stats,
+                'dateFrom' => $dateFrom,
+                'dateTo' => $dateTo,
+                'showNav' => false,
+                'printMode' => true
+            ];
+            
+            $this->view('reports/discrepancies_print', $data);
         } else {
-            $this->setFlash('error', 'Exportación PDF disponible solo para reporte financiero.');
+            $this->setFlash('error', 'Tipo de reporte no válido para exportación PDF.');
             $this->redirect('/reports/' . $type);
         }
     }
@@ -387,9 +458,26 @@ class ReportController extends BaseController {
         
         $discrepancies = $this->accessModel->getPlateDiscrepancies($filters);
         
+        // Obtener todos los accesos del período para calcular tasa de verificación
+        $allFilters = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo
+        ];
+        $allAccesses = $this->accessModel->getAll($allFilters);
+        
+        // Calcular placas verificadas (plate_discrepancy = 0)
+        $platesMatched = 0;
+        foreach ($allAccesses as $access) {
+            if ($access['plate_discrepancy'] == 0) {
+                $platesMatched++;
+            }
+        }
+        
         // Calcular estadísticas
         $stats = [
             'total_discrepancies' => count($discrepancies),
+            'total_accesses' => count($allAccesses),
+            'plates_matched' => $platesMatched,
             'by_status' => [
                 'in_progress' => 0,
                 'completed' => 0,
@@ -411,5 +499,71 @@ class ReportController extends BaseController {
         ];
         
         $this->view('reports/plate_discrepancies', $data);
+    }
+    
+    public function plateVerification() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        $filters = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo
+        ];
+        
+        // Obtener accesos con placas verificadas (plate_discrepancy = 0)
+        $accesses = $this->accessModel->getPlateVerifications($filters);
+        
+        // Debug temporal
+        error_log("=== DEBUG PLATE VERIFICATION ===");
+        error_log("Date From: " . $dateFrom);
+        error_log("Date To: " . $dateTo);
+        error_log("Total accesses with plate_discrepancy=0: " . count($accesses));
+        
+        // Obtener todos los accesos para estadísticas generales
+        $allAccesses = $this->accessModel->getAll($filters);
+        
+        // Calcular estadísticas generales (de todos los accesos)
+        $stats = [
+            'total_accesses' => count($allAccesses),
+            'plates_matched' => count($accesses), // Solo los que coincidieron
+            'plates_not_matched' => 0,
+            'plates_not_detected' => 0,
+            'by_status' => [
+                'in_progress' => 0,
+                'completed' => 0,
+                'cancelled' => 0
+            ]
+        ];
+        
+        // Calcular estadísticas de todos los accesos
+        foreach ($allAccesses as $access) {
+            $hasValidReading = !empty($access['license_plate_reading']) 
+                && $access['license_plate_reading'] !== 'N/A' 
+                && $access['license_plate_reading'] !== 'Placa no encontrada';
+                
+            if (!$hasValidReading) {
+                $stats['plates_not_detected']++;
+            } elseif ($access['plate_discrepancy'] == 1 || $access['plate_discrepancy'] === true || $access['plate_discrepancy'] === '1') {
+                $stats['plates_not_matched']++;
+            }
+        }
+        
+        // Calcular estadísticas de estado solo de los que coincidieron
+        foreach ($accesses as $access) {
+            $stats['by_status'][$access['status']]++;
+        }
+        
+        $data = [
+            'title' => 'Reporte de Verificación de Placas',
+            'accesses' => $accesses,
+            'stats' => $stats,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'showNav' => true
+        ];
+        
+        $this->view('reports/plate_verification', $data);
     }
 }

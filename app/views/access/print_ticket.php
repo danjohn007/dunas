@@ -31,7 +31,7 @@
     <div class="max-w-md mx-auto p-4">
         <!-- Botones de Acción (No se imprimen) -->
         <div class="no-print mb-4 flex justify-between">
-            <a href="<?php echo BASE_URL; ?>/access" 
+            <a href="<?php echo BASE_URL; ?>/access/detail/<?php echo $access['id']; ?>" 
                class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-arrow-left mr-2"></i>Volver
             </a>
@@ -126,10 +126,14 @@
             margin: 0
         });
         
-        // Auto-imprimir al cargar (opcional, comentar si no se desea)
-        // window.onload = function() {
-        //     setTimeout(() => window.print(), 500);
-        // };
+        // Redirigir a la vista de registro de salida después de imprimir (donde está el botón de permitir acceso)
+        let hasRedirected = false;
+        window.addEventListener('afterprint', function() {
+            if (!hasRedirected) {
+                hasRedirected = true;
+                window.location.href = '<?php echo BASE_URL; ?>/access/registerExit/<?php echo $access['id']; ?>';
+            }
+        });
     </script>
 </body>
 </html>

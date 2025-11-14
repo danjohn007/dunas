@@ -49,11 +49,23 @@ class AccessController extends BaseController {
     public function index() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
+        // Configuración de paginación
+        $perPage = 20;
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $offset = ($page - 1) * $perPage;
+        
         $filters = [
+            'search' => $_GET['search'] ?? '',
             'status' => $_GET['status'] ?? '',
             'date_from' => $_GET['date_from'] ?? '',
-            'date_to' => $_GET['date_to'] ?? ''
+            'date_to' => $_GET['date_to'] ?? '',
+            'limit' => $perPage,
+            'offset' => $offset
         ];
+        
+        // Obtener total de registros y calcular páginas
+        $totalRecords = $this->accessModel->countAll($filters);
+        $totalPages = ceil($totalRecords / $perPage);
         
         $accessLogs = $this->accessModel->getAll($filters);
         $inProgress = $this->accessModel->getInProgress();
@@ -63,6 +75,12 @@ class AccessController extends BaseController {
             'accessLogs' => $accessLogs,
             'inProgress' => $inProgress,
             'filters' => $filters,
+            'pagination' => [
+                'currentPage' => $page,
+                'totalPages' => $totalPages,
+                'totalRecords' => $totalRecords,
+                'perPage' => $perPage
+            ],
             'showNav' => true
         ];
         
@@ -103,41 +121,57 @@ class AccessController extends BaseController {
                 try {
                     $data = $_POST;
                     
-                    // Leer placa desde cámara Hikvision
-                    $cameraReading = HikvisionAPI::readLicensePlate();
-                    if ($cameraReading['success'] && !empty($cameraReading['plate'])) {
-                        $data['license_plate_reading'] = $cameraReading['plate'];
+                    // Obtener placa de la unidad seleccionada
+                    $unit = $this->unitModel->getById($data['unit_id']);
+                    
+                    if ($unit) {
+                        // Buscar en detected_plates si hay una detección reciente que coincida con esta unidad
+                        $db = Database::getInstance()->getConnection();
                         
-                        // Obtener placa de la unidad seleccionada
-                        $unit = $this->unitModel->getById($data['unit_id']);
-                        if ($unit) {
-                            // Normalizar placas para comparación
-                            $registeredPlate = strtoupper(preg_replace('/[\s\-]/', '', $unit['plate_number']));
-                            $detectedPlate = strtoupper(preg_replace('/[\s\-]/', '', $cameraReading['plate']));
-                            
-                            // Comparar directamente
-                            $platesMatch = ($registeredPlate === $detectedPlate);
-                            
-                            // Si NO coinciden = 1 (discrepancia), si coinciden = 0
-                            $data['plate_discrepancy'] = $platesMatch ? 0 : 1;
-                            
-                            // Log para debug
-                            error_log("=== DEBUG PLATE DISCREPANCY ===");
-                            error_log("Placa Registrada Original: {$unit['plate_number']}");
-                            error_log("Placa Registrada Normalizada: {$registeredPlate}");
-                            error_log("Placa Detectada Original: {$cameraReading['plate']}");
-                            error_log("Placa Detectada Normalizada: {$detectedPlate}");
-                            error_log("¿Coinciden? " . ($platesMatch ? 'SÍ' : 'NO'));
-                            error_log("plate_discrepancy: " . $data['plate_discrepancy'] . " (0=coinciden, 1=NO coinciden)");
+                        // Normalizar placa de la unidad
+                        $normalizedUnitPlate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $unit['plate_number']));
+                        
+                        // Buscar detecciones recientes (últimas 100) que coincidan
+                        $stmt = $db->prepare("
+                            SELECT plate_text, captured_at, confidence, is_match 
+                            FROM detected_plates 
+                            ORDER BY captured_at DESC, id DESC 
+                            LIMIT 100
+                        ");
+                        $stmt->execute();
+                        $recentDetections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        
+                        $matchFound = false;
+                        $detectedPlate = null;
+                        $latestDetection = null;
+                        
+                        // Guardar la detección más reciente por si acaso no hay coincidencia
+                        if (!empty($recentDetections)) {
+                            $latestDetection = $recentDetections[0]['plate_text'];
+                        }
+                        
+                        foreach ($recentDetections as $detection) {
+                            $normalizedDetected = strtoupper(preg_replace('/[^A-Z0-9]/', '', $detection['plate_text']));
+                            if ($normalizedDetected === $normalizedUnitPlate && !empty($normalizedUnitPlate)) {
+                                $matchFound = true;
+                                $detectedPlate = $detection['plate_text'];
+                                break;
+                            }
+                        }
+                        
+                        if ($matchFound) {
+                            // Placas coinciden
+                            $data['license_plate_reading'] = $detectedPlate;
+                            $data['plate_discrepancy'] = 0;
+                        } else {
+                            // No se encontró coincidencia
+                            $data['license_plate_reading'] = 'Placa no encontrada';
+                            $data['plate_discrepancy'] = 1;
                         }
                     } else {
-                        // Si no se detectó placa, marcar como 1 (discrepancia - no se pudo verificar)
+                        // Si no se encuentra la unidad, marcar como discrepancia
                         $data['license_plate_reading'] = 'Placa no encontrada';
                         $data['plate_discrepancy'] = 1;
-                        
-                        error_log("=== PLACA NO DETECTADA ===");
-                        error_log("La cámara no pudo detectar la placa");
-                        error_log("Marcando plate_discrepancy = 1");
                     }
                     
                     $accessId = $this->accessModel->create($data);
@@ -250,10 +284,11 @@ class AccessController extends BaseController {
         $this->redirect('/access');
     }
     
-    public function openBarrier() {
-        Auth::requireRole(['admin', 'supervisor', 'operator']);
+    public function openBarrier($id = null) {
+        // Si se proporciona ID, usar correlation ID para idempotencia
+        $correlationId = $id ? "access:{$id}:entry" : null;
         
-        $result = $this->executeShellyAction('abrir_cerrar', 'open');
+        $result = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
         
         if ($result['success']) {
             $this->json([
@@ -450,10 +485,7 @@ class AccessController extends BaseController {
             
             $accessId = $this->accessModel->create($accessData);
             
-            // Abrir barrera usando el nuevo servicio
-            $correlationId = "access:{$accessId}:entry";
-            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
-            
+            // NO abrir barrera aquí - se abrirá después de imprimir el ticket
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
                 $message .= '. Placa leída por cámara: ' . $accessData['license_plate_reading'];
@@ -462,14 +494,7 @@ class AccessController extends BaseController {
                 }
             }
             
-            if (!$shellyResult['success']) {
-                $message .= ' pero no se pudo abrir la barrera automáticamente.';
-                $this->setFlash('warning', $message);
-            } else {
-                $message .= ' y barrera abierta exitosamente.';
-                $this->setFlash('success', $message);
-            }
-            
+            $this->setFlash('success', $message);
             $this->redirect('/access/printTicket/' . $accessId);
             
         } catch (Exception $e) {

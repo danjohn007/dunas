@@ -10,6 +10,48 @@ class AccessLog {
         $this->db = Database::getInstance();
     }
     
+    public function countAll($filters = []) {
+        $sql = "SELECT COUNT(*) as total
+                FROM access_logs al
+                JOIN drivers d ON al.driver_id = d.id
+                JOIN units u ON al.unit_id = u.id
+                JOIN clients c ON al.client_id = c.id
+                WHERE 1=1";
+        $params = [];
+        
+        if (!empty($filters['status'])) {
+            $sql .= " AND al.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        if (!empty($filters['unit_id'])) {
+            $sql .= " AND al.unit_id = ?";
+            $params[] = $filters['unit_id'];
+        }
+        
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND DATE(al.entry_datetime) >= ?";
+            $params[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND DATE(al.entry_datetime) <= ?";
+            $params[] = $filters['date_to'];
+        }
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (al.ticket_code LIKE ? OR u.plate_number LIKE ? OR c.business_name LIKE ? OR d.full_name LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return (int)$result['total'];
+    }
+    
     public function getAll($filters = []) {
         $sql = "SELECT al.*, d.full_name as driver_name, u.plate_number, c.business_name as client_name
                 FROM access_logs al
@@ -39,7 +81,23 @@ class AccessLog {
             $params[] = $filters['date_to'];
         }
         
+        if (!empty($filters['search'])) {
+            $sql .= " AND (al.ticket_code LIKE ? OR u.plate_number LIKE ? OR c.business_name LIKE ? OR d.full_name LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
         $sql .= " ORDER BY al.entry_datetime DESC";
+        
+        // Paginación
+        if (isset($filters['limit']) && isset($filters['offset'])) {
+            $sql .= " LIMIT ? OFFSET ?";
+            $params[] = (int)$filters['limit'];
+            $params[] = (int)$filters['offset'];
+        }
         
         return $this->db->fetchAll($sql, $params);
     }
@@ -198,6 +256,37 @@ class AccessLog {
         if (!empty($filters['status'])) {
             $sql .= " AND al.status = ?";
             $params[] = $filters['status'];
+        }
+        
+        $sql .= " ORDER BY al.entry_datetime DESC";
+        
+        return $this->db->fetchAll($sql, $params);
+    }
+    
+    public function getPlateVerifications($filters = []) {
+        $sql = "SELECT DISTINCT al.*, 
+                d.full_name as driver_name, d.phone as driver_phone,
+                u.plate_number, u.capacity_liters,
+                c.business_name as client_name, c.phone as client_phone,
+                dp.plate_text as detected_plate,
+                dp.is_match as detection_match
+                FROM access_logs al
+                JOIN drivers d ON al.driver_id = d.id
+                JOIN units u ON al.unit_id = u.id
+                JOIN clients c ON al.client_id = c.id
+                LEFT JOIN detected_plates dp ON u.plate_number = dp.plate_text
+                WHERE al.plate_discrepancy = 0
+                AND dp.plate_text IS NOT NULL";
+        $params = [];
+        
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND DATE(al.entry_datetime) >= ?";
+            $params[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND DATE(al.entry_datetime) <= ?";
+            $params[] = $filters['date_to'];
         }
         
         $sql .= " ORDER BY al.entry_datetime DESC";

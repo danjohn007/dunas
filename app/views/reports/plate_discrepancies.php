@@ -32,7 +32,7 @@
     </div>
     
     <!-- Estadísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
             <div class="flex items-center">
                 <i class="fas fa-exclamation-circle text-3xl text-red-500 mr-4"></i>
@@ -72,13 +72,35 @@
                 </div>
             </div>
         </div>
+        
+        <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-4">
+            <div class="flex items-center">
+                <i class="fas fa-percentage text-3xl text-indigo-500 mr-4"></i>
+                <div>
+                    <p class="text-sm text-gray-600">Tasa Verificaci&oacute;n</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        <?php 
+                        $rate = $stats['total_accesses'] > 0 
+                            ? round(($stats['plates_matched'] / $stats['total_accesses']) * 100, 1) 
+                            : 0;
+                        echo $rate . '%'; 
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
     
-    <!-- Botón de exportar -->
-    <div class="mb-4 flex justify-end">
+    <!-- Botones de exportar -->
+    <div class="mb-4 flex justify-end gap-3">
         <a href="<?php echo BASE_URL; ?>/reports/exportExcel/discrepancies?date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
            class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
             <i class="fas fa-file-excel mr-2"></i>Exportar a Excel
+        </a>
+        <a href="<?php echo BASE_URL; ?>/reports/exportPdf/discrepancies?date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+           target="_blank"
+           class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg">
+            <i class="fas fa-file-pdf mr-2"></i>Imprimir PDF
         </a>
     </div>
     
