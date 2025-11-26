@@ -55,6 +55,16 @@ define('SHELLY_API_TIMEOUT', 15); // Timeout para conexión en segundos
 define('SHELLY_SWITCH_ID', 0);  // ID del switch para abrir/cerrar barrera (canal)
 define('SHELLY_ENABLED', true); // Habilitado con Cloud API
 
+// Configuración de Hikvision Bridge (PC Puente)
+// El PC puente permite la comunicación entre el servidor y el dispositivo Hikvision
+// que se encuentra en la red local
+// IP Pública: 187.145.46.170 (obtenida de whatismyip.com)
+// Firewall configurado correctamente ✅
+define('HIKVISION_BRIDGE_URL', 'http://187.145.46.170:8080'); // URL del PC puente
+define('HIKVISION_BRIDGE_TIMEOUT', 10); // Timeout en segundos
+define('HIKVISION_USER_VALIDITY_HOURS', 1); // Horas de validez del PIN (default: 1 hora)
+define('HIKVISION_ENABLED', true); // Integración habilitada
+
 // Configuración de archivos
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/jpg']);

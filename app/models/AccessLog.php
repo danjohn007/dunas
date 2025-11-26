@@ -152,10 +152,71 @@ class AccessLog {
         $this->db->execute($sql, $params);
         $id = $this->db->lastInsertId();
         
+        // Crear usuario en el dispositivo Hikvision vía PC puente
+        $this->createHikvisionUser($id, $ticketCode, $data);
+        
         // Generar QR y código de barras
         $this->generateCodes($id, $ticketCode);
         
         return $id;
+    }
+    
+    /**
+     * Crea un usuario en el dispositivo Hikvision con el PIN del ticket
+     * 
+     * @param int $ticketId ID del ticket/access log
+     * @param string $pin PIN de 4 dígitos
+     * @param array $data Datos del ticket (para obtener nombres)
+     */
+    private function createHikvisionUser($ticketId, $pin, $data) {
+        // Verificar si la integración está habilitada
+        if (!defined('HIKVISION_ENABLED') || !HIKVISION_ENABLED) {
+            error_log("ℹ️ Integración con Hikvision deshabilitada");
+            return;
+        }
+        
+        try {
+            require_once __DIR__ . '/../services/HikvisionBridgeService.php';
+            $bridge = new HikvisionBridgeService();
+            
+            // Generar ID único para el dispositivo basado en el ticket
+            $deviceUserId = "TKT-" . str_pad($ticketId, 6, '0', STR_PAD_LEFT);
+            
+            // Obtener nombre del cliente para el usuario
+            $clientName = $this->getClientName($data['client_id']);
+            $userName = $clientName ? substr($clientName, 0, 30) : "Ticket-{$ticketId}";
+            
+            // Obtener horas de validez de la configuración
+            $hoursValid = defined('HIKVISION_USER_VALIDITY_HOURS') ? HIKVISION_USER_VALIDITY_HOURS : 1;
+            
+            // Crear usuario en el dispositivo
+            $result = $bridge->createTicketUser(
+                $deviceUserId,
+                $userName,
+                $pin,
+                $hoursValid
+            );
+            
+            if ($result['success']) {
+                error_log("✅ Usuario creado en dispositivo Hikvision: {$deviceUserId} con PIN: {$pin} (válido {$hoursValid}h)");
+            } else {
+                error_log("⚠️ No se pudo crear usuario en dispositivo: " . $result['message']);
+                // No lanzamos excepción para que el ticket se cree de todos modos
+            }
+            
+        } catch (Exception $e) {
+            error_log("❌ Error al crear usuario en Hikvision: " . $e->getMessage());
+            // No lanzamos excepción para que el ticket se cree de todos modos
+        }
+    }
+    
+    /**
+     * Obtiene el nombre del cliente por ID
+     */
+    private function getClientName($clientId) {
+        $sql = "SELECT business_name FROM clients WHERE id = ?";
+        $result = $this->db->fetchOne($sql, [$clientId]);
+        return $result ? $result['business_name'] : null;
     }
     
     public function registerExit($id, $literSupplied) {

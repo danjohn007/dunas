@@ -958,6 +958,102 @@
         </div>
     </template>
     
+    <!-- Configuración del Lector HikVision (Control de Acceso con PIN) -->
+    <form method="POST" action="<?php echo BASE_URL; ?>/settings/saveHikvisionBridge" id="hikvisionBridgeForm">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-fingerprint text-purple-600 mr-2"></i>Lector HikVision (Control de Acceso)
+                </h2>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">
+                Configure el puente (bridge) para comunicación con el dispositivo lector HikVision DS-K1T502DBWX. 
+                Este sistema permite crear usuarios temporales con PIN en el dispositivo cuando se generan tickets de acceso.
+            </p>
+            
+            <div class="bg-gray-50 border border-gray-300 rounded-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- URL del Bridge -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            URL del Bridge <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="bridge_url" 
+                               value="<?php echo defined('HIKVISION_BRIDGE_URL') ? HIKVISION_BRIDGE_URL : 'http://187.145.46.170:8080'; ?>"
+                               placeholder="http://187.145.46.170:8080"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm"
+                               required>
+                        <p class="mt-1 text-xs text-gray-500">
+                            URL del servidor puente que conecta con el dispositivo HikVision. Incluir http:// y puerto.
+                        </p>
+                    </div>
+                    
+                    <!-- Timeout -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Timeout (segundos) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="bridge_timeout" 
+                               value="<?php echo defined('HIKVISION_BRIDGE_TIMEOUT') ? HIKVISION_BRIDGE_TIMEOUT : 10; ?>"
+                               min="5" max="60" step="1"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               required>
+                        <p class="mt-1 text-xs text-gray-500">Tiempo máximo de espera para conexión (5-60 segundos)</p>
+                    </div>
+                    
+                    <!-- Horas de Validez -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Validez del PIN (horas) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="user_validity_hours" 
+                               value="<?php echo defined('HIKVISION_USER_VALIDITY_HOURS') ? HIKVISION_USER_VALIDITY_HOURS : 1; ?>"
+                               min="1" max="24" step="1"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               required>
+                        <p class="mt-1 text-xs text-gray-500">Duración de usuarios temporales creados (1-24 horas)</p>
+                    </div>
+                </div>
+                
+                <!-- Habilitado -->
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="bridge_enabled" 
+                               value="1" <?php echo (defined('HIKVISION_ENABLED') && HIKVISION_ENABLED) ? 'checked' : ''; ?>
+                               class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2">
+                        <span class="text-sm text-gray-700">Sistema habilitado (crear usuarios automáticamente en tickets)</span>
+                    </label>
+                </div>
+                
+                <!-- Info del dispositivo actual -->
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 class="text-sm font-semibold text-blue-900 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>Información del Dispositivo
+                    </h4>
+                    <div class="text-xs text-blue-800 space-y-1">
+                        <p><strong>Modelo:</strong> HikVision DS-K1T502DBWX-CQR</p>
+                        <p><strong>IP Local:</strong> 192.168.1.129</p>
+                        <p><strong>Bridge PC:</strong> 192.168.1.50:8080</p>
+                        <p><strong>Endpoint:</strong> POST /create-ticket-user</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-4 mb-6">
+            <a href="<?php echo BASE_URL; ?>/dashboard" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-save mr-2"></i>Guardar Configuración del Lector
+            </button>
+        </div>
+    </form>
+    
     <script>
         let deviceIndex = <?php echo (int)count($shellyDevices); ?>;
         let hikvisionIndex = <?php echo (int)count($hikvisionDevices); ?>;

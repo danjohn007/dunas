@@ -259,4 +259,89 @@ class SettingsController extends BaseController {
         
         $this->redirect('/settings');
     }
+    
+    /**
+     * Guarda la configuración del Bridge HikVision (Control de Acceso)
+     */
+    public function saveHikvisionBridge() {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/settings');
+            return;
+        }
+        
+        try {
+            // Validar campos
+            $bridgeUrl = trim($_POST['bridge_url'] ?? '');
+            $bridgeTimeout = (int)($_POST['bridge_timeout'] ?? 10);
+            $userValidityHours = (int)($_POST['user_validity_hours'] ?? 1);
+            $bridgeEnabled = isset($_POST['bridge_enabled']) ? 1 : 0;
+            
+            // Validaciones
+            if (empty($bridgeUrl)) {
+                throw new Exception('La URL del Bridge es requerida.');
+            }
+            
+            if (!filter_var($bridgeUrl, FILTER_VALIDATE_URL)) {
+                throw new Exception('La URL del Bridge no es valida.');
+            }
+            
+            if ($bridgeTimeout < 5 || $bridgeTimeout > 60) {
+                throw new Exception('El timeout debe estar entre 5 y 60 segundos.');
+            }
+            
+            if ($userValidityHours < 1 || $userValidityHours > 24) {
+                throw new Exception('Las horas de validez deben estar entre 1 y 24.');
+            }
+            
+            // Actualizar el archivo config.php
+            $configPath = __DIR__ . '/../../config/config.php';
+            if (!file_exists($configPath)) {
+                throw new Exception('No se encontro el archivo config.php');
+            }
+            
+            $configContent = file_get_contents($configPath);
+            
+            // Actualizar HIKVISION_BRIDGE_URL
+            $configContent = preg_replace(
+                "/define\('HIKVISION_BRIDGE_URL',\s*'[^']*'\);/",
+                "define('HIKVISION_BRIDGE_URL', '" . addslashes($bridgeUrl) . "');",
+                $configContent
+            );
+            
+            // Actualizar HIKVISION_BRIDGE_TIMEOUT
+            $configContent = preg_replace(
+                "/define\('HIKVISION_BRIDGE_TIMEOUT',\s*\d+\);/",
+                "define('HIKVISION_BRIDGE_TIMEOUT', " . $bridgeTimeout . ");",
+                $configContent
+            );
+            
+            // Actualizar HIKVISION_USER_VALIDITY_HOURS
+            $configContent = preg_replace(
+                "/define\('HIKVISION_USER_VALIDITY_HOURS',\s*\d+\);/",
+                "define('HIKVISION_USER_VALIDITY_HOURS', " . $userValidityHours . ");",
+                $configContent
+            );
+            
+            // Actualizar HIKVISION_ENABLED
+            $configContent = preg_replace(
+                "/define\('HIKVISION_ENABLED',\s*(true|false)\);/",
+                "define('HIKVISION_ENABLED', " . ($bridgeEnabled ? 'true' : 'false') . ");",
+                $configContent
+            );
+            
+            // Guardar el archivo
+            if (file_put_contents($configPath, $configContent) === false) {
+                throw new Exception('No se pudo escribir el archivo config.php');
+            }
+            
+            $this->setFlash('success', 'Configuracion del Lector HikVision guardada exitosamente.');
+        } catch (Exception $e) {
+            error_log("Error al guardar configuracion del bridge HikVision: " . $e->getMessage());
+            $this->setFlash('error', 'Error: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/settings');
+    }
 }
