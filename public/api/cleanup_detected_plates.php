@@ -48,28 +48,27 @@ try {
         throw new Exception('No se pudo conectar a la base de datos');
     }
 
-    // Contar registros antes de eliminar (para información)
-    $countStmt = $db->query("SELECT COUNT(*) as total FROM detected_plates");
-    $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
-    $totalBefore = $countResult['total'] ?? 0;
-
     // Eliminar todos los registros de la tabla detected_plates
+    // y obtener el número de filas afectadas
     $stmt = $db->prepare("DELETE FROM detected_plates");
     $result = $stmt->execute();
     
     if (!$result) {
         throw new Exception('Error al limpiar la tabla detected_plates');
     }
+    
+    // Obtener el número de registros eliminados
+    $deletedCount = $stmt->rowCount();
 
     // Registrar en log la limpieza
-    error_log("cleanup_detected_plates.php - Se eliminaron $totalBefore registros de la tabla detected_plates");
+    error_log("cleanup_detected_plates.php - Se eliminaron $deletedCount registros de la tabla detected_plates");
 
     // Limpiar buffer y enviar respuesta exitosa
     ob_clean();
     echo json_encode([
         'success' => true,
         'message' => 'Tabla detected_plates limpiada correctamente',
-        'deleted_count' => $totalBefore,
+        'deleted_count' => $deletedCount,
         'timestamp' => date('Y-m-d H:i:s')
     ]);
 
@@ -84,23 +83,13 @@ try {
     ]);
     
 } catch (Exception $e) {
-    // Error general
+    // Error general (incluye Throwable ya que Exception implementa Throwable)
     error_log("cleanup_detected_plates.php - General error: " . $e->getMessage());
     ob_clean();
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()
-    ]);
-    
-} catch (Throwable $e) {
-    // Error crítico
-    error_log("cleanup_detected_plates.php - Critical error: " . $e->getMessage());
-    ob_clean();
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Error interno del servidor'
     ]);
 }
 
