@@ -642,3 +642,55 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 10000);
 })();
 </script>
+
+<!-- Script para limpieza periódica de registros de placas detectadas -->
+<script>
+(function() {
+    // Obtener el intervalo de limpieza configurado (en minutos)
+    const cleanupIntervalMinutes = <?php echo (int)($systemSettings['auto_cleanup_minutes'] ?? 15); ?>;
+    
+    // Convertir a milisegundos
+    const cleanupIntervalMs = cleanupIntervalMinutes * 60 * 1000;
+    
+    const cleanupUrl = "<?php echo BASE_URL; ?>/api/cleanup_detected_plates.php";
+    
+    console.log('Quick Registration - Limpieza automática configurada cada', cleanupIntervalMinutes, 'minutos');
+    
+    // Función para ejecutar la limpieza
+    async function executeCleanup() {
+        try {
+            console.log('Quick Registration - Ejecutando limpieza de registros...');
+            
+            const response = await fetch(cleanupUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('Quick Registration - Limpieza completada:', data.deleted_count, 'registros eliminados');
+            } else {
+                console.error('Quick Registration - Error en limpieza:', data.error);
+            }
+            
+        } catch (error) {
+            console.error('Quick Registration - Error al ejecutar limpieza:', error);
+        }
+    }
+    
+    // Ejecutar la primera limpieza al cargar la página
+    executeCleanup();
+    
+    // Configurar el intervalo periódico
+    setInterval(executeCleanup, cleanupIntervalMs);
+    
+    console.log('Quick Registration - Próxima limpieza en', cleanupIntervalMinutes, 'minutos');
+})();
+</script>
