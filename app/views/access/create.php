@@ -409,8 +409,8 @@ document.getElementById('accessForm').addEventListener('submit', function(e) {
 <script>
 // === Autoejecutar mover_ftp_a_public.php y register_new_plates.php cada 10 segundos ===
 
-// URLs
-const moverUrl = "https://fix360.app/dunas/Imagenes/mover_ftp_a_public.php";
+// URLs - imagenes está fuera de /public
+const moverUrl = "http://residencial.digital/dunas/imagenes/mover_ftp_a_public.php";
 const registrarUrl = "<?php echo BASE_URL; ?>/api/register_new_plates.php";
 
 // función que llama al script de mover imágenes (sin interrumpir al usuario)

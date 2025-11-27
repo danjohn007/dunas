@@ -11,18 +11,14 @@ require_once __DIR__ . '/../../config/config.php';
 header('Content-Type: application/json');
 
 try {
-    // 0) Resolver SIEMPRE /dunas/Imagenes como ruta de disco
-    //    (coincide con la URL pública https://fix360.app/dunas/Imagenes)
-    $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? rtrim($_SERVER['DOCUMENT_ROOT'], '/') : '';
-    $dir = $docRoot . '/dunas/Imagenes';
-
-    // Fallback por si el host no expone DOCUMENT_ROOT correctamente
-    if (!is_dir($dir)) {
-        // intenta relativo a este archivo: ../../Imagenes (sube dos niveles desde /dunas/api/)
-        $alt = realpath(__DIR__ . '/../../Imagenes');
-        if ($alt && is_dir($alt)) {
-            $dir = $alt;
-        }
+    // 0) Resolver la ruta de disco para las imágenes
+    //    La carpeta imagenes está fuera de public: /dunas/imagenes
+    $dir = realpath(__DIR__ . '/../../imagenes');
+    
+    // Fallback: intenta con DOCUMENT_ROOT
+    if (!$dir || !is_dir($dir)) {
+        $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? rtrim($_SERVER['DOCUMENT_ROOT'], '/') : '';
+        $dir = $docRoot . '/dunas/imagenes';
     }
 
     if (!is_dir($dir)) {

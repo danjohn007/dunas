@@ -1,0 +1,9 @@
+# Permitir acceso a archivos PHP y de imagen
+<Files "mover_ftp_a_public.php">
+    Require all granted
+</Files>
+
+# Permitir acceso a imágenes
+<FilesMatch "\.(jpg|jpeg|png|gif)$">
+    Require all granted
+</FilesMatch>
