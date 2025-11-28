@@ -265,3 +265,13 @@
     </div>
     <?php endif; ?>
 </div>
+
+<!-- Configuración para limpieza periódica de registros de placas detectadas -->
+<script>
+window.CLEANUP_CONFIG = {
+    intervalMinutes: <?php echo (int)($systemSettings['auto_cleanup_minutes'] ?? 15); ?>,
+    url: "<?php echo BASE_URL; ?>/api/cleanup_detected_plates.php",
+    viewName: "Access View"
+};
+</script>
+<script src="<?php echo BASE_URL; ?>/assets/js/detected-plates-cleanup.js"></script>

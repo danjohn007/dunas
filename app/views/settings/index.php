@@ -211,6 +211,31 @@
             </div>
         </div>
         
+        <!-- Tiempo para limpiar registro automático -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-clock text-red-600 mr-2"></i>Tiempo para limpiar registro automático
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Intervalo de limpieza (minutos)
+                    </label>
+                    <input type="number" name="auto_cleanup_minutes" 
+                           value="<?php echo htmlspecialchars($settings['auto_cleanup_minutes'] ?? '15'); ?>"
+                           min="1" max="1440"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="15">
+                    <p class="mt-1 text-xs text-gray-500">
+                        Tiempo en minutos para limpiar automáticamente los registros de placas detectadas. 
+                        Este proceso se ejecuta automáticamente en las vistas de Control de Acceso y Registro Rápido.
+                        Por defecto: 15 minutos.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
         <!-- Botones -->
         <div class="flex justify-end space-x-4 mb-6">
             <a href="<?php echo BASE_URL; ?>/dashboard" 
