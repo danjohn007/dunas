@@ -54,7 +54,7 @@ class ShellyDevice {
                     $seen[] = $id;
                     // Actualizar dispositivo existente
                     $db->execute(
-                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, area=?, active_channel=?, entry_channel=?, exit_channel=?, pulse_duration_ms=?, channel_count=?, invert_sequence=?, is_simultaneous=?, is_enabled=?, updated_at=NOW() WHERE id=?",
+                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, area=?, active_channel=?, entry_channel=?, exit_channel=?, pulse_duration_ms=?, channel_count=?, invert_sequence=?, is_simultaneous=?, is_enabled=?, quick_register_channel=?, quick_register_action=?, quick_register_pulse_enabled=?, quick_register_pulse_ms=?, exit_register_channel=?, exit_register_action=?, exit_register_pulse_enabled=?, exit_register_pulse_ms=?, new_access_channel=?, new_access_action=?, new_access_pulse_enabled=?, new_access_pulse_ms=?, updated_at=NOW() WHERE id=?",
                         [
                             $r['name'],
                             $r['auth_token'],
@@ -69,13 +69,25 @@ class ShellyDevice {
                             isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
                             isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,
                             (int)$r['is_enabled'],
+                            (int)($r['quick_register_channel'] ?? $r['entry_channel'] ?? 0),
+                            ($r['quick_register_action'] ?? 'open'),
+                            isset($r['quick_register_pulse_enabled']) ? 1 : 0,
+                            (int)($r['quick_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
+                            (int)($r['exit_register_channel'] ?? $r['exit_channel'] ?? 1),
+                            ($r['exit_register_action'] ?? 'close'),
+                            isset($r['exit_register_pulse_enabled']) ? 1 : 0,
+                            (int)($r['exit_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
+                            (int)($r['new_access_channel'] ?? $r['entry_channel'] ?? 0),
+                            ($r['new_access_action'] ?? 'open'),
+                            isset($r['new_access_pulse_enabled']) ? 1 : 0,
+                            (int)($r['new_access_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
                             $id
                         ]
                     );
                 } else {
                     // Insertar nuevo dispositivo
                     $db->execute(
-                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, area, active_channel, entry_channel, exit_channel, pulse_duration_ms, channel_count, invert_sequence, is_simultaneous, is_enabled, sort_order) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, area, active_channel, entry_channel, exit_channel, pulse_duration_ms, channel_count, invert_sequence, is_simultaneous, is_enabled, sort_order, quick_register_channel, quick_register_action, quick_register_pulse_enabled, quick_register_pulse_ms, exit_register_channel, exit_register_action, exit_register_pulse_enabled, exit_register_pulse_ms, new_access_channel, new_access_action, new_access_pulse_enabled, new_access_pulse_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         [
                             $r['name'],
                             $r['auth_token'],
@@ -90,7 +102,19 @@ class ShellyDevice {
                             isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
                             isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,
                             1,
-                            (int)($r['sort_order'] ?? 0)
+                            (int)($r['sort_order'] ?? 0),
+                            (int)($r['quick_register_channel'] ?? $r['entry_channel'] ?? 0),
+                            ($r['quick_register_action'] ?? 'open'),
+                            isset($r['quick_register_pulse_enabled']) ? 1 : 0,
+                            (int)($r['quick_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
+                            (int)($r['exit_register_channel'] ?? $r['exit_channel'] ?? 1),
+                            ($r['exit_register_action'] ?? 'close'),
+                            isset($r['exit_register_pulse_enabled']) ? 1 : 0,
+                            (int)($r['exit_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
+                            (int)($r['new_access_channel'] ?? $r['entry_channel'] ?? 0),
+                            ($r['new_access_action'] ?? 'open'),
+                            isset($r['new_access_pulse_enabled']) ? 1 : 0,
+                            (int)($r['new_access_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000)
                         ]
                     );
                     $id = $db->lastInsertId();
@@ -131,5 +155,128 @@ class ShellyDevice {
             ORDER BY sd.sort_order, sd.id
             LIMIT 1", [$code]);
         return $row ?: null;
+    }
+    
+    /**
+     * Obtiene la configuración del dispositivo para un tipo de acción específico
+     * @param Database $db Instancia de base de datos
+     * @param string $actionType Tipo de acción: 'quick_register', 'exit_register', 'new_access'
+     * @return array|null Configuración del dispositivo con campos específicos para la acción
+     */
+    public static function getForActionType($db, $actionType) {
+        $device = $db->fetchOne("
+            SELECT * FROM shelly_devices 
+            WHERE is_enabled = 1 
+            ORDER BY sort_order, id 
+            LIMIT 1
+        ");
+        
+        if (!$device) {
+            return null;
+        }
+        
+        // Map the action type to the specific channel configuration
+        $channelField = null;
+        $actionField = null;
+        $pulseEnabledField = null;
+        $pulseMsField = null;
+        
+        switch ($actionType) {
+            case 'quick_register':
+                $channelField = 'quick_register_channel';
+                $actionField = 'quick_register_action';
+                $pulseEnabledField = 'quick_register_pulse_enabled';
+                $pulseMsField = 'quick_register_pulse_ms';
+                break;
+            case 'exit_register':
+                $channelField = 'exit_register_channel';
+                $actionField = 'exit_register_action';
+                $pulseEnabledField = 'exit_register_pulse_enabled';
+                $pulseMsField = 'exit_register_pulse_ms';
+                break;
+            case 'new_access':
+                $channelField = 'new_access_channel';
+                $actionField = 'new_access_action';
+                $pulseEnabledField = 'new_access_pulse_enabled';
+                $pulseMsField = 'new_access_pulse_ms';
+                break;
+            default:
+                // Fallback to legacy entry_channel for 'open' actions
+                $channelField = 'entry_channel';
+                $actionField = null;
+                $pulseEnabledField = null;
+                $pulseMsField = 'pulse_duration_ms';
+        }
+        
+        // Build the configuration array
+        $config = $device;
+        $config['action_channel'] = isset($device[$channelField]) ? (int)$device[$channelField] : 0;
+        $config['action_mode'] = isset($device[$actionField]) ? $device[$actionField] : 'open';
+        $config['pulse_enabled'] = isset($device[$pulseEnabledField]) ? (bool)$device[$pulseEnabledField] : true;
+        $config['pulse_ms'] = isset($device[$pulseMsField]) ? (int)$device[$pulseMsField] : 5000;
+        
+        return $config;
+    }
+    
+    /**
+     * Obtiene todos los dispositivos habilitados configurados para un tipo de acción
+     * @param Database $db Instancia de base de datos
+     * @param string $actionType Tipo de acción: 'quick_register', 'exit_register', 'new_access'
+     * @return array Lista de dispositivos con su configuración para la acción
+     */
+    public static function getAllForActionType($db, $actionType) {
+        $devices = $db->fetchAll("
+            SELECT * FROM shelly_devices 
+            WHERE is_enabled = 1 
+            ORDER BY sort_order, id
+        ");
+        
+        if (!$devices) {
+            return [];
+        }
+        
+        $result = [];
+        foreach ($devices as $device) {
+            $channelField = null;
+            $actionField = null;
+            $pulseEnabledField = null;
+            $pulseMsField = null;
+            
+            switch ($actionType) {
+                case 'quick_register':
+                    $channelField = 'quick_register_channel';
+                    $actionField = 'quick_register_action';
+                    $pulseEnabledField = 'quick_register_pulse_enabled';
+                    $pulseMsField = 'quick_register_pulse_ms';
+                    break;
+                case 'exit_register':
+                    $channelField = 'exit_register_channel';
+                    $actionField = 'exit_register_action';
+                    $pulseEnabledField = 'exit_register_pulse_enabled';
+                    $pulseMsField = 'exit_register_pulse_ms';
+                    break;
+                case 'new_access':
+                    $channelField = 'new_access_channel';
+                    $actionField = 'new_access_action';
+                    $pulseEnabledField = 'new_access_pulse_enabled';
+                    $pulseMsField = 'new_access_pulse_ms';
+                    break;
+                default:
+                    $channelField = 'entry_channel';
+                    $actionField = null;
+                    $pulseEnabledField = null;
+                    $pulseMsField = 'pulse_duration_ms';
+            }
+            
+            $config = $device;
+            $config['action_channel'] = isset($device[$channelField]) ? (int)$device[$channelField] : 0;
+            $config['action_mode'] = isset($device[$actionField]) ? $device[$actionField] : 'open';
+            $config['pulse_enabled'] = isset($device[$pulseEnabledField]) ? (bool)$device[$pulseEnabledField] : true;
+            $config['pulse_ms'] = isset($device[$pulseMsField]) ? (int)$device[$pulseMsField] : 5000;
+            
+            $result[] = $config;
+        }
+        
+        return $result;
     }
 }

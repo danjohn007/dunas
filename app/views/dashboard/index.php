@@ -178,6 +178,96 @@
     <?php endif; ?>
 </div>
 
+<!-- Panel FIXED: Registrar Acceso con Placa Detectada -->
+<?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
+<div id="fixedPlatePanel" class="fixed bottom-4 right-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-2xl border-2 border-green-400 p-4 w-80">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-gray-800">
+                <i class="fas fa-camera text-green-600 mr-2"></i>Placa Detectada
+            </h3>
+            <button type="button" onclick="document.getElementById('fixedPlatePanel').classList.add('hidden')" 
+                    class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-3 mb-3 text-center">
+            <div id="fixedDetectedPlate" class="text-2xl font-mono font-bold text-gray-900">---</div>
+            <div id="fixedDetectedTime" class="text-xs text-gray-500 mt-1">Sin detecciones recientes</div>
+        </div>
+        
+        <div class="flex gap-2">
+            <a id="fixedRegisterBtn" href="#" 
+               class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg text-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+               onclick="return goToQuickRegistration()">
+                <i class="fas fa-door-open mr-1"></i>Registrar Acceso
+            </a>
+            <button type="button" onclick="refreshDetectedPlate()" 
+                    class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold py-2 px-3 rounded-lg text-sm">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let lastDetectedPlate = null;
+
+function goToQuickRegistration() {
+    if (!lastDetectedPlate) {
+        alert('No hay placa detectada. Por favor espere la detección de una placa.');
+        return false;
+    }
+    window.location.href = '<?php echo BASE_URL; ?>/access/quickRegistration?plate=' + encodeURIComponent(lastDetectedPlate);
+    return false;
+}
+
+async function refreshDetectedPlate() {
+    try {
+        const response = await fetch('<?php echo BASE_URL; ?>/api/get_latest_plate.php', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        });
+        
+        if (!response.ok) throw new Error('Error al obtener placa');
+        
+        const data = await response.json();
+        const panel = document.getElementById('fixedPlatePanel');
+        const plateEl = document.getElementById('fixedDetectedPlate');
+        const timeEl = document.getElementById('fixedDetectedTime');
+        
+        if (data.success && data.plate) {
+            lastDetectedPlate = data.plate;
+            plateEl.textContent = data.plate;
+            
+            if (data.captured_at) {
+                const date = new Date(data.captured_at);
+                timeEl.textContent = 'Detectado: ' + date.toLocaleString('es-MX');
+            } else {
+                timeEl.textContent = 'Recién detectado';
+            }
+            
+            panel.classList.remove('hidden');
+        } else {
+            plateEl.textContent = '---';
+            timeEl.textContent = 'Sin detecciones recientes';
+            // Keep panel visible but disabled
+        }
+    } catch (error) {
+        console.error('Error refreshing plate:', error);
+    }
+}
+
+// Auto-refresh detected plate every 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    refreshDetectedPlate();
+    setInterval(refreshDetectedPlate, 5000);
+});
+</script>
+<?php endif; ?>
+
 <script>
 // Gráfica de ingresos mensuales
 document.addEventListener('DOMContentLoaded', function() {

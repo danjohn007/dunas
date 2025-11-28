@@ -219,6 +219,15 @@
             
             <div class="space-y-4">
                 <div>
+                    <label class="flex items-center mb-3">
+                        <input type="checkbox" name="auto_cleanup_enabled" value="1" 
+                               <?php echo (($settings['auto_cleanup_enabled'] ?? '1') === '1') ? 'checked' : ''; ?>
+                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                               id="autoCleanupEnabled">
+                        <span class="text-sm text-gray-700">Habilitar limpieza automática de registros</span>
+                    </label>
+                </div>
+                <div id="cleanupMinutesContainer">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Intervalo de limpieza (minutos)
                     </label>
@@ -226,7 +235,8 @@
                            value="<?php echo htmlspecialchars($settings['auto_cleanup_minutes'] ?? '15'); ?>"
                            min="1" max="1440"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="15">
+                           placeholder="15"
+                           id="autoCleanupMinutes">
                     <p class="mt-1 text-xs text-gray-500">
                         Tiempo en minutos para limpiar automáticamente los registros de placas detectadas. 
                         Este proceso se ejecuta automáticamente en las vistas de Control de Acceso y Registro Rápido.
@@ -234,6 +244,27 @@
                     </p>
                 </div>
             </div>
+            
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const enabledCheckbox = document.getElementById('autoCleanupEnabled');
+                const minutesContainer = document.getElementById('cleanupMinutesContainer');
+                const minutesInput = document.getElementById('autoCleanupMinutes');
+                
+                function toggleCleanupMinutes() {
+                    if (enabledCheckbox.checked) {
+                        minutesContainer.classList.remove('opacity-50');
+                        minutesInput.disabled = false;
+                    } else {
+                        minutesContainer.classList.add('opacity-50');
+                        minutesInput.disabled = true;
+                    }
+                }
+                
+                enabledCheckbox.addEventListener('change', toggleCleanupMinutes);
+                toggleCleanupMinutes(); // Initial state
+            });
+            </script>
         </div>
         
         <!-- Botones -->
@@ -333,18 +364,6 @@
                                     <p class="mt-1 text-xs text-gray-500">Sin https:// ni puerto</p>
                                 </div>
                                 
-                                <!-- Acción -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Acción
-                                    </label>
-                                    <select name="devices[<?php echo $index; ?>][action_code]" 
-                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                        <option value="abrir_cerrar" <?php echo $actionCode === 'abrir_cerrar' ? 'selected' : ''; ?>>Abrir/Cerrar</option>
-                                        <option value="vacio" <?php echo $actionCode === 'vacio' ? 'selected' : ''; ?>>Vacío</option>
-                                    </select>
-                                </div>
-                                
                                 <!-- Área -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -357,49 +376,157 @@
                                 </div>
                             </div>
                             
-                            <!-- Canales de Entrada y Salida -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Canal de Entrada (Apertura)
-                                    </label>
-                                    <select name="devices[<?php echo $index; ?>][entry_channel]" 
-                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                        <?php for ($ch = 0; $ch < 4; $ch++): ?>
-                                            <option value="<?php echo $ch; ?>" 
-                                                    <?php echo (isset($device['entry_channel']) && $device['entry_channel'] == $ch) ? 'selected' : ''; ?>>
-                                                Canal <?php echo $ch; ?>
-                                            </option>
-                                        <?php endfor; ?>
-                                    </select>
-                                    <p class="mt-1 text-xs text-gray-500">Pulso de 5 segundos al entrar</p>
+                            <!-- Canales de Acciones -->
+                            <div class="border-t border-gray-200 pt-4 mb-4">
+                                <h4 class="text-sm font-semibold text-gray-800 mb-3">
+                                    <i class="fas fa-cogs text-orange-500 mr-2"></i>Configuración de Canales y Acciones
+                                </h4>
+                                
+                                <!-- Registro Rápido -->
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                <i class="fas fa-bolt text-green-600 mr-1"></i>Registro Rápido
+                                            </label>
+                                            <select name="devices[<?php echo $index; ?>][quick_register_channel]" 
+                                                    class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
+                                                <?php for ($ch = 0; $ch <= 4; $ch++): ?>
+                                                    <option value="<?php echo $ch; ?>" 
+                                                            <?php echo (isset($device['quick_register_channel']) && $device['quick_register_channel'] == $ch) ? 'selected' : (((!isset($device['quick_register_channel']) || $device['quick_register_channel'] === null) && isset($device['entry_channel']) && $device['entry_channel'] == $ch) ? 'selected' : ''); ?>>
+                                                        Canal <?php echo $ch; ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+                                            <select name="devices[<?php echo $index; ?>][quick_register_action]" 
+                                                    class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
+                                                <option value="open" <?php echo (isset($device['quick_register_action']) && $device['quick_register_action'] === 'open') ? 'selected' : ((!isset($device['quick_register_action'])) ? 'selected' : ''); ?>>Abrir</option>
+                                                <option value="close" <?php echo (isset($device['quick_register_action']) && $device['quick_register_action'] === 'close') ? 'selected' : ''; ?>>Cerrar</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center mb-1">
+                                                <input type="checkbox" name="devices[<?php echo $index; ?>][quick_register_pulse_enabled]" value="1" 
+                                                       <?php echo (isset($device['quick_register_pulse_enabled']) && $device['quick_register_pulse_enabled']) ? 'checked' : 'checked'; ?>
+                                                       class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 pulse-toggle"
+                                                       data-target="quick_register_pulse_<?php echo $index; ?>">
+                                                <span class="text-sm text-gray-700">Duración Pulso (ms)</span>
+                                            </label>
+                                            <input type="number" name="devices[<?php echo $index; ?>][quick_register_pulse_ms]" 
+                                                   id="quick_register_pulse_<?php echo $index; ?>"
+                                                   value="<?php echo isset($device['quick_register_pulse_ms']) ? $device['quick_register_pulse_ms'] : (isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000); ?>"
+                                                   min="100" max="10000" step="100"
+                                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <p class="text-xs text-gray-500">Se activa al registrar entrada rápida</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Canal de Salida (Cierre)
-                                    </label>
-                                    <select name="devices[<?php echo $index; ?>][exit_channel]" 
-                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                        <?php for ($ch = 0; $ch < 4; $ch++): ?>
-                                            <option value="<?php echo $ch; ?>" 
-                                                    <?php echo (isset($device['exit_channel']) && $device['exit_channel'] == $ch) ? 'selected' : ''; ?>>
-                                                Canal <?php echo $ch; ?>
-                                            </option>
-                                        <?php endfor; ?>
-                                    </select>
-                                    <p class="mt-1 text-xs text-gray-500">Activación al salir</p>
+                                
+                                <!-- Registrar Salida -->
+                                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                <i class="fas fa-sign-out-alt text-purple-600 mr-1"></i>Registrar Salida
+                                            </label>
+                                            <select name="devices[<?php echo $index; ?>][exit_register_channel]" 
+                                                    class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
+                                                <?php for ($ch = 0; $ch <= 4; $ch++): ?>
+                                                    <option value="<?php echo $ch; ?>" 
+                                                            <?php echo (isset($device['exit_register_channel']) && $device['exit_register_channel'] == $ch) ? 'selected' : (((!isset($device['exit_register_channel']) || $device['exit_register_channel'] === null) && isset($device['exit_channel']) && $device['exit_channel'] == $ch) ? 'selected' : ''); ?>>
+                                                        Canal <?php echo $ch; ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+                                            <select name="devices[<?php echo $index; ?>][exit_register_action]" 
+                                                    class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
+                                                <option value="open" <?php echo (isset($device['exit_register_action']) && $device['exit_register_action'] === 'open') ? 'selected' : ''; ?>>Abrir</option>
+                                                <option value="close" <?php echo (isset($device['exit_register_action']) && $device['exit_register_action'] === 'close') ? 'selected' : ((!isset($device['exit_register_action'])) ? 'selected' : ''); ?>>Cerrar</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center mb-1">
+                                                <input type="checkbox" name="devices[<?php echo $index; ?>][exit_register_pulse_enabled]" value="1" 
+                                                       <?php echo (isset($device['exit_register_pulse_enabled']) && $device['exit_register_pulse_enabled']) ? 'checked' : 'checked'; ?>
+                                                       class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2 pulse-toggle"
+                                                       data-target="exit_register_pulse_<?php echo $index; ?>">
+                                                <span class="text-sm text-gray-700">Duración Pulso (ms)</span>
+                                            </label>
+                                            <input type="number" name="devices[<?php echo $index; ?>][exit_register_pulse_ms]" 
+                                                   id="exit_register_pulse_<?php echo $index; ?>"
+                                                   value="<?php echo isset($device['exit_register_pulse_ms']) ? $device['exit_register_pulse_ms'] : (isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000); ?>"
+                                                   min="100" max="10000" step="100"
+                                                   class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <p class="text-xs text-gray-500">Se activa al escanear salida</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Duración Pulso (ms)
-                                    </label>
-                                    <input type="number" name="devices[<?php echo $index; ?>][pulse_duration_ms]" 
-                                           value="<?php echo isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000; ?>"
-                                           min="100" max="10000" step="100"
-                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms. Máximo: 10 seg</p>
+                                
+                                <!-- Nuevo Acceso -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                <i class="fas fa-plus-circle text-blue-600 mr-1"></i>Nuevo Acceso
+                                            </label>
+                                            <select name="devices[<?php echo $index; ?>][new_access_channel]" 
+                                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                                <?php for ($ch = 0; $ch <= 4; $ch++): ?>
+                                                    <option value="<?php echo $ch; ?>" 
+                                                            <?php echo (isset($device['new_access_channel']) && $device['new_access_channel'] == $ch) ? 'selected' : ((!isset($device['new_access_channel']) && $ch == 0) ? 'selected' : ''); ?>>
+                                                        Canal <?php echo $ch; ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+                                            <select name="devices[<?php echo $index; ?>][new_access_action]" 
+                                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                                <option value="open" <?php echo (isset($device['new_access_action']) && $device['new_access_action'] === 'open') ? 'selected' : ((!isset($device['new_access_action'])) ? 'selected' : ''); ?>>Abrir</option>
+                                                <option value="close" <?php echo (isset($device['new_access_action']) && $device['new_access_action'] === 'close') ? 'selected' : ''; ?>>Cerrar</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center mb-1">
+                                                <input type="checkbox" name="devices[<?php echo $index; ?>][new_access_pulse_enabled]" value="1" 
+                                                       <?php echo (isset($device['new_access_pulse_enabled']) && $device['new_access_pulse_enabled']) ? 'checked' : 'checked'; ?>
+                                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2 pulse-toggle"
+                                                       data-target="new_access_pulse_<?php echo $index; ?>">
+                                                <span class="text-sm text-gray-700">Duración Pulso (ms)</span>
+                                            </label>
+                                            <input type="number" name="devices[<?php echo $index; ?>][new_access_pulse_ms]" 
+                                                   id="new_access_pulse_<?php echo $index; ?>"
+                                                   value="<?php echo isset($device['new_access_pulse_ms']) ? $device['new_access_pulse_ms'] : (isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000); ?>"
+                                                   min="100" max="10000" step="100"
+                                                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <p class="text-xs text-gray-500">Se activa al crear nuevo acceso</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            
+                            <!-- Legacy fields (hidden) for backward compatibility -->
+                            <input type="hidden" name="devices[<?php echo $index; ?>][entry_channel]" 
+                                   value="<?php echo isset($device['entry_channel']) ? $device['entry_channel'] : 0; ?>">
+                            <input type="hidden" name="devices[<?php echo $index; ?>][exit_channel]" 
+                                   value="<?php echo isset($device['exit_channel']) ? $device['exit_channel'] : 1; ?>">
+                            <input type="hidden" name="devices[<?php echo $index; ?>][pulse_duration_ms]" 
+                                   value="<?php echo isset($device['pulse_duration_ms']) ? $device['pulse_duration_ms'] : 5000; ?>">
+                            <input type="hidden" name="devices[<?php echo $index; ?>][action_code]" 
+                                   value="<?php echo $actionCode; ?>">
                             
                             <!-- Puerto Activo (legacy - oculto) -->
                             <input type="hidden" name="devices[<?php echo $index; ?>][active_channel]" 
@@ -519,45 +646,141 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Canal de Entrada (Apertura)
-                    </label>
-                    <select name="devices[INDEX][entry_channel]" 
-                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="0" selected>Canal 0</option>
-                        <option value="1">Canal 1</option>
-                        <option value="2">Canal 2</option>
-                        <option value="3">Canal 3</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Pulso de 5 segundos al entrar</p>
+            <!-- Canales de Acciones -->
+            <div class="border-t border-gray-200 pt-4 mb-4">
+                <h4 class="text-sm font-semibold text-gray-800 mb-3">
+                    <i class="fas fa-cogs text-orange-500 mr-2"></i>Configuración de Canales y Acciones
+                </h4>
+                
+                <!-- Registro Rápido -->
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-bolt text-green-600 mr-1"></i>Registro Rápido
+                            </label>
+                            <select name="devices[INDEX][quick_register_channel]" 
+                                    class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
+                                <option value="0" selected>Canal 0</option>
+                                <option value="1">Canal 1</option>
+                                <option value="2">Canal 2</option>
+                                <option value="3">Canal 3</option>
+                                <option value="4">Canal 4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+                            <select name="devices[INDEX][quick_register_action]" 
+                                    class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
+                                <option value="open" selected>Abrir</option>
+                                <option value="close">Cerrar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="flex items-center mb-1">
+                                <input type="checkbox" name="devices[INDEX][quick_register_pulse_enabled]" value="1" checked
+                                       class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 pulse-toggle">
+                                <span class="text-sm text-gray-700">Duración Pulso (ms)</span>
+                            </label>
+                            <input type="number" name="devices[INDEX][quick_register_pulse_ms]" 
+                                   value="5000"
+                                   min="100" max="10000" step="100"
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <p class="text-xs text-gray-500">Se activa al registrar entrada rápida</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Canal de Salida (Cierre)
-                    </label>
-                    <select name="devices[INDEX][exit_channel]" 
-                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="0">Canal 0</option>
-                        <option value="1" selected>Canal 1</option>
-                        <option value="2">Canal 2</option>
-                        <option value="3">Canal 3</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Activación al salir</p>
+                
+                <!-- Registrar Salida -->
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-3">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-sign-out-alt text-purple-600 mr-1"></i>Registrar Salida
+                            </label>
+                            <select name="devices[INDEX][exit_register_channel]" 
+                                    class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
+                                <option value="0">Canal 0</option>
+                                <option value="1" selected>Canal 1</option>
+                                <option value="2">Canal 2</option>
+                                <option value="3">Canal 3</option>
+                                <option value="4">Canal 4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+                            <select name="devices[INDEX][exit_register_action]" 
+                                    class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
+                                <option value="open">Abrir</option>
+                                <option value="close" selected>Cerrar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="flex items-center mb-1">
+                                <input type="checkbox" name="devices[INDEX][exit_register_pulse_enabled]" value="1" checked
+                                       class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2 pulse-toggle">
+                                <span class="text-sm text-gray-700">Duración Pulso (ms)</span>
+                            </label>
+                            <input type="number" name="devices[INDEX][exit_register_pulse_ms]" 
+                                   value="5000"
+                                   min="100" max="10000" step="100"
+                                   class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <p class="text-xs text-gray-500">Se activa al escanear salida</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Duración Pulso (ms)
-                    </label>
-                    <input type="number" name="devices[INDEX][pulse_duration_ms]" 
-                           value="5000"
-                           min="100" max="10000" step="100"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                    <p class="mt-1 text-xs text-gray-500">Por defecto: 5000 ms. Máximo: 10 seg</p>
+                
+                <!-- Nuevo Acceso -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-plus-circle text-blue-600 mr-1"></i>Nuevo Acceso
+                            </label>
+                            <select name="devices[INDEX][new_access_channel]" 
+                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                <option value="0" selected>Canal 0</option>
+                                <option value="1">Canal 1</option>
+                                <option value="2">Canal 2</option>
+                                <option value="3">Canal 3</option>
+                                <option value="4">Canal 4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+                            <select name="devices[INDEX][new_access_action]" 
+                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                <option value="open" selected>Abrir</option>
+                                <option value="close">Cerrar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="flex items-center mb-1">
+                                <input type="checkbox" name="devices[INDEX][new_access_pulse_enabled]" value="1" checked
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2 pulse-toggle">
+                                <span class="text-sm text-gray-700">Duración Pulso (ms)</span>
+                            </label>
+                            <input type="number" name="devices[INDEX][new_access_pulse_ms]" 
+                                   value="5000"
+                                   min="100" max="10000" step="100"
+                                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <p class="text-xs text-gray-500">Se activa al crear nuevo acceso</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             
+            <!-- Legacy fields (hidden) for backward compatibility -->
+            <input type="hidden" name="devices[INDEX][entry_channel]" value="0">
+            <input type="hidden" name="devices[INDEX][exit_channel]" value="1">
+            <input type="hidden" name="devices[INDEX][pulse_duration_ms]" value="5000">
+            <input type="hidden" name="devices[INDEX][action_code]" value="abrir_cerrar">
             <input type="hidden" name="devices[INDEX][active_channel]" value="0">
             
             <div class="space-y-2">

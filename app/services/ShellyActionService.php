@@ -147,6 +147,96 @@ class ShellyActionService {
     }
     
     /**
+     * Ejecuta una acción Shelly según el tipo de acción configurado
+     * @param Database $db Instancia de base de datos
+     * @param string $actionType Tipo de acción: 'quick_register', 'exit_register', 'new_access'
+     * @param string|null $correlationId ID de correlación para idempotencia
+     * @return array Resultado de la operación
+     * @throws Exception Si no hay configuración para la acción
+     */
+    public static function executeByActionType($db, $actionType, ?string $correlationId = null) {
+        require_once APP_PATH . '/models/ShellyDevice.php';
+        
+        // Obtener dispositivos configurados para este tipo de acción
+        $devices = ShellyDevice::getAllForActionType($db, $actionType);
+        
+        if (!$devices || count($devices) === 0) {
+            throw new Exception("No hay dispositivos configurados para el tipo de acción: $actionType");
+        }
+        
+        // Separar en simultáneos y normales
+        $simul = array_values(array_filter($devices, fn($r) => isset($r['is_simultaneous']) && (int)$r['is_simultaneous'] === 1));
+        $targets = !empty($simul) ? $simul : [$devices[0]]; // fallback al primero si no hay simultáneos
+        
+        $lastResult = null;
+        foreach ($targets as $cfg) {
+            // Usar el canal y modo configurados para este tipo de acción
+            $channel = (int)($cfg['action_channel'] ?? 0);
+            $mode = $cfg['action_mode'] ?? 'open';
+            $pulseEnabled = $cfg['pulse_enabled'] ?? true;
+            $pulseDuration = $pulseEnabled ? (int)($cfg['pulse_ms'] ?? 5000) : 0;
+            
+            $invert = isset($cfg['invert_sequence']) ? (int)$cfg['invert_sequence'] : 1;
+            
+            // Generar ID de correlación si no se proporcionó
+            $correlation = $correlationId ?? uniqid("shelly_{$actionType}_", true);
+            $actionLabel = ($mode === 'open') ? 'entry' : 'exit';
+            
+            // Verificar si el pulso ya fue ejecutado (idempotencia)
+            if (ShellyLockHelper::pulseExists($db, $channel, $correlation)) {
+                error_log("ShellyActionService::executeByActionType - Pulse already exists: {$correlation}, skipping");
+                continue;
+            }
+            
+            // Ejecutar con lock para evitar dobles pulsos
+            $lastResult = ShellyLockHelper::withPortLock($db, $channel, function() use ($cfg, $channel, $pulseDuration, $invert, $mode, $db, $correlation, $actionLabel, $actionType, $pulseEnabled) {
+                $client = new ShellyCloudClient(
+                    $cfg['server_host'],
+                    $cfg['device_id'],
+                    $cfg['auth_token'] ?? ''
+                );
+                
+                // Determinar el tipo de acción basado en el modo configurado
+                if ($pulseEnabled && $pulseDuration > 0) {
+                    // Ejecutar pulso
+                    $result = $client->pulse($channel, $pulseDuration, (bool)$invert);
+                    
+                    // Registrar en log de pulsos
+                    ShellyLockHelper::logPulse($db, $actionLabel, $channel, $correlation, [
+                        'device_id' => $cfg['device_id'],
+                        'action_type' => $actionType,
+                        'duration_ms' => $pulseDuration,
+                        'success' => $result['ok'],
+                        'error_message' => $result['error'] ?? null
+                    ]);
+                    
+                    return ['success' => $result['ok'], 'data' => $result['result'] ?? null, 'error' => $result['error'] ?? null];
+                } else {
+                    // Ejecutar acción simple (on/off)
+                    if ($mode === 'open') {
+                        $result = $invert ? $client->turnOn($channel) : $client->turnOff($channel);
+                    } else {
+                        $result = $invert ? $client->turnOff($channel) : $client->turnOn($channel);
+                    }
+                    
+                    ShellyLockHelper::logPulse($db, $actionLabel, $channel, $correlation, [
+                        'device_id' => $cfg['device_id'],
+                        'action_type' => $actionType,
+                        'success' => $result['ok'],
+                        'error_message' => $result['error'] ?? null
+                    ]);
+                    
+                    return ['success' => $result['ok'], 'data' => $result['result'] ?? null, 'error' => $result['error'] ?? null];
+                }
+            });
+            
+            error_log("ShellyActionService::executeByActionType() - {$actionType} {$mode} - device={$cfg['device_id']} channel={$channel} correlation={$correlation}");
+        }
+        
+        return $lastResult; // último resultado por conveniencia
+    }
+    
+    /**
      * Determina el canal a usar según el modo de operación
      * @param array $cfg Configuración del dispositivo
      * @param string $mode Modo de operación ('open' o 'close')

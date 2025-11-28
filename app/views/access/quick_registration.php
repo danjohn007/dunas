@@ -1,7 +1,15 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Registro Rápido</h1>
-        <p class="text-gray-600">Registrar entrada de unidad de manera rápida</p>
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Registro Rápido</h1>
+            <p class="text-gray-600">Registrar entrada de unidad de manera rápida</p>
+        </div>
+        <div>
+            <a href="<?php echo BASE_URL; ?>/units/create" 
+               class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-truck mr-2"></i>Nueva Unidad
+            </a>
+        </div>
     </div>
     
     <!-- Paso 1: Buscar Unidad -->
@@ -19,7 +27,8 @@
                     <input type="text" id="plateSearch" 
                            class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 uppercase"
                            placeholder="Ej: ABC-123"
-                           autocomplete="off">
+                           autocomplete="off"
+                           value="<?php echo isset($_GET['plate']) ? htmlspecialchars($_GET['plate']) : ''; ?>">
                     <button type="button" id="searchBtn" 
                             class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">
                         <i class="fas fa-search mr-2"></i>Buscar
@@ -473,6 +482,16 @@ document.addEventListener('DOMContentLoaded', function() {
             searchBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Buscar';
         }
     });
+    
+    // Auto-search if plate parameter is provided in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const plateParam = urlParams.get('plate');
+    if (plateParam && plateParam.trim().length > 0) {
+        // Wait a moment for page to load, then trigger search
+        setTimeout(function() {
+            searchBtn.click();
+        }, 500);
+    }
 });
 </script>
 

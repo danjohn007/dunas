@@ -6,6 +6,10 @@
         </div>
         <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
         <div class="flex gap-2">
+            <a href="<?php echo BASE_URL; ?>/access/create" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-plus-circle mr-2"></i>Nuevo Acceso
+            </a>
             <a href="<?php echo BASE_URL; ?>/access/quickRegistration" 
                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-bolt mr-2"></i>Registro R&aacute;pido

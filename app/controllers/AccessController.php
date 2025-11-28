@@ -46,6 +46,34 @@ class AccessController extends BaseController {
         }
     }
     
+    /**
+     * Ejecuta una acción Shelly por tipo de acción configurado
+     * @param string $actionType Tipo de acción: 'quick_register', 'exit_register', 'new_access'
+     * @param string|null $correlationId ID de correlación para idempotencia
+     * @return array Resultado de la operación
+     */
+    private function executeShellyActionByType($actionType, $correlationId = null) {
+        try {
+            $db = Database::getInstance();
+            return ShellyActionService::executeByActionType($db, $actionType, $correlationId);
+        } catch (Exception $e) {
+            // Si no hay dispositivos configurados o error, intentar método legacy
+            error_log("ShellyActionService::executeByActionType error: " . $e->getMessage());
+            
+            // Fallback: mapear actionType a action y mode legacy
+            switch ($actionType) {
+                case 'quick_register':
+                    return $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
+                case 'exit_register':
+                    return $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
+                case 'new_access':
+                    return $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
+                default:
+                    return $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
+            }
+        }
+    }
+    
     public function index() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
@@ -236,10 +264,10 @@ class AccessController extends BaseController {
                 try {
                     $this->accessModel->registerExit($id, $_POST['liters_supplied']);
                     
-                    // Abrir barrera con Shelly Relay usando el nuevo servicio (en lugar de cerrar)
+                    // Ejecutar acción de 'quick_register' para abrir barrera (confirmando entrada)
                     // Usar ID de acceso para correlación e idempotencia
                     $correlationId = "access:{$id}:entry";
-                    $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open', $correlationId);
+                    $shellyResult = $this->executeShellyActionByType('quick_register', $correlationId);
                     
                     if (!$shellyResult['success']) {
                         $errorDetails = isset($shellyResult['error']) ? $shellyResult['error'] : 'Error desconocido';
@@ -546,9 +574,9 @@ class AccessController extends BaseController {
             // Registrar salida con capacidad máxima de la unidad
             $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
             
-            // Cerrar barrera usando el nuevo servicio
+            // Ejecutar acción de salida usando la configuración de 'exit_register'
             $correlationId = "access:{$access['id']}:exit";
-            $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
+            $shellyResult = $this->executeShellyActionByType('exit_register', $correlationId);
             
             $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
             
@@ -653,15 +681,15 @@ class AccessController extends BaseController {
                 return;
             }
             
-            // Si el acceso está en progreso, es una salida - cerrar barrera
+            // Si el acceso está en progreso, es una salida - ejecutar acción de salida
             if ($access['status'] === 'in_progress') {
                 // Registrar salida con capacidad máxima
                 // NOTA: Se asume carga completa. Para cargas parciales, usar registro manual
                 $this->accessModel->registerExit($access['id'], $access['capacity_liters']);
                 
-                // Cerrar barrera usando el nuevo servicio
+                // Ejecutar acción de 'exit_register' usando la configuración correspondiente
                 $correlationId = "access:{$access['id']}:exit";
-                $shellyResult = $this->executeShellyAction('abrir_cerrar', 'close', $correlationId);
+                $shellyResult = $this->executeShellyActionByType('exit_register', $correlationId);
                 
                 $message = 'Salida registrada exitosamente con ' . number_format($access['capacity_liters']) . ' litros.';
                 
