@@ -1,60 +1,61 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Registro Rápido</h1>
-        <p class="text-gray-600">Registrar entrada de unidad de manera rápida</p>
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Registro Rápido</h1>
+            <p class="text-gray-600">Registrar entrada de unidad de manera rápida</p>
+        </div>
+        <div>
+            <a href="<?php echo BASE_URL; ?>/units/create" 
+               class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-truck mr-2"></i>Nueva Unidad
+            </a>
+        </div>
     </div>
     
-    <!-- Paso 1: Buscar Unidad -->
+    <!-- Detección Automática de Placas -->
     <div id="step1" class="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">
-            <i class="fas fa-search text-blue-600 mr-2"></i>Paso 1: Buscar Unidad
+            <i class="fas fa-camera text-blue-600 mr-2"></i>Detección Automática de Placas
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Número de Placa <span class="text-red-500">*</span>
-                </label>
-                <div class="flex gap-2">
-                    <input type="text" id="plateSearch" 
-                           class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 uppercase"
-                           placeholder="Ej: ABC-123"
-                           autocomplete="off">
-                    <button type="button" id="searchBtn" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">
-                        <i class="fas fa-search mr-2"></i>Buscar
-                    </button>
-                </div>
-            </div>
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+            <p class="text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-1"></i>
+                <strong>Sistema automático:</strong> Las placas detectadas por la cámara se comparan automáticamente con las unidades registradas. El botón de registro solo aparece cuando hay una coincidencia.
+            </p>
         </div>
         
-        <div id="searchResult" class="mt-4 hidden"></div>
-        
-        <!-- Comparación de Placas -->
-        <div id="plateComparisonQuick" class="mt-4 hidden">
+        <!-- Comparación de Placas - Siempre Visible -->
+        <div id="plateComparisonQuick">
             <div id="plate-compare-box" class="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">
-                    <i class="fas fa-camera text-indigo-600 mr-2"></i>Comparación de Placas
+                    <i class="fas fa-sync-alt text-indigo-600 mr-2"></i>Comparación Automática
                 </h3>
                 
                 <div class="grid grid-cols-2 gap-3">
-                    <!-- Placa Ingresada -->
+                    <!-- Placa Detectada (de detected_plates) -->
                     <div class="bg-white rounded p-3 border border-gray-200">
                         <div class="text-xs text-gray-500 uppercase font-semibold mb-1">
-                            Placa Ingresada
+                            <i class="fas fa-camera text-gray-400 mr-1"></i>Última Detección
                         </div>
-                        <div id="plate-saved-text" class="text-lg font-bold text-gray-900 font-mono">
-                            ---
+                        <div id="plate-detected-text" class="text-lg font-bold text-gray-900 font-mono">
+                            <span class="text-gray-400">Esperando...</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Desde cámara
                         </div>
                     </div>
                     
-                    <!-- Placa Detectada -->
+                    <!-- Placa Encontrada en units.plate_number -->
                     <div class="bg-white rounded p-3 border border-gray-200">
                         <div class="text-xs text-gray-500 uppercase font-semibold mb-1">
-                            Placa Detectada
+                            <i class="fas fa-database text-gray-400 mr-1"></i>Placa en Sistema
                         </div>
-                        <div id="plate-detected-text" class="text-lg font-bold text-gray-900 font-mono">
-                            <span class="text-gray-400">...</span>
+                        <div id="plate-saved-text" class="text-lg font-bold text-gray-900 font-mono">
+                            <span class="text-gray-400">---</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Tabla: units
                         </div>
                     </div>
                 </div>
@@ -62,11 +63,44 @@
                 <!-- Estado -->
                 <div class="mt-3 p-2 rounded bg-gray-50 border border-gray-200">
                     <div class="text-xs font-semibold text-gray-600">
-                        Estado: <span id="plate-compare-status">Esperando...</span>
+                        <i class="fas fa-info-circle mr-1"></i>Estado: <span id="plate-compare-status">Esperando detección...</span>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Botón Buscar (aparece cuando hay coincidencia) -->
+        <div id="searchButtonContainer" class="mt-4 hidden">
+            <button type="button" id="searchBtn" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg">
+                <i class="fas fa-search mr-2"></i>Buscar y Registrar Entrada
+            </button>
+        </div>
+        
+        <!-- Sección de Registro Manual (siempre visible) -->
+        <div id="manualRegistrationContainer" class="mt-6 border-t border-gray-200 pt-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-keyboard text-gray-600 mr-2"></i>Registro Manual (Si la cámara no detecta)
+            </h3>
+            
+            <div class="flex gap-3">
+                <div class="flex-1">
+                    <input type="text" id="manualPlateInput" 
+                           placeholder="Escriba la placa manualmente (ej: ABC1059)"
+                           class="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 uppercase"
+                           maxlength="10">
+                </div>
+                <button type="button" id="manualRegistrationBtn" 
+                        class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-6 rounded-lg whitespace-nowrap">
+                    <i class="fas fa-edit mr-2"></i>Registrar
+                </button>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>Use esta opción solo si la cámara no detecta la placa automáticamente
+            </p>
+        </div>
+        
+        <div id="searchResult" class="mt-4 hidden"></div>
     </div>
     
     <!-- Formulario de Registro -->
@@ -290,7 +324,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const plateSearch = document.getElementById('plateSearch');
     const searchBtn = document.getElementById('searchBtn');
     const searchResult = document.getElementById('searchResult');
     const registrationForm = document.getElementById('registrationForm');
@@ -303,19 +336,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const newClientFields = document.getElementById('newClientFields');
     const newDriverCheck = document.getElementById('newDriverCheck');
     const newDriverFields = document.getElementById('newDriverFields');
+    const searchButtonContainer = document.getElementById('searchButtonContainer');
     
-    // Convertir a mayúsculas automáticamente
-    plateSearch.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
-    });
-    
-    // Buscar al presionar Enter
-    plateSearch.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchBtn.click();
-        }
-    });
+    // Variable global para almacenar la última placa detectada
+    window.lastDetectedPlate = null;
     
     // Toggle para nuevo cliente
     newClientCheck.addEventListener('change', function() {
@@ -346,10 +370,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     searchBtn.addEventListener('click', async function() {
-        const plate = plateSearch.value.trim();
+        const plate = window.lastDetectedPlate;
         
         if (!plate) {
-            alert('Por favor ingrese un número de placa');
+            alert('No hay ninguna placa detectada para buscar');
             return;
         }
         
@@ -470,7 +494,170 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error al buscar la unidad: ' + error.message);
         } finally {
             searchBtn.disabled = false;
-            searchBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Buscar';
+            searchBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Buscar y Registrar Entrada';
+        }
+    });
+    
+    // Evento para el botón de registro manual
+    const manualRegistrationBtn = document.getElementById('manualRegistrationBtn');
+    const manualPlateInput = document.getElementById('manualPlateInput');
+    
+    // Convertir a mayúsculas mientras escribe
+    manualPlateInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    manualRegistrationBtn.addEventListener('click', async function() {
+        // Usar placa manual o placa detectada
+        let plate = manualPlateInput.value.trim();
+        
+        if (!plate) {
+            plate = window.lastDetectedPlate;
+        }
+        
+        if (!plate) {
+            alert('Por favor escriba una placa o espere a que la cámara detecte una');
+            manualPlateInput.focus();
+            return;
+        }
+        
+        // Validar formato básico de placa
+        if (plate.length < 3) {
+            alert('La placa debe tener al menos 3 caracteres');
+            manualPlateInput.focus();
+            return;
+        }
+        
+        // Deshabilitar botón mientras busca
+        manualRegistrationBtn.disabled = true;
+        manualRegistrationBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Buscando...';
+        
+        try {
+            // Primero buscar si la placa existe en el sistema
+            const response = await fetch(`<?php echo BASE_URL; ?>/access/searchUnit?plate=${encodeURIComponent(plate)}`);
+            const data = await response.json();
+            
+            if (data.success && data.exists) {
+                // La placa EXISTE - usar flujo normal (igual que el botón azul)
+                document.getElementById('plateNumber').value = plate;
+                
+                let infoHtml = `
+                    <div class="flex items-center text-green-800">
+                        <i class="fas fa-check-circle text-2xl mr-3"></i>
+                        <div>
+                            <p class="font-semibold">Unidad encontrada</p>
+                            <p class="text-sm">Placa: ${data.unit.plate_number} - Capacidad: ${parseInt(data.unit.capacity_liters).toLocaleString()} L</p>
+                `;
+                
+                if (data.lastEntry) {
+                    infoHtml += `
+                            <p class="text-sm mt-1">Cliente: ${data.lastEntry.client_name || 'N/A'}</p>
+                            <p class="text-sm">Último chofer: ${data.lastEntry.driver_name || 'N/A'}</p>
+                    `;
+                }
+                
+                infoHtml += `
+                        </div>
+                    </div>
+                `;
+                
+                searchResult.className = 'mt-4 p-4 bg-green-50 border border-green-200 rounded-lg';
+                searchResult.innerHTML = infoHtml;
+                
+                document.getElementById('unitId').value = data.unit.id;
+                document.getElementById('capacityLiters').value = data.unit.capacity_liters;
+                step2Unit.classList.add('hidden');
+                
+                // Precargar cliente del último registro
+                if (data.lastEntry && data.lastEntry.client_id) {
+                    document.getElementById('clientId').value = data.lastEntry.client_id;
+                    newClientCheck.checked = false;
+                    newClientFields.classList.add('hidden');
+                }
+                
+                // Mostrar selector de choferes
+                if (data.drivers && data.drivers.length > 0) {
+                    const driverSelect = document.getElementById('driverIdExisting');
+                    driverSelect.innerHTML = '<option value="">Seleccione un chofer</option>';
+                    
+                    data.drivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.id;
+                        option.textContent = driver.full_name;
+                        
+                        // Preseleccionar el último chofer usado
+                        if (data.lastEntry && parseInt(driver.id) === parseInt(data.lastEntry.driver_id)) {
+                            option.selected = true;
+                            document.getElementById('driverId').value = driver.id;
+                        }
+                        
+                        driverSelect.appendChild(option);
+                    });
+                    
+                    // Manejar cambio de chofer
+                    driverSelect.addEventListener('change', function() {
+                        document.getElementById('driverId').value = this.value;
+                    });
+                    
+                    step2Driver.classList.remove('hidden');
+                    step3.classList.add('hidden');
+                    step4.classList.add('hidden');
+                } else {
+                    step2Driver.classList.add('hidden');
+                    step3.classList.remove('hidden');
+                    step4.classList.remove('hidden');
+                    newClientCheck.checked = true;
+                    newClientFields.classList.remove('hidden');
+                    newDriverCheck.checked = true;
+                    newDriverFields.classList.remove('hidden');
+                }
+                
+                // Limpiar el input manual
+                manualPlateInput.value = '';
+            } else {
+                // La placa NO existe - registro manual para nueva unidad
+                document.getElementById('plateNumber').value = plate;
+                
+                searchResult.className = 'mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg';
+                searchResult.innerHTML = `
+                    <div class="flex items-center text-orange-800">
+                        <i class="fas fa-edit text-2xl mr-3"></i>
+                        <div>
+                            <p class="font-semibold">Registro Manual</p>
+                            <p class="text-sm">Placa: <strong>${plate}</strong> - Complete los datos para registrar la unidad</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('unitId').value = '';
+                step2Unit.classList.remove('hidden');
+                step2Driver.classList.add('hidden');
+                step3.classList.remove('hidden');
+                step4.classList.remove('hidden');
+                document.getElementById('capacityLiters').setAttribute('required', 'required');
+                
+                // Mostrar campos de registro nuevo
+                newClientCheck.checked = true;
+                newClientFields.classList.remove('hidden');
+                newDriverCheck.checked = true;
+                newDriverFields.classList.remove('hidden');
+                
+                // Limpiar el input manual
+                manualPlateInput.value = '';
+            }
+            
+            searchResult.classList.remove('hidden');
+            registrationForm.classList.remove('hidden');
+            actionButtons.classList.remove('hidden');
+            
+            // Scroll al formulario
+            registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+        } catch (error) {
+            alert('Error al buscar la unidad: ' + error.message);
+        } finally {
+            manualRegistrationBtn.disabled = false;
+            manualRegistrationBtn.innerHTML = '<i class="fas fa-edit mr-2"></i>Registrar';
         }
     });
 });
@@ -513,21 +700,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function doCompareQuick() {
-    const plateValue = plateInput?.value?.trim();
-    if (!plateValue || plateValue.length < 3) {
-      console.log('Quick Registration - Plate too short or empty');
-      return;
-    }
-
     try {
-      console.log('Quick Registration - Starting comparison for plate:', plateValue);
-      
-      // Actualizar UI mientras se carga
-      if (detectedEl) detectedEl.textContent = 'Cargando...';
-      if (statusEl) statusEl.textContent = 'Consultando...';
+      console.log('Quick Registration - Checking for detected plates');
       
       const formData = new FormData();
-      formData.append('unit_plate', plateValue);
+      // No enviar parámetros - la API buscará automáticamente
       
       const response = await fetch(compareUrl, {
         method: 'POST',
@@ -556,89 +733,178 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (data.success) {
         const detected = data.detected || 'Sin detección';
+        const matchedPlate = data.matched_plate || null;
         const isMatch = data.is_match || false;
+        const unitId = data.unit_id || null;
         
-        // Personalizar el mensaje según el caso
-        let message;
-        if (detected === 'Placa no encontrada') {
-          message = 'Placa no encontrada';
-        } else if (isMatch) {
-          message = 'Las placas coinciden';
+        // Guardar la placa detectada y el unit_id globalmente
+        if (detected && detected !== 'Sin detección' && isMatch) {
+          window.lastDetectedPlate = detected;
+          window.lastMatchedUnitId = unitId;
         } else {
-          message = 'Las placas no coinciden';
+          window.lastDetectedPlate = detected !== 'Sin detección' ? detected : null;
+          window.lastMatchedUnitId = null;
         }
         
-        setCompareUI({
-          detected: detected,
-          ok: isMatch,
-          msg: message
-        });
+        // Actualizar placa detectada (de detected_plates)
+        if (detectedEl) {
+          if (detected === 'Sin detección') {
+            detectedEl.innerHTML = '<span class="text-gray-400">Sin detección</span>';
+          } else {
+            detectedEl.innerHTML = `<span class="text-gray-900">${detected}</span>`;
+          }
+        }
+        
+        // Actualizar placa encontrada en el sistema (de units.plate_number)
+        if (savedPlateEl) {
+          if (matchedPlate && isMatch) {
+            savedPlateEl.innerHTML = `<span class="text-green-700">${matchedPlate}</span>`;
+          } else {
+            savedPlateEl.innerHTML = '<span class="text-gray-400">No registrada</span>';
+          }
+        }
+        
+        // Actualizar estado y mostrar/ocultar botones
+        const searchBtnContainer = document.getElementById('searchButtonContainer');
+        
+        if (detected === 'Sin detección') {
+          if (statusEl) statusEl.innerHTML = '<span class="text-gray-600">Esperando detección de cámara...</span>';
+          if (containerEl) {
+            containerEl.classList.remove('match-ok', 'match-bad');
+            containerEl.classList.add('match-bad');
+          }
+          if (searchBtnContainer) searchBtnContainer.classList.add('hidden');
+        } else if (isMatch) {
+          if (statusEl) statusEl.innerHTML = '<span class="text-green-700"><i class="fas fa-check-circle mr-1"></i>Coincidencia encontrada - Lista para registrar</span>';
+          if (containerEl) {
+            containerEl.classList.remove('match-ok', 'match-bad');
+            containerEl.classList.add('match-ok');
+          }
+          // Mostrar botón de búsqueda cuando hay coincidencia
+          if (searchBtnContainer) searchBtnContainer.classList.remove('hidden');
+        } else {
+          if (statusEl) statusEl.innerHTML = '<span class="text-orange-600"><i class="fas fa-exclamation-triangle mr-1"></i>Placa detectada no está registrada - Puede registrar manualmente</span>';
+          if (containerEl) {
+            containerEl.classList.remove('match-ok', 'match-bad');
+            containerEl.classList.add('match-bad');
+          }
+          // Ocultar botón de búsqueda cuando NO hay coincidencia
+          if (searchBtnContainer) searchBtnContainer.classList.add('hidden');
+        }
       } else {
         console.error('Quick Registration - API error:', data.error);
-        setCompareUI({
-          detected: 'Error',
-          ok: false,
-          msg: data.error || 'Error en la comparación'
-        });
+        if (detectedEl) {
+          detectedEl.innerHTML = '<span class="text-red-500">Error</span>';
+        }
+        if (statusEl) {
+          statusEl.innerHTML = '<span class="text-red-600">' + (data.error || 'Error en la consulta') + '</span>';
+        }
+        window.lastDetectedPlate = null;
+        window.lastMatchedUnitId = null;
       }
       
     } catch (error) {
       console.error('Quick Registration - Comparison failed:', error);
-      setCompareUI({
-        detected: 'Error',
-        ok: false,
-        msg: 'No se pudo consultar las detecciones'
-      });
+      if (detectedEl) {
+        detectedEl.innerHTML = '<span class="text-red-500">Error conexión</span>';
+      }
+      if (statusEl) {
+        statusEl.innerHTML = '<span class="text-red-600">No se pudo consultar las detecciones</span>';
+      }
+      window.lastDetectedPlate = null;
+      window.lastMatchedUnitId = null;
     }
   }
 
-  // Ejecuta cuando el usuario escribe en el campo de placa
-  if (plateInput) {
-    plateInput.addEventListener('input', function() {
-      const plateValue = this.value.trim().toUpperCase();
-      
-      console.log('Quick Registration - Input changed:', plateValue);
-      
-      // Actualizar el campo visual de la placa ingresada
-      if (savedPlateEl) {
-        savedPlateEl.textContent = plateValue || '---';
-      }
-      
-      // Mostrar/ocultar la caja de comparación
-      if (plateValue && plateValue.length >= 3) {
-        comparisonBox.classList.remove('hidden');
-        
-        // Limpiar estado anterior
-        if (detectedEl) detectedEl.textContent = 'Cargando...';
-        if (statusEl) statusEl.textContent = 'Consultando...';
-        
-        // Debounce para evitar muchas llamadas
-        clearTimeout(window.__qr_compare_timeout);
-        window.__qr_compare_timeout = setTimeout(doCompareQuick, 600);
-      } else {
-        comparisonBox.classList.add('hidden');
-        clearTimeout(window.__qr_compare_timeout);
-      }
-    });
-  }
+  // Ejecutar comparación inicial automática
+  setTimeout(() => {
+    console.log('Quick Registration - Initial auto comparison');
+    doCompareQuick();
+  }, 1000);
 
-  // Ejecutar al cargar si ya hay un valor
-  if (plateInput && plateInput.value) {
-    const plateValue = plateInput.value.trim();
-    if (plateValue.length >= 3) {
-      if (savedPlateEl) savedPlateEl.textContent = plateValue.toUpperCase();
-      comparisonBox.classList.remove('hidden');
-      doCompareQuick();
-    }
-  }
-
-  // Refrescar automáticamente cada 10 segundos
+  // Refrescar automáticamente cada 3 segundos para mostrar nuevas detecciones
   setInterval(() => {
-    const plateValue = plateInput?.value?.trim();
-    if (plateValue && plateValue.length >= 3 && !comparisonBox.classList.contains('hidden')) {
-      console.log('Quick Registration - Auto refresh comparison');
-      doCompareQuick();
-    }
-  }, 10000);
+    console.log('Quick Registration - Auto refresh comparison');
+    doCompareQuick();
+  }, 3000);
 })();
 </script>
+
+<!-- Script para mover imágenes FTP y registrar placas automáticamente -->
+<script>
+// === Autoejecutar move_ftp_images.php y register_new_plates.php cada 10 segundos ===
+
+// URLs - usar endpoint público en /api
+const moverUrl = "<?php echo BASE_URL; ?>/api/move_ftp_images.php";
+const registrarUrl = "<?php echo BASE_URL; ?>/api/register_new_plates.php";
+
+// función que llama al script de mover imágenes (sin interrumpir al usuario)
+async function autoRunMoverFTP() {
+  try {
+    // hacemos una petición GET silenciosa
+    const res = await fetch(moverUrl, { method: "GET", cache: "no-store" });
+    if (!res.ok) {
+      console.warn("⚠️ mover_ftp_a_public.php devolvió un error:", res.status);
+      return;
+    }
+    console.log("🔁 mover_ftp_a_public.php ejecutado correctamente");
+  } catch (err) {
+    console.error("❌ Error ejecutando mover_ftp_a_public.php:", err);
+  }
+}
+
+// función que llama al endpoint de registro de placas
+async function autoRegisterNewPlates() {
+  try {
+    const res = await fetch(registrarUrl, { 
+      method: "POST", 
+      headers: { "Accept": "application/json" },
+      cache: "no-store"
+    });
+    
+    if (!res.ok) {
+      console.warn("⚠️ register_new_plates.php devolvió un error:", res.status);
+      return;
+    }
+    
+    const data = await res.json();
+    if (!data.success) {
+      console.warn("⚠️ Error registrando placas:", data.error);
+      return;
+    }
+    
+    // Log opcional: solo mostrar cuando se inserten placas
+    if (data.inserted > 0) {
+      console.log(`✅ Detectadas/insertadas: ${data.inserted} placas`);
+    }
+  } catch (err) {
+    console.error("❌ Error registrando placas:", err);
+  }
+}
+
+// Ejecutar secuencialmente al cargar la página
+(async () => {
+  await autoRunMoverFTP();
+  await autoRegisterNewPlates();
+})();
+
+// Repetir cada 10 segundos (10000 ms)
+setInterval(async () => {
+  await autoRunMoverFTP();
+  await autoRegisterNewPlates();
+}, 10000);
+</script>
+
+<!-- Configuración para limpieza periódica de registros de placas detectadas -->
+<?php if (isset($systemSettings['auto_cleanup_enabled']) && $systemSettings['auto_cleanup_enabled'] === '1'): ?>
+<script>
+window.CLEANUP_CONFIG = {
+    intervalMinutes: <?php echo (int)($systemSettings['auto_cleanup_minutes'] ?? 15); ?>,
+    url: "<?php echo BASE_URL; ?>/api/cleanup_detected_plates.php",
+    viewName: "Quick Registration"
+};
+</script>
+<script src="<?php echo BASE_URL; ?>/assets/js/detected-plates-cleanup.js"></script>
+<?php else: ?>
+<!-- Limpieza automática desactivada en configuración -->
+<?php endif; ?>

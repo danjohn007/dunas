@@ -6,6 +6,10 @@
         </div>
         <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
         <div class="flex gap-2">
+            <a href="<?php echo BASE_URL; ?>/access/create" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-plus-circle mr-2"></i>Nuevo Acceso
+            </a>
             <a href="<?php echo BASE_URL; ?>/access/quickRegistration" 
                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-bolt mr-2"></i>Registro R&aacute;pido
@@ -265,3 +269,17 @@
     </div>
     <?php endif; ?>
 </div>
+
+<!-- Configuración para limpieza periódica de registros de placas detectadas -->
+<?php if (isset($systemSettings['auto_cleanup_enabled']) && $systemSettings['auto_cleanup_enabled'] === '1'): ?>
+<script>
+window.CLEANUP_CONFIG = {
+    intervalMinutes: <?php echo (int)($systemSettings['auto_cleanup_minutes'] ?? 15); ?>,
+    url: "<?php echo BASE_URL; ?>/api/cleanup_detected_plates.php",
+    viewName: "Access View"
+};
+</script>
+<script src="<?php echo BASE_URL; ?>/assets/js/detected-plates-cleanup.js"></script>
+<?php else: ?>
+<!-- Limpieza automática desactivada en configuración -->
+<?php endif; ?>
