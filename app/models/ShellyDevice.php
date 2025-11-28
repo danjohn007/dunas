@@ -50,72 +50,39 @@ class ShellyDevice {
             foreach ($rows as $r) {
                 $id = isset($r['id']) && $r['id'] !== '' && $r['id'] > 0 ? (int)$r['id'] : null;
                 
+                // Prepare common values for both insert and update
+                $baseParams = self::prepareDeviceParams($r);
+                $actionParams = self::prepareActionParams($r);
+                
                 if ($id) {
                     $seen[] = $id;
                     // Actualizar dispositivo existente
+                    $allParams = array_merge($baseParams, $actionParams, [$id]);
                     $db->execute(
-                        "UPDATE shelly_devices SET name=?, auth_token=?, device_id=?, server_host=?, area=?, active_channel=?, entry_channel=?, exit_channel=?, pulse_duration_ms=?, channel_count=?, invert_sequence=?, is_simultaneous=?, is_enabled=?, quick_register_channel=?, quick_register_action=?, quick_register_pulse_enabled=?, quick_register_pulse_ms=?, exit_register_channel=?, exit_register_action=?, exit_register_pulse_enabled=?, exit_register_pulse_ms=?, new_access_channel=?, new_access_action=?, new_access_pulse_enabled=?, new_access_pulse_ms=?, updated_at=NOW() WHERE id=?",
-                        [
-                            $r['name'],
-                            $r['auth_token'],
-                            $r['device_id'],
-                            $r['server_host'],
-                            $r['area'],
-                            (int)$r['active_channel'],
-                            (int)($r['entry_channel'] ?? 0),
-                            (int)($r['exit_channel'] ?? 1),
-                            (int)($r['pulse_duration_ms'] ?? 5000),
-                            (int)$r['channel_count'],
-                            isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
-                            isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,
-                            (int)$r['is_enabled'],
-                            (int)($r['quick_register_channel'] ?? $r['entry_channel'] ?? 0),
-                            ($r['quick_register_action'] ?? 'open'),
-                            isset($r['quick_register_pulse_enabled']) ? 1 : 0,
-                            (int)($r['quick_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
-                            (int)($r['exit_register_channel'] ?? $r['exit_channel'] ?? 1),
-                            ($r['exit_register_action'] ?? 'close'),
-                            isset($r['exit_register_pulse_enabled']) ? 1 : 0,
-                            (int)($r['exit_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
-                            (int)($r['new_access_channel'] ?? $r['entry_channel'] ?? 0),
-                            ($r['new_access_action'] ?? 'open'),
-                            isset($r['new_access_pulse_enabled']) ? 1 : 0,
-                            (int)($r['new_access_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
-                            $id
-                        ]
+                        "UPDATE shelly_devices SET 
+                            name=?, auth_token=?, device_id=?, server_host=?, area=?, 
+                            active_channel=?, entry_channel=?, exit_channel=?, pulse_duration_ms=?, 
+                            channel_count=?, invert_sequence=?, is_simultaneous=?, is_enabled=?,
+                            quick_register_channel=?, quick_register_action=?, quick_register_pulse_enabled=?, quick_register_pulse_ms=?,
+                            exit_register_channel=?, exit_register_action=?, exit_register_pulse_enabled=?, exit_register_pulse_ms=?,
+                            new_access_channel=?, new_access_action=?, new_access_pulse_enabled=?, new_access_pulse_ms=?,
+                            updated_at=NOW() 
+                        WHERE id=?",
+                        $allParams
                     );
                 } else {
                     // Insertar nuevo dispositivo
+                    $allParams = array_merge($baseParams, [(int)($r['sort_order'] ?? 0)], $actionParams);
                     $db->execute(
-                        "INSERT INTO shelly_devices (name, auth_token, device_id, server_host, area, active_channel, entry_channel, exit_channel, pulse_duration_ms, channel_count, invert_sequence, is_simultaneous, is_enabled, sort_order, quick_register_channel, quick_register_action, quick_register_pulse_enabled, quick_register_pulse_ms, exit_register_channel, exit_register_action, exit_register_pulse_enabled, exit_register_pulse_ms, new_access_channel, new_access_action, new_access_pulse_enabled, new_access_pulse_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        [
-                            $r['name'],
-                            $r['auth_token'],
-                            $r['device_id'],
-                            $r['server_host'],
-                            $r['area'],
-                            (int)$r['active_channel'],
-                            (int)($r['entry_channel'] ?? 0),
-                            (int)($r['exit_channel'] ?? 1),
-                            (int)($r['pulse_duration_ms'] ?? 5000),
-                            (int)$r['channel_count'],
-                            isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
-                            isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,
-                            1,
-                            (int)($r['sort_order'] ?? 0),
-                            (int)($r['quick_register_channel'] ?? $r['entry_channel'] ?? 0),
-                            ($r['quick_register_action'] ?? 'open'),
-                            isset($r['quick_register_pulse_enabled']) ? 1 : 0,
-                            (int)($r['quick_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
-                            (int)($r['exit_register_channel'] ?? $r['exit_channel'] ?? 1),
-                            ($r['exit_register_action'] ?? 'close'),
-                            isset($r['exit_register_pulse_enabled']) ? 1 : 0,
-                            (int)($r['exit_register_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000),
-                            (int)($r['new_access_channel'] ?? $r['entry_channel'] ?? 0),
-                            ($r['new_access_action'] ?? 'open'),
-                            isset($r['new_access_pulse_enabled']) ? 1 : 0,
-                            (int)($r['new_access_pulse_ms'] ?? $r['pulse_duration_ms'] ?? 5000)
-                        ]
+                        "INSERT INTO shelly_devices (
+                            name, auth_token, device_id, server_host, area, 
+                            active_channel, entry_channel, exit_channel, pulse_duration_ms, 
+                            channel_count, invert_sequence, is_simultaneous, is_enabled, sort_order,
+                            quick_register_channel, quick_register_action, quick_register_pulse_enabled, quick_register_pulse_ms,
+                            exit_register_channel, exit_register_action, exit_register_pulse_enabled, exit_register_pulse_ms,
+                            new_access_channel, new_access_action, new_access_pulse_enabled, new_access_pulse_ms
+                        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        $allParams
                     );
                     $id = $db->lastInsertId();
                     $seen[] = $id;
@@ -137,6 +104,58 @@ class ShellyDevice {
             $db->rollBack();
             throw $e;
         }
+    }
+    
+    /**
+     * Prepares base device parameters for insert/update
+     * @param array $r Device row data
+     * @return array Array of parameters for base device fields
+     */
+    private static function prepareDeviceParams($r) {
+        return [
+            $r['name'],
+            $r['auth_token'],
+            $r['device_id'],
+            $r['server_host'],
+            $r['area'],
+            (int)$r['active_channel'],
+            (int)($r['entry_channel'] ?? 0),
+            (int)($r['exit_channel'] ?? 1),
+            (int)($r['pulse_duration_ms'] ?? 5000),
+            (int)$r['channel_count'],
+            isset($r['invert_sequence']) ? (int)$r['invert_sequence'] : 1,
+            isset($r['is_simultaneous']) ? (int)$r['is_simultaneous'] : 0,
+            (int)$r['is_enabled']
+        ];
+    }
+    
+    /**
+     * Prepares action-specific channel parameters
+     * @param array $r Device row data
+     * @return array Array of parameters for action channel fields
+     */
+    private static function prepareActionParams($r) {
+        $pulseDuration = (int)($r['pulse_duration_ms'] ?? 5000);
+        $entryChannel = (int)($r['entry_channel'] ?? 0);
+        $exitChannel = (int)($r['exit_channel'] ?? 1);
+        
+        return [
+            // Quick register
+            (int)($r['quick_register_channel'] ?? $entryChannel),
+            ($r['quick_register_action'] ?? 'open'),
+            isset($r['quick_register_pulse_enabled']) ? 1 : 0,
+            (int)($r['quick_register_pulse_ms'] ?? $pulseDuration),
+            // Exit register  
+            (int)($r['exit_register_channel'] ?? $exitChannel),
+            ($r['exit_register_action'] ?? 'close'),
+            isset($r['exit_register_pulse_enabled']) ? 1 : 0,
+            (int)($r['exit_register_pulse_ms'] ?? $pulseDuration),
+            // New access
+            (int)($r['new_access_channel'] ?? $entryChannel),
+            ($r['new_access_action'] ?? 'open'),
+            isset($r['new_access_pulse_enabled']) ? 1 : 0,
+            (int)($r['new_access_pulse_ms'] ?? $pulseDuration)
+        ];
     }
     
     /**

@@ -1,3 +1,37 @@
+<?php
+/**
+ * Helper function to determine if a channel should be selected
+ * @param array $device Device configuration
+ * @param string $field Primary field to check
+ * @param string $fallbackField Fallback field if primary is not set
+ * @param int $channelValue Channel value to check against
+ * @return string 'selected' if matches, empty string otherwise
+ */
+function isChannelSelected($device, $field, $fallbackField, $channelValue) {
+    if (isset($device[$field]) && $device[$field] !== null) {
+        return ($device[$field] == $channelValue) ? 'selected' : '';
+    }
+    if (isset($device[$fallbackField])) {
+        return ($device[$fallbackField] == $channelValue) ? 'selected' : '';
+    }
+    return ($channelValue == 0) ? 'selected' : '';
+}
+
+/**
+ * Helper function to determine if an action option should be selected
+ * @param array $device Device configuration
+ * @param string $field Field to check
+ * @param string $value Value to check against
+ * @param string $default Default value if field not set
+ * @return string 'selected' if matches, empty string otherwise
+ */
+function isActionSelected($device, $field, $value, $default = 'open') {
+    if (isset($device[$field])) {
+        return ($device[$field] === $value) ? 'selected' : '';
+    }
+    return ($value === $default) ? 'selected' : '';
+}
+?>
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Configuraciones del Sistema</h1>
@@ -17,7 +51,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Nombre del Sitio
                     </label>
-                    <input type="text" name="site_name" 
+                    <input type="text" name="site_name"
                            value="<?php echo htmlspecialchars($settings['site_name'] ?? 'Sistema de Control de Acceso con IoT'); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
@@ -392,8 +426,7 @@
                                             <select name="devices[<?php echo $index; ?>][quick_register_channel]" 
                                                     class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
                                                 <?php for ($ch = 0; $ch <= 4; $ch++): ?>
-                                                    <option value="<?php echo $ch; ?>" 
-                                                            <?php echo (isset($device['quick_register_channel']) && $device['quick_register_channel'] == $ch) ? 'selected' : (((!isset($device['quick_register_channel']) || $device['quick_register_channel'] === null) && isset($device['entry_channel']) && $device['entry_channel'] == $ch) ? 'selected' : ''); ?>>
+                                                    <option value="<?php echo $ch; ?>" <?php echo isChannelSelected($device, 'quick_register_channel', 'entry_channel', $ch); ?>>
                                                         Canal <?php echo $ch; ?>
                                                     </option>
                                                 <?php endfor; ?>
@@ -403,8 +436,8 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
                                             <select name="devices[<?php echo $index; ?>][quick_register_action]" 
                                                     class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 text-sm">
-                                                <option value="open" <?php echo (isset($device['quick_register_action']) && $device['quick_register_action'] === 'open') ? 'selected' : ((!isset($device['quick_register_action'])) ? 'selected' : ''); ?>>Abrir</option>
-                                                <option value="close" <?php echo (isset($device['quick_register_action']) && $device['quick_register_action'] === 'close') ? 'selected' : ''; ?>>Cerrar</option>
+                                                <option value="open" <?php echo isActionSelected($device, 'quick_register_action', 'open', 'open'); ?>>Abrir</option>
+                                                <option value="close" <?php echo isActionSelected($device, 'quick_register_action', 'close', 'open'); ?>>Cerrar</option>
                                             </select>
                                         </div>
                                         <div>
@@ -437,8 +470,7 @@
                                             <select name="devices[<?php echo $index; ?>][exit_register_channel]" 
                                                     class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
                                                 <?php for ($ch = 0; $ch <= 4; $ch++): ?>
-                                                    <option value="<?php echo $ch; ?>" 
-                                                            <?php echo (isset($device['exit_register_channel']) && $device['exit_register_channel'] == $ch) ? 'selected' : (((!isset($device['exit_register_channel']) || $device['exit_register_channel'] === null) && isset($device['exit_channel']) && $device['exit_channel'] == $ch) ? 'selected' : ''); ?>>
+                                                    <option value="<?php echo $ch; ?>" <?php echo isChannelSelected($device, 'exit_register_channel', 'exit_channel', $ch); ?>>
                                                         Canal <?php echo $ch; ?>
                                                     </option>
                                                 <?php endfor; ?>
@@ -448,8 +480,8 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
                                             <select name="devices[<?php echo $index; ?>][exit_register_action]" 
                                                     class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-sm">
-                                                <option value="open" <?php echo (isset($device['exit_register_action']) && $device['exit_register_action'] === 'open') ? 'selected' : ''; ?>>Abrir</option>
-                                                <option value="close" <?php echo (isset($device['exit_register_action']) && $device['exit_register_action'] === 'close') ? 'selected' : ((!isset($device['exit_register_action'])) ? 'selected' : ''); ?>>Cerrar</option>
+                                                <option value="open" <?php echo isActionSelected($device, 'exit_register_action', 'open', 'close'); ?>>Abrir</option>
+                                                <option value="close" <?php echo isActionSelected($device, 'exit_register_action', 'close', 'close'); ?>>Cerrar</option>
                                             </select>
                                         </div>
                                         <div>
@@ -482,8 +514,7 @@
                                             <select name="devices[<?php echo $index; ?>][new_access_channel]" 
                                                     class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
                                                 <?php for ($ch = 0; $ch <= 4; $ch++): ?>
-                                                    <option value="<?php echo $ch; ?>" 
-                                                            <?php echo (isset($device['new_access_channel']) && $device['new_access_channel'] == $ch) ? 'selected' : ((!isset($device['new_access_channel']) && $ch == 0) ? 'selected' : ''); ?>>
+                                                    <option value="<?php echo $ch; ?>" <?php echo isChannelSelected($device, 'new_access_channel', 'entry_channel', $ch); ?>>
                                                         Canal <?php echo $ch; ?>
                                                     </option>
                                                 <?php endfor; ?>
@@ -493,8 +524,8 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Acción</label>
                                             <select name="devices[<?php echo $index; ?>][new_access_action]" 
                                                     class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
-                                                <option value="open" <?php echo (isset($device['new_access_action']) && $device['new_access_action'] === 'open') ? 'selected' : ((!isset($device['new_access_action'])) ? 'selected' : ''); ?>>Abrir</option>
-                                                <option value="close" <?php echo (isset($device['new_access_action']) && $device['new_access_action'] === 'close') ? 'selected' : ''; ?>>Cerrar</option>
+                                                <option value="open" <?php echo isActionSelected($device, 'new_access_action', 'open', 'open'); ?>>Abrir</option>
+                                                <option value="close" <?php echo isActionSelected($device, 'new_access_action', 'close', 'open'); ?>>Cerrar</option>
                                             </select>
                                         </div>
                                         <div>
