@@ -171,6 +171,16 @@
         <?php echo $content; ?>
     </main>
     
+    <!-- Botón Fijo: Registrar Acceso -->
+    <?php if (isset($showNav) && $showNav && Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
+    <a href="<?php echo BASE_URL; ?>/access/quickRegistration" 
+       class="fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 z-50 group"
+       title="Registrar Acceso Rápido">
+        <i class="fas fa-door-open text-lg group-hover:scale-110 transition-transform"></i>
+        <span class="hidden sm:inline">Registrar Acceso</span>
+    </a>
+    <?php endif; ?>
+    
     <!-- Footer -->
     <footer class="bg-white border-t mt-12">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

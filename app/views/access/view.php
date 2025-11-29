@@ -68,7 +68,7 @@
                     <p class="text-gray-900"><?php echo htmlspecialchars($access['client_name']); ?></p>
                 </div>
                 <div>
-                    <label class="text-sm font-medium text-gray-500">Teléfono</label>
+                    <label class="text-sm font-medium text-gray-500">Teléfono/WhatsApp</label>
                     <p class="text-gray-900"><?php echo htmlspecialchars($access['client_phone']); ?></p>
                 </div>
             </div>
@@ -88,7 +88,7 @@
                     <p class="text-gray-900"><?php echo htmlspecialchars($access['driver_name']); ?></p>
                 </div>
                 <div>
-                    <label class="text-sm font-medium text-gray-500">Teléfono</label>
+                    <label class="text-sm font-medium text-gray-500">Teléfono/WhatsApp</label>
                     <p class="text-gray-900"><?php echo htmlspecialchars($access['driver_phone']); ?></p>
                 </div>
             </div>

@@ -62,16 +62,19 @@ class ClientController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'business_name' => 'required',
-                'rfc_curp' => 'required',
-                'address' => 'required',
-                'phone' => 'required|phone',
-                'email' => 'required|email',
-                'client_type' => 'required'
+                'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $this->clientModel->create($_POST);
+                    // Establecer valores por defecto para campos opcionales
+                    $data = $_POST;
+                    $data['rfc_curp'] = $data['rfc_curp'] ?? '';
+                    $data['address'] = $data['address'] ?? '';
+                    $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
+                    $data['client_type'] = $data['client_type'] ?: 'commercial';
+                    
+                    $this->clientModel->create($data);
                     $this->setFlash('success', 'Cliente registrado exitosamente.');
                     $this->redirect('/clients');
                 } catch (Exception $e) {
@@ -104,16 +107,19 @@ class ClientController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'business_name' => 'required',
-                'rfc_curp' => 'required',
-                'address' => 'required',
-                'phone' => 'required|phone',
-                'email' => 'required|email',
-                'client_type' => 'required'
+                'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $this->clientModel->update($id, $_POST);
+                    // Establecer valores por defecto para campos opcionales
+                    $data = $_POST;
+                    $data['rfc_curp'] = $data['rfc_curp'] ?? '';
+                    $data['address'] = $data['address'] ?? '';
+                    $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
+                    $data['client_type'] = $data['client_type'] ?: 'commercial';
+                    
+                    $this->clientModel->update($id, $data);
                     $this->setFlash('success', 'Cliente actualizado exitosamente.');
                     $this->redirect('/clients');
                 } catch (Exception $e) {

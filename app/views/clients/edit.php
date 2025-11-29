@@ -18,18 +18,19 @@
                 
                 <div>
                     <label for="rfc_curp" class="block text-sm font-medium text-gray-700 mb-1">
-                        RFC / CURP <span class="text-red-500">*</span>
+                        RFC / CURP
                     </label>
-                    <input type="text" id="rfc_curp" name="rfc_curp" required
+                    <input type="text" id="rfc_curp" name="rfc_curp"
                            value="<?php echo htmlspecialchars($client['rfc_curp']); ?>"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="Ingrese RFC o CURP (opcional)">
                 </div>
                 
                 <div>
                     <label for="client_type" class="block text-sm font-medium text-gray-700 mb-1">
-                        Tipo de Cliente <span class="text-red-500">*</span>
+                        Tipo de Cliente
                     </label>
-                    <select id="client_type" name="client_type" required
+                    <select id="client_type" name="client_type"
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="residential" <?php echo $client['client_type'] === 'residential' ? 'selected' : ''; ?>>Residencial</option>
                         <option value="commercial" <?php echo $client['client_type'] === 'commercial' ? 'selected' : ''; ?>>Comercial</option>
@@ -39,15 +40,16 @@
                 
                 <div class="md:col-span-2">
                     <label for="address" class="block text-sm font-medium text-gray-700 mb-1">
-                        Dirección <span class="text-red-500">*</span>
+                        Dirección
                     </label>
-                    <textarea id="address" name="address" rows="3" required
-                              class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"><?php echo htmlspecialchars($client['address']); ?></textarea>
+                    <textarea id="address" name="address" rows="3"
+                              class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              placeholder="Ingrese la dirección completa (opcional)"><?php echo htmlspecialchars($client['address']); ?></textarea>
                 </div>
                 
                 <div>
                     <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-                        Teléfono <span class="text-red-500">*</span>
+                        Teléfono/WhatsApp <span class="text-red-500">*</span>
                     </label>
                     <input type="tel" id="phone" name="phone" required maxlength="10"
                            pattern="[0-9]{10}"
@@ -59,11 +61,12 @@
                 
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-                        Correo Electrónico <span class="text-red-500">*</span>
+                        Correo Electrónico
                     </label>
-                    <input type="email" id="email" name="email" required
+                    <input type="email" id="email" name="email"
                            value="<?php echo htmlspecialchars($client['email']); ?>"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="Ingrese correo electrónico (opcional)">
                 </div>
                 
                 <div>

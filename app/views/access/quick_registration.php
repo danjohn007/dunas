@@ -206,7 +206,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Teléfono <span class="text-red-500">*</span>
+                            Teléfono/WhatsApp <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" name="client_phone" id="clientPhone"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
@@ -270,7 +270,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Teléfono <span class="text-red-500">*</span>
+                            Teléfono/WhatsApp <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" name="driver_phone" id="driverPhone"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
