@@ -188,7 +188,8 @@
     $qrDefaultSize = 200;
     
     $qrSize = (int)($themeSettings['qr_size'] ?? $qrDefaultSize);
-    if ($qrSize < $qrMinSize) $qrSize = $qrDefaultSize;
+    // Clamp to boundary values for consistency
+    if ($qrSize < $qrMinSize) $qrSize = $qrMinSize;
     if ($qrSize > $qrMaxSize) $qrSize = $qrMaxSize;
     ?>
     
@@ -197,8 +198,10 @@
         // Using error correction level M (Medium ~15%) for better readability on printed passes
         try {
             if (typeof QRCode !== 'undefined') {
+                // Pass code format is VIS-YYYYMMDD-XXXXXXXX (alphanumeric and dashes only)
+                // No special characters that need escaping for JavaScript string
                 new QRCode(document.getElementById('qrcode'), {
-                    text: "<?php echo htmlspecialchars($visitor['pass_code'] ?? '', ENT_QUOTES); ?>",
+                    text: "<?php echo $visitor['pass_code'] ?? ''; ?>",
                     width: <?php echo $qrSize; ?>,
                     height: <?php echo $qrSize; ?>,
                     colorDark: '#000000',

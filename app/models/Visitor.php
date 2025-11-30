@@ -122,7 +122,12 @@ class Visitor {
         $date = $entryDatetime ? date('Ymd', strtotime($entryDatetime)) : date('Ymd');
         
         do {
-            $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            // Use random_bytes for secure random generation when available
+            if (function_exists('random_bytes')) {
+                $random = strtoupper(bin2hex(random_bytes(4)));
+            } else {
+                $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            }
             $passCode = "VIS-{$date}-{$random}";
             
             // Check if code already exists
@@ -134,11 +139,23 @@ class Visitor {
             }
         } while ($attempts < $maxAttempts);
         
-        // Fallback: Use microtime for more entropy and verify uniqueness
+        // Fallback: Use microtime for more entropy with safety limit
+        $fallbackAttempts = 0;
+        $fallbackMaxAttempts = 100;
+        
         do {
-            $random = strtoupper(substr(md5(uniqid(mt_rand(), true) . microtime(true)), 0, 8));
+            if (function_exists('random_bytes')) {
+                $random = strtoupper(bin2hex(random_bytes(4)));
+            } else {
+                $random = strtoupper(substr(md5(uniqid(mt_rand(), true) . microtime(true)), 0, 8));
+            }
             $passCode = "VIS-{$date}-{$random}";
             $existing = $this->getByPassCode($passCode);
+            $fallbackAttempts++;
+            
+            if ($fallbackAttempts >= $fallbackMaxAttempts) {
+                throw new Exception('Unable to generate unique pass code after maximum attempts');
+            }
         } while ($existing);
         
         return $passCode;
