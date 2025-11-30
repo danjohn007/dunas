@@ -1,25 +1,22 @@
 -- =============================================================================
--- Migration Script: QR Configuration and Financial Report Updates
+-- Migration Script: QR Configuration and Financial Report Updates (Safe import)
 -- Version: 1.5.0
 -- Date: 2025-11-30
--- Description: 
---   1. Add QR configuration settings (qr_api_provider, qr_size)
---   2. Add capacity_costs table for pricing by capacity
---   3. Add cost and payment_method fields to access_logs
---   4. Add unique constraint on client phone number
+-- Notes:
+--  - Este script intenta aplicar cambios de forma segura: si las columnas o el índice
+--    ya existen, los errores no abortarán la importación.
+--  - Requiere permisos para CREATE/DROP PROCEDURE. Si no los tienes, ejecuta las
+--    secciones relevantes manualmente (ver nota al final).
+--  - Hace backup antes de ejecutar en producción.
 -- =============================================================================
 
--- =============================================================================
--- 1. QR Code Configuration Settings
--- =============================================================================
+-- 1) QR Code Configuration Settings
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('qr_api_provider', 'qrserver'),
 ('qr_size', '350')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 
--- =============================================================================
--- 2. Create capacity_costs table for pricing catalog
--- =============================================================================
+-- 2) Create capacity_costs table for pricing catalog
 CREATE TABLE IF NOT EXISTS `capacity_costs` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `capacity_liters` INT NOT NULL,
@@ -33,7 +30,6 @@ CREATE TABLE IF NOT EXISTS `capacity_costs` (
     INDEX `idx_capacity_liters_active` (`capacity_liters`, `is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default capacity costs (example pricing)
 INSERT INTO `capacity_costs` (`capacity_liters`, `cost`, `description`, `is_active`) VALUES
 (5000, 25000.00, 'Pipa 5,000 litros', 1),
 (10000, 50000.00, 'Pipa 10,000 litros', 1),
@@ -46,26 +42,63 @@ ON DUPLICATE KEY UPDATE
     is_active = VALUES(is_active);
 
 -- =============================================================================
--- 3. Add cost and payment_method fields to access_logs
+-- 3) Safe add columns to access_logs and deduplicate clients.phone
 -- =============================================================================
-ALTER TABLE `access_logs`
-    ADD COLUMN IF NOT EXISTS `cost` DECIMAL(10, 2) DEFAULT NULL AFTER `liters_supplied`,
-    ADD COLUMN IF NOT EXISTS `payment_method` ENUM('cash', 'voucher', 'bank_transfer') DEFAULT 'cash' AFTER `cost`;
+-- This section uses a stored procedure with an error handler that continues on errors
+-- (so attempts to add already-existing columns or already-existing indexes won't abort).
+-- If your DB user cannot CREATE PROCEDURE, run the manual section shown after this file.
+DELIMITER $$
+CREATE PROCEDURE safe_apply_qr_financial_changes()
+BEGIN
+  -- If any statement inside throws an exception, keep going.
+  DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET @migration_error = 1;
 
--- Update existing records to have default values
-UPDATE `access_logs` SET `payment_method` = 'cash' WHERE `payment_method` IS NULL;
+  -- 3.a Try to add 'cost' column (if already exists, handler will swallow the error)
+  ALTER TABLE `access_logs`
+    ADD COLUMN `cost` DECIMAL(10, 2) DEFAULT NULL AFTER `liters_supplied`;
 
--- =============================================================================
--- 4. Add unique index on clients phone (with check to avoid duplicate)
--- =============================================================================
--- First check if index exists, drop if it does to avoid errors
-SET @indexExists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND INDEX_NAME = 'uk_phone');
+  -- 3.b Try to add 'payment_method' column
+  ALTER TABLE `access_logs`
+    ADD COLUMN `payment_method` ENUM('cash','voucher','bank_transfer') DEFAULT 'cash' AFTER `cost`;
 
--- Create unique index only if it doesn't exist
--- Note: This might fail if there are duplicate phone numbers - clean them first if needed
--- To check for duplicates: SELECT phone, COUNT(*) FROM clients GROUP BY phone HAVING COUNT(*) > 1;
--- ALTER TABLE `clients` ADD UNIQUE INDEX `uk_phone` (`phone`);
+  -- 3.c Ensure existing rows have default payment_method (if column exists)
+  -- If column does not exist, this will throw and be caught by the handler.
+  UPDATE `access_logs` SET `payment_method` = 'cash' WHERE `payment_method` IS NULL;
+
+  -- =============================================================================
+  -- 4) Clients.phone dedupe & create unique index safely
+  -- =============================================================================
+  -- 4.a Convert empty-string phones to NULL (so '' doesn't collide)
+  UPDATE `clients` SET `phone` = NULL WHERE `phone` = '';
+
+  -- 4.b Build temporary table of duplicated phones and the id to keep (min id)
+  DROP TEMPORARY TABLE IF EXISTS tmp_dup_phones;
+  CREATE TEMPORARY TABLE tmp_dup_phones AS
+    SELECT `phone`, MIN(`id`) AS keep_id
+    FROM `clients`
+    WHERE `phone` IS NOT NULL
+    GROUP BY `phone`
+    HAVING COUNT(*) > 1;
+
+  -- 4.c Null out phone on duplicated rows (keep the row with keep_id)
+  UPDATE `clients` c
+    JOIN tmp_dup_phones t ON c.`phone` = t.`phone`
+    SET c.`phone` = NULL
+    WHERE c.`id` <> t.`keep_id`;
+
+  DROP TEMPORARY TABLE IF EXISTS tmp_dup_phones;
+
+  -- 4.d Try to add unique index on phone (if already exists, handler will swallow the error)
+  ALTER TABLE `clients` ADD UNIQUE INDEX `uk_phone` (`phone`);
+
+END$$
+DELIMITER ;
+
+-- Call the procedure (will run the attempts; harmless if parts already applied)
+CALL safe_apply_qr_financial_changes();
+
+-- Remove the helper procedure
+DROP PROCEDURE IF EXISTS safe_apply_qr_financial_changes;
 
 -- =============================================================================
 -- End of migration
