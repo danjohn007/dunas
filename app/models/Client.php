@@ -91,4 +91,23 @@ class Client {
         
         return $this->db->fetchAll($sql, [$clientId, $limit]);
     }
+    
+    /**
+     * Verificar si un teléfono ya existe para otro cliente
+     * @param string $phone Número de teléfono
+     * @param int|null $excludeId ID del cliente a excluir (para edición)
+     * @return bool
+     */
+    public function phoneExists($phone, $excludeId = null) {
+        $sql = "SELECT COUNT(*) as count FROM clients WHERE phone = ?";
+        $params = [$phone];
+        
+        if ($excludeId !== null) {
+            $sql .= " AND id != ?";
+            $params[] = $excludeId;
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['count'] > 0;
+    }
 }

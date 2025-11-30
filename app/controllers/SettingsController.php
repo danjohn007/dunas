@@ -344,4 +344,71 @@ class SettingsController extends BaseController {
         
         $this->redirect('/settings');
     }
+    
+    /**
+     * Guarda/actualiza los costos por capacidad
+     */
+    public function saveCapacityCosts() {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/settings');
+            return;
+        }
+        
+        try {
+            require_once APP_PATH . '/models/CapacityCost.php';
+            $capacityCostModel = new CapacityCost();
+            $db = Database::getInstance();
+            
+            // Get existing IDs for cleanup
+            $existingCosts = $capacityCostModel->getAll(false);
+            $existingIds = array_column($existingCosts, 'id');
+            $submittedIds = [];
+            
+            if (isset($_POST['capacity_costs']) && is_array($_POST['capacity_costs'])) {
+                foreach ($_POST['capacity_costs'] as $cost) {
+                    $capacityLiters = (int)($cost['capacity_liters'] ?? 0);
+                    $costValue = (float)($cost['cost'] ?? 0);
+                    $description = trim($cost['description'] ?? '');
+                    $isActive = (int)($cost['is_active'] ?? 1);
+                    
+                    // Skip invalid entries
+                    if ($capacityLiters <= 0 || $costValue < 0) {
+                        continue;
+                    }
+                    
+                    $data = [
+                        'capacity_liters' => $capacityLiters,
+                        'cost' => $costValue,
+                        'description' => $description,
+                        'is_active' => $isActive
+                    ];
+                    
+                    if (!empty($cost['id'])) {
+                        // Update existing
+                        $capacityCostModel->update($cost['id'], $data);
+                        $submittedIds[] = (int)$cost['id'];
+                    } else {
+                        // Create new
+                        $newId = $capacityCostModel->create($data);
+                        $submittedIds[] = $newId;
+                    }
+                }
+            }
+            
+            // Delete removed items
+            $toDelete = array_diff($existingIds, $submittedIds);
+            foreach ($toDelete as $id) {
+                $capacityCostModel->delete($id);
+            }
+            
+            $this->setFlash('success', 'Costos por capacidad guardados exitosamente.');
+        } catch (Exception $e) {
+            error_log("Error al guardar costos por capacidad: " . $e->getMessage());
+            $this->setFlash('error', 'Error al guardar: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/settings');
+    }
 }

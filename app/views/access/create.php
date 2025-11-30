@@ -12,7 +12,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Cliente <span class="text-red-500">*</span>
                 </label>
-                <select name="client_id" required
+                <select name="client_id" id="clientSelect" required
                         class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">-- Seleccione un cliente --</option>
                     <?php foreach ($clients as $client): ?>
@@ -29,19 +29,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Unidad (Pipa) <span class="text-red-500">*</span>
                 </label>
-                <select name="unit_id" id="unitSelect" required
-                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <select name="unit_id" id="unitSelect" required disabled
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100">
                     <option value="">-- Seleccione una unidad --</option>
-                    <?php foreach ($units as $unit): ?>
-                        <option value="<?php echo $unit['id']; ?>" 
-                                data-capacity="<?php echo $unit['capacity_liters']; ?>"
-                                data-plate="<?php echo htmlspecialchars($unit['plate_number']); ?>">
-                            <?php echo htmlspecialchars($unit['plate_number']); ?> 
-                            (<?php echo $unit['brand']; ?> <?php echo $unit['model']; ?> - 
-                            <?php echo number_format($unit['capacity_liters']); ?> L)
-                        </option>
-                    <?php endforeach; ?>
                 </select>
+                <p id="unitHelpText" class="mt-1 text-xs text-gray-500">Primero seleccione un cliente para ver sus unidades</p>
             </div>
             
             <!-- Comparación de Placas (ANPR) -->
@@ -105,16 +97,25 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Chofer <span class="text-red-500">*</span>
                 </label>
-                <select name="driver_id" required
-                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <select name="driver_id" id="driverSelect" required disabled
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100">
                     <option value="">-- Seleccione un chofer --</option>
-                    <?php foreach ($drivers as $driver): ?>
-                        <option value="<?php echo $driver['id']; ?>">
-                            <?php echo htmlspecialchars($driver['full_name']); ?> 
-                            (Lic: <?php echo htmlspecialchars($driver['license_number']); ?>)
-                        </option>
-                    <?php endforeach; ?>
                 </select>
+                <p id="driverHelpText" class="mt-1 text-xs text-gray-500">Primero seleccione un cliente para ver sus choferes</p>
+            </div>
+            
+            <!-- Método de Pago -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Método de Pago <span class="text-red-500">*</span>
+                </label>
+                <select name="payment_method" id="paymentMethod" required
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <option value="cash" selected>Efectivo</option>
+                    <option value="voucher">Vales</option>
+                    <option value="bank_transfer">Transferencia Bancaria</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">El método de pago se reflejará en el ticket y en el reporte financiero</p>
             </div>
             
             <!-- Información Adicional -->
@@ -127,6 +128,7 @@
                     <li><i class="fas fa-check text-green-600 mr-2"></i>Se registrará la fecha y hora de entrada actual</li>
                     <li><i class="fas fa-check text-green-600 mr-2"></i>El sistema abrirá la barrera automáticamente</li>
                     <li><i class="fas fa-check text-green-600 mr-2"></i>El estado inicial será "En Progreso"</li>
+                    <li><i class="fas fa-check text-green-600 mr-2"></i>El costo se calculará automáticamente según la capacidad de la unidad</li>
                 </ul>
             </div>
             
@@ -140,7 +142,7 @@
             
             <!-- Botones -->
             <div class="flex justify-end space-x-4">
-                <a href="<?php echo BASE_URL; ?>/access" 
+                <a href="<?php echo BASE_URL; ?>/access"
                    class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
                     <i class="fas fa-times mr-2"></i>Cancelar
                 </a>
@@ -178,6 +180,89 @@
     background: linear-gradient(to right, #f3f4f6, #e5e7eb) !important;
 }
 </style>
+
+<!-- Script to handle client selection and filter units/drivers -->
+<script>
+(function(){
+    const clientSelect = document.getElementById('clientSelect');
+    const unitSelect = document.getElementById('unitSelect');
+    const driverSelect = document.getElementById('driverSelect');
+    const unitHelpText = document.getElementById('unitHelpText');
+    const driverHelpText = document.getElementById('driverHelpText');
+    const baseUrl = "<?php echo BASE_URL; ?>";
+    
+    // Handle client selection change
+    clientSelect.addEventListener('change', async function() {
+        const clientId = this.value;
+        
+        // Reset and disable selects
+        unitSelect.innerHTML = '<option value="">-- Cargando unidades... --</option>';
+        driverSelect.innerHTML = '<option value="">-- Cargando choferes... --</option>';
+        unitSelect.disabled = true;
+        driverSelect.disabled = true;
+        
+        if (!clientId) {
+            unitSelect.innerHTML = '<option value="">-- Seleccione una unidad --</option>';
+            driverSelect.innerHTML = '<option value="">-- Seleccione un chofer --</option>';
+            unitHelpText.textContent = 'Primero seleccione un cliente para ver sus unidades';
+            driverHelpText.textContent = 'Primero seleccione un cliente para ver sus choferes';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${baseUrl}/api/get_by_client.php?client_id=${clientId}&type=both`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Populate units
+                unitSelect.innerHTML = '<option value="">-- Seleccione una unidad --</option>';
+                if (data.units && data.units.length > 0) {
+                    data.units.forEach(unit => {
+                        const option = document.createElement('option');
+                        option.value = unit.id;
+                        option.textContent = `${unit.plate_number} (${unit.brand} ${unit.model} - ${parseInt(unit.capacity_liters).toLocaleString()} L)`;
+                        option.dataset.capacity = unit.capacity_liters;
+                        option.dataset.plate = unit.plate_number;
+                        unitSelect.appendChild(option);
+                    });
+                    unitSelect.disabled = false;
+                    unitHelpText.textContent = `${data.units.length} unidad(es) disponible(s)`;
+                } else {
+                    unitSelect.innerHTML = '<option value="">-- No hay unidades para este cliente --</option>';
+                    unitHelpText.textContent = 'Este cliente no tiene unidades registradas';
+                }
+                
+                // Populate drivers
+                driverSelect.innerHTML = '<option value="">-- Seleccione un chofer --</option>';
+                if (data.drivers && data.drivers.length > 0) {
+                    data.drivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.id;
+                        const license = driver.license_number ? `Lic: ${driver.license_number}` : 'Sin licencia';
+                        option.textContent = `${driver.full_name} (${license})`;
+                        driverSelect.appendChild(option);
+                    });
+                    driverSelect.disabled = false;
+                    driverHelpText.textContent = `${data.drivers.length} chofer(es) disponible(s)`;
+                } else {
+                    driverSelect.innerHTML = '<option value="">-- No hay choferes para este cliente --</option>';
+                    driverHelpText.textContent = 'Este cliente no tiene choferes registrados';
+                }
+            } else {
+                console.error('Error fetching data:', data.error);
+                unitHelpText.textContent = 'Error al cargar datos';
+                driverHelpText.textContent = 'Error al cargar datos';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            unitSelect.innerHTML = '<option value="">-- Error al cargar --</option>';
+            driverSelect.innerHTML = '<option value="">-- Error al cargar --</option>';
+            unitHelpText.textContent = 'Error de conexión';
+            driverHelpText.textContent = 'Error de conexión';
+        }
+    });
+})();
+</script>
 
 <script src="<?php echo BASE_URL; ?>/assets/js/plate-compare.js"></script>
 <script>

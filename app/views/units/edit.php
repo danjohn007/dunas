@@ -62,10 +62,30 @@
                     <label for="capacity_liters" class="block text-sm font-medium text-gray-700 mb-1">
                         Capacidad (Litros) <span class="text-red-500">*</span>
                     </label>
-                    <input type="number" id="capacity_liters" name="capacity_liters" required
-                           value="<?php echo htmlspecialchars($unit['capacity_liters']); ?>"
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Ej: 10000">
+                    <select id="capacity_liters" name="capacity_liters" required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Seleccione una capacidad</option>
+                        <?php if (!empty($data['capacities'])): ?>
+                            <?php foreach ($data['capacities'] as $capacity): ?>
+                                <option value="<?php echo $capacity['capacity_liters']; ?>" 
+                                        data-cost="<?php echo $capacity['cost']; ?>"
+                                        <?php echo $unit['capacity_liters'] == $capacity['capacity_liters'] ? 'selected' : ''; ?>>
+                                    <?php echo number_format($capacity['capacity_liters']); ?> L 
+                                    - $<?php echo number_format($capacity['cost'], 2); ?>
+                                    <?php if (!empty($capacity['description'])): ?>
+                                        (<?php echo htmlspecialchars($capacity['description']); ?>)
+                                    <?php endif; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <option value="5000" <?php echo $unit['capacity_liters'] == 5000 ? 'selected' : ''; ?>>5,000 L</option>
+                            <option value="10000" <?php echo $unit['capacity_liters'] == 10000 ? 'selected' : ''; ?>>10,000 L</option>
+                            <option value="12000" <?php echo $unit['capacity_liters'] == 12000 ? 'selected' : ''; ?>>12,000 L</option>
+                            <option value="15000" <?php echo $unit['capacity_liters'] == 15000 ? 'selected' : ''; ?>>15,000 L</option>
+                            <option value="20000" <?php echo $unit['capacity_liters'] == 20000 ? 'selected' : ''; ?>>20,000 L</option>
+                        <?php endif; ?>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">El costo se asignará automáticamente según la capacidad</p>
                 </div>
                 
                 <!-- Marca -->

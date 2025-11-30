@@ -192,6 +192,52 @@
             </div>
         </div>
         
+        <!-- Configuración de Códigos QR -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-start mb-4">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-purple-100 mr-4">
+                    <i class="fas fa-qrcode text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Configuración de Códigos QR</h2>
+                    <p class="text-gray-600 text-sm">Para generación de códigos QR en eventos</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        API para Generación de QR
+                    </label>
+                    <select name="qr_api_provider" 
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="qrserver" <?php echo ($settings['qr_api_provider'] ?? 'qrserver') === 'qrserver' ? 'selected' : ''; ?>>QR Server API</option>
+                        <option value="goqr" <?php echo ($settings['qr_api_provider'] ?? '') === 'goqr' ? 'selected' : ''; ?>>GoQR.me API</option>
+                        <option value="local" <?php echo ($settings['qr_api_provider'] ?? '') === 'local' ? 'selected' : ''; ?>>Generación Local (JavaScript)</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Seleccione el proveedor de API para generar códigos QR</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tamaño de QR (píxeles)
+                    </label>
+                    <input type="number" name="qr_size" min="100" max="1000" step="50"
+                           value="<?php echo htmlspecialchars($settings['qr_size'] ?? '350'); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="350">
+                    <p class="mt-1 text-xs text-gray-500">Tamaño del código QR para impresión (recomendado: 400px)</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Nota:</strong> La configuración de API de QR permite cambiar el proveedor de generación de códigos QR. Un tamaño mayor mejora la calidad de la impresión.
+                </p>
+            </div>
+        </div>
+        
         <!-- Configuración de Tickets -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
@@ -221,6 +267,105 @@
                     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-save mr-2"></i>Guardar Configuraciones
             </button>
+        </div>
+    </form>
+    
+    <!-- Configuración de Costos por Capacidad -->
+    <form method="POST" action="<?php echo BASE_URL; ?>/settings/saveCapacityCosts" id="capacityCostsForm">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-start">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-green-100 mr-4">
+                        <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">Costos por Capacidad de Pipa</h2>
+                        <p class="text-gray-600 text-sm">Configure los precios para cada capacidad disponible en el sistema</p>
+                    </div>
+                </div>
+                <button type="button" onclick="addCapacityCost()" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i>Agregar Capacidad
+                </button>
+            </div>
+            
+            <div id="capacityCostsContainer" class="space-y-4">
+                <?php 
+                // Get capacity costs from database
+                require_once APP_PATH . '/models/CapacityCost.php';
+                $capacityCostModel = new CapacityCost();
+                $capacityCosts = $capacityCostModel->getAll(false);
+                
+                if (empty($capacityCosts)): 
+                ?>
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-info-circle text-4xl mb-4"></i>
+                        <p>No hay costos configurados. Haga clic en "Agregar Capacidad" para comenzar.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($capacityCosts as $index => $cost): ?>
+                        <div class="capacity-cost-item border border-gray-200 rounded-lg p-4 bg-gray-50" id="capacity-cost-<?php echo $index; ?>">
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                <input type="hidden" name="capacity_costs[<?php echo $index; ?>][id]" value="<?php echo $cost['id']; ?>">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad (Litros)</label>
+                                    <input type="number" name="capacity_costs[<?php echo $index; ?>][capacity_liters]" 
+                                           value="<?php echo $cost['capacity_liters']; ?>" required min="1"
+                                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                           placeholder="Ej: 10000">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Costo ($)</label>
+                                    <input type="number" name="capacity_costs[<?php echo $index; ?>][cost]" 
+                                           value="<?php echo $cost['cost']; ?>" required min="0" step="0.01"
+                                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                           placeholder="Ej: 50000.00">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                    <input type="text" name="capacity_costs[<?php echo $index; ?>][description]" 
+                                           value="<?php echo htmlspecialchars($cost['description'] ?? ''); ?>"
+                                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                           placeholder="Ej: Pipa estándar">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                    <select name="capacity_costs[<?php echo $index; ?>][is_active]"
+                                            class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                                        <option value="1" <?php echo $cost['is_active'] ? 'selected' : ''; ?>>Activo</option>
+                                        <option value="0" <?php echo !$cost['is_active'] ? 'selected' : ''; ?>>Inactivo</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <button type="button" onclick="removeCapacityCost(this)"
+                                            class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg w-full">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Importante:</strong> Los costos configurados aquí se utilizarán automáticamente en los registros de entrada y se reflejarán en el Reporte Financiero.
+                </p>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button type="submit" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Guardar Costos por Capacidad
+                </button>
+            </div>
         </div>
     </form>
     
@@ -1150,6 +1295,92 @@
                 input.type = 'password';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Capacity Cost functions
+        let capacityCostIndex = <?php 
+            require_once APP_PATH . '/models/CapacityCost.php';
+            $ccModel = new CapacityCost();
+            $ccCount = count($ccModel->getAll(false));
+            echo (int)$ccCount; 
+        ?>;
+        
+        function addCapacityCost() {
+            const container = document.getElementById('capacityCostsContainer');
+            
+            // Remove "no costs" message if present
+            const noDataMsg = container.querySelector('.text-center');
+            if (noDataMsg && noDataMsg.textContent.includes('No hay costos')) {
+                noDataMsg.remove();
+            }
+            
+            const html = `
+                <div class="capacity-cost-item border border-gray-200 rounded-lg p-4 bg-gray-50" id="capacity-cost-${capacityCostIndex}">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <input type="hidden" name="capacity_costs[${capacityCostIndex}][id]" value="">
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad (Litros)</label>
+                            <input type="number" name="capacity_costs[${capacityCostIndex}][capacity_liters]" 
+                                   required min="1"
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                   placeholder="Ej: 10000">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Costo ($)</label>
+                            <input type="number" name="capacity_costs[${capacityCostIndex}][cost]" 
+                                   required min="0" step="0.01"
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                   placeholder="Ej: 50000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                            <input type="text" name="capacity_costs[${capacityCostIndex}][description]" 
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                   placeholder="Ej: Pipa estándar">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                            <select name="capacity_costs[${capacityCostIndex}][is_active]"
+                                    class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                                <option value="1" selected>Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <button type="button" onclick="removeCapacityCost(this)"
+                                    class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg w-full">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', html);
+            capacityCostIndex++;
+        }
+        
+        function removeCapacityCost(btn) {
+            if (confirm('¿Está seguro de eliminar este costo de capacidad?')) {
+                const item = btn.closest('.capacity-cost-item');
+                item.remove();
+                
+                // Check if container is empty
+                const container = document.getElementById('capacityCostsContainer');
+                if (container.querySelectorAll('.capacity-cost-item').length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-info-circle text-4xl mb-4"></i>
+                            <p>No hay costos configurados. Haga clic en "Agregar Capacidad" para comenzar.</p>
+                        </div>
+                    `;
+                }
             }
         }
     </script>

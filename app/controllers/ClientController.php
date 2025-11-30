@@ -67,6 +67,18 @@ class ClientController extends BaseController {
             
             if ($validator->validate($_POST, $rules)) {
                 try {
+                    // Verificar que el teléfono no esté duplicado
+                    $phone = $_POST['phone'] ?? '';
+                    if ($this->clientModel->phoneExists($phone)) {
+                        $this->setFlash('error', 'El número de Teléfono/WhatsApp ya está registrado para otro cliente.');
+                        $data = [
+                            'title' => 'Nuevo Cliente',
+                            'showNav' => true
+                        ];
+                        $this->view('clients/create', $data);
+                        return;
+                    }
+                    
                     // Establecer valores por defecto para campos opcionales
                     $data = $_POST;
                     $data['rfc_curp'] = $data['rfc_curp'] ?? '';
@@ -112,6 +124,19 @@ class ClientController extends BaseController {
             
             if ($validator->validate($_POST, $rules)) {
                 try {
+                    // Verificar que el teléfono no esté duplicado (excluyendo el cliente actual)
+                    $phone = $_POST['phone'] ?? '';
+                    if ($this->clientModel->phoneExists($phone, $id)) {
+                        $this->setFlash('error', 'El número de Teléfono/WhatsApp ya está registrado para otro cliente.');
+                        $data = [
+                            'title' => 'Editar Cliente',
+                            'client' => $client,
+                            'showNav' => true
+                        ];
+                        $this->view('clients/edit', $data);
+                        return;
+                    }
+                    
                     // Establecer valores por defecto para campos opcionales
                     $data = $_POST;
                     $data['rfc_curp'] = $data['rfc_curp'] ?? '';
