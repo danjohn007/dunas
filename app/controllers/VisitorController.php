@@ -5,7 +5,6 @@
 require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Visitor.php';
 require_once APP_PATH . '/helpers/FileUpload.php';
-require_once APP_PATH . '/helpers/Database.php';
 
 class VisitorController extends BaseController {
     
@@ -220,10 +219,8 @@ class VisitorController extends BaseController {
         if (empty($visitor['pass_code'])) {
             $passCode = $this->visitorModel->generatePassCode($visitor['entry_datetime']);
             
-            // Actualizar en la base de datos
-            $db = Database::getInstance()->getConnection();
-            $stmt = $db->prepare("UPDATE visitors SET pass_code = ? WHERE id = ?");
-            $stmt->execute([$passCode, $id]);
+            // Actualizar en la base de datos usando el método del modelo
+            $this->visitorModel->updatePassCode($id, $passCode);
             
             $visitor['pass_code'] = $passCode;
         }

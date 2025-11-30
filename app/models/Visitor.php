@@ -134,9 +134,23 @@ class Visitor {
             }
         } while ($attempts < $maxAttempts);
         
-        // Fallback: append timestamp if all attempts failed
-        $random = strtoupper(substr(md5(uniqid(mt_rand(), true) . time()), 0, 8));
-        return "VIS-{$date}-{$random}";
+        // Fallback: Use microtime for more entropy and verify uniqueness
+        do {
+            $random = strtoupper(substr(md5(uniqid(mt_rand(), true) . microtime(true)), 0, 8));
+            $passCode = "VIS-{$date}-{$random}";
+            $existing = $this->getByPassCode($passCode);
+        } while ($existing);
+        
+        return $passCode;
+    }
+    
+    /**
+     * Actualizar código de pase de un visitante
+     */
+    public function updatePassCode($id, $passCode) {
+        $sql = "UPDATE {$this->table} SET pass_code = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$passCode, $id]);
     }
     
     /**
