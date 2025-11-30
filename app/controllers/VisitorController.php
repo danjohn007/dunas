@@ -5,6 +5,7 @@
 require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Visitor.php';
 require_once APP_PATH . '/helpers/FileUpload.php';
+require_once APP_PATH . '/helpers/Database.php';
 
 class VisitorController extends BaseController {
     
@@ -199,5 +200,40 @@ class VisitorController extends BaseController {
         }
         
         $this->redirect('/visitors');
+    }
+    
+    /**
+     * Ver pase de visita
+     */
+    public function pass($id) {
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+        
+        $visitor = $this->visitorModel->getById($id);
+        
+        if (!$visitor) {
+            $this->setFlash('error', 'Visitante no encontrado');
+            $this->redirect('/visitors');
+            return;
+        }
+        
+        // Si el visitante no tiene código de pase, generar uno
+        if (empty($visitor['pass_code'])) {
+            $passCode = 'VIS-' . date('Ymd', strtotime($visitor['entry_datetime'])) . '-' . strtoupper(substr(md5($visitor['id'] . $visitor['entry_datetime']), 0, 8));
+            
+            // Actualizar en la base de datos
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("UPDATE visitors SET pass_code = ? WHERE id = ?");
+            $stmt->execute([$passCode, $id]);
+            
+            $visitor['pass_code'] = $passCode;
+        }
+        
+        $data = [
+            'title' => 'Pase de Visita',
+            'visitor' => $visitor,
+            'showNav' => false
+        ];
+        
+        $this->view('visitors/pass', $data);
     }
 }

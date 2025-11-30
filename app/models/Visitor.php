@@ -102,15 +102,37 @@ class Visitor {
     }
     
     /**
+     * Obtener un visitante por código de pase
+     */
+    public function getByPassCode($passCode) {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE pass_code = ?");
+        $stmt->execute([$passCode]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Generar código de pase único
+     */
+    private function generatePassCode() {
+        $date = date('Ymd');
+        $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+        return "VIS-{$date}-{$random}";
+    }
+    
+    /**
      * Crear un nuevo registro de visitante
      */
     public function create($data) {
+        // Generar código de pase único
+        $passCode = $this->generatePassCode();
+        
         $sql = "INSERT INTO {$this->table} 
-                (visitor_name, plate_number, phone, id_photo, plate_photo, badge_photo, entry_datetime, notes, status)
-                VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, 'in')";
+                (pass_code, visitor_name, plate_number, phone, id_photo, plate_photo, badge_photo, entry_datetime, notes, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'in')";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
+            $passCode,
             $data['visitor_name'] ?? null,
             $data['plate_number'] ?? null,
             $data['phone'] ?? null,
