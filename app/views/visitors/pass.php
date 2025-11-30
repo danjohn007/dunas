@@ -181,14 +181,20 @@
     </div>
     
     <?php
-    // Get QR settings
-    $qrSize = (int)($themeSettings['qr_size'] ?? 200);
-    if ($qrSize < 100) $qrSize = 200;
-    if ($qrSize > 500) $qrSize = 500;
+    // QR Code size configuration
+    // Min size: 100px, Max size: 500px, Default: 200px
+    $qrMinSize = 100;
+    $qrMaxSize = 500;
+    $qrDefaultSize = 200;
+    
+    $qrSize = (int)($themeSettings['qr_size'] ?? $qrDefaultSize);
+    if ($qrSize < $qrMinSize) $qrSize = $qrDefaultSize;
+    if ($qrSize > $qrMaxSize) $qrSize = $qrMaxSize;
     ?>
     
     <script>
         // Generate QR Code
+        // Using error correction level M (Medium ~15%) for better readability on printed passes
         try {
             if (typeof QRCode !== 'undefined') {
                 new QRCode(document.getElementById('qrcode'), {
@@ -197,7 +203,7 @@
                     height: <?php echo $qrSize; ?>,
                     colorDark: '#000000',
                     colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.L
+                    correctLevel: QRCode.CorrectLevel.M
                 });
             } else {
                 console.error('QRCode library not loaded');

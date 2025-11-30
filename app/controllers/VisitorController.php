@@ -216,9 +216,9 @@ class VisitorController extends BaseController {
             return;
         }
         
-        // Si el visitante no tiene código de pase, generar uno
+        // Si el visitante no tiene código de pase, generar uno usando el modelo
         if (empty($visitor['pass_code'])) {
-            $passCode = 'VIS-' . date('Ymd', strtotime($visitor['entry_datetime'])) . '-' . strtoupper(substr(md5($visitor['id'] . $visitor['entry_datetime']), 0, 8));
+            $passCode = $this->visitorModel->generatePassCode($visitor['entry_datetime']);
             
             // Actualizar en la base de datos
             $db = Database::getInstance()->getConnection();

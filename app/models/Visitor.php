@@ -112,10 +112,30 @@ class Visitor {
     
     /**
      * Generar código de pase único
+     * Format: VIS-YYYYMMDD-XXXXXXXX
+     * Uses a loop to ensure uniqueness in the database
      */
-    private function generatePassCode() {
-        $date = date('Ymd');
-        $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+    public function generatePassCode($entryDatetime = null) {
+        $maxAttempts = 10;
+        $attempts = 0;
+        
+        $date = $entryDatetime ? date('Ymd', strtotime($entryDatetime)) : date('Ymd');
+        
+        do {
+            $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            $passCode = "VIS-{$date}-{$random}";
+            
+            // Check if code already exists
+            $existing = $this->getByPassCode($passCode);
+            $attempts++;
+            
+            if (!$existing) {
+                return $passCode;
+            }
+        } while ($attempts < $maxAttempts);
+        
+        // Fallback: append timestamp if all attempts failed
+        $random = strtoupper(substr(md5(uniqid(mt_rand(), true) . time()), 0, 8));
         return "VIS-{$date}-{$random}";
     }
     
