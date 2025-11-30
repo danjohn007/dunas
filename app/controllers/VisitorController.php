@@ -4,6 +4,7 @@
  */
 require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Visitor.php';
+require_once APP_PATH . '/helpers/FileUpload.php';
 
 class VisitorController extends BaseController {
     

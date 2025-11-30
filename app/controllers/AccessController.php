@@ -471,7 +471,8 @@ class AccessController extends BaseController {
             $accessData = [
                 'driver_id' => $driverId,
                 'unit_id' => $unitId,
-                'client_id' => $clientId
+                'client_id' => $clientId,
+                'payment_method' => $_POST['payment_method'] ?? 'cash'
             ];
             
             // Leer placa desde cámara Hikvision
