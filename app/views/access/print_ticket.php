@@ -6,7 +6,16 @@
     <title>Ticket de Entrada - <?php echo $access['ticket_code']; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- QRCode library with fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <?php
+    // Get theme colors from settings
+    require_once APP_PATH . '/models/Settings.php';
+    $settingsModel = new Settings();
+    $themeSettings = $settingsModel->getAll();
+    $primaryColor = $themeSettings['theme_primary_color'] ?? '#2563eb';
+    $secondaryColor = $themeSettings['theme_secondary_color'] ?? '#1e40af';
+    ?>
     <style>
         @media print {
             .no-print {
@@ -25,6 +34,14 @@
             padding: 10mm;
             border: 2px dashed #ccc;
         }
+        
+        /* Theme button styles */
+        .btn-primary {
+            background-color: <?php echo $primaryColor; ?>;
+        }
+        .btn-primary:hover {
+            background-color: <?php echo $secondaryColor; ?>;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -36,7 +53,7 @@
                 <i class="fas fa-arrow-left mr-2"></i>Volver
             </a>
             <button onclick="window.print()" 
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    class="btn-primary text-white font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-print mr-2"></i>Imprimir Ticket
             </button>
         </div>
@@ -52,7 +69,7 @@
             
             <!-- Código QR -->
             <div class="text-center mb-4">
-                <canvas id="qrcode" class="mx-auto"></canvas>
+                <div id="qrcode" class="mx-auto inline-block"></div>
                 <p class="text-2xl font-mono font-bold text-gray-900 mt-2"><?php echo $access['ticket_code']; ?></p>
             </div>
             
@@ -150,17 +167,25 @@
     ?>
     
     <script>
-        // Generar código QR with settings size
-        QRCode.toCanvas(document.getElementById('qrcode'), "<?php echo $access['ticket_code']; ?>", {
-            width: <?php echo $qrSize; ?>,
-            margin: 1,
-            color: {
-                dark: '#000000',
-                light: '#ffffff'
+        // Generar código QR with settings size using QRCode.js library
+        try {
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(document.getElementById('qrcode'), {
+                    text: "<?php echo $access['ticket_code']; ?>",
+                    width: <?php echo $qrSize; ?>,
+                    height: <?php echo $qrSize; ?>,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            } else {
+                console.error('QRCode library not loaded');
+                document.getElementById('qrcode').innerHTML = '<p class="text-red-500">Error: No se pudo cargar el código QR</p>';
             }
-        }, function (error) {
-            if (error) console.error(error);
-        });
+        } catch (error) {
+            console.error('Error generating QR code:', error);
+            document.getElementById('qrcode').innerHTML = '<p class="text-red-500">Error: ' + error.message + '</p>';
+        }
         
         // Redirigir a la vista de registro de salida después de imprimir (donde está el botón de permitir acceso)
         let hasRedirected = false;
