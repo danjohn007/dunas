@@ -15,6 +15,33 @@ try {
     $clientId = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;
     $type = isset($_GET['type']) ? $_GET['type'] : 'both';
     
+    // Validate client_id is a positive integer
+    if ($clientId <= 0) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Invalid client_id parameter. Must be a positive integer.',
+            'units' => [],
+            'drivers' => []
+        ]);
+        exit;
+    }
+    
+    // Verify client exists
+    $stmt = $db->prepare("SELECT id FROM clients WHERE id = ? AND status = 'active'");
+    $stmt->execute([$clientId]);
+    $clientExists = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$clientExists) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Client not found or inactive.',
+            'client_id' => $clientId,
+            'units' => [],
+            'drivers' => []
+        ]);
+        exit;
+    }
+    
     $result = [
         'success' => true,
         'client_id' => $clientId

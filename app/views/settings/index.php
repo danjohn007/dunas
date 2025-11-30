@@ -1302,7 +1302,7 @@
         let capacityCostIndex = <?php 
             require_once APP_PATH . '/models/CapacityCost.php';
             $ccModel = new CapacityCost();
-            $ccCount = count($ccModel->getAll(false));
+            $ccCount = $ccModel->count(false);
             echo (int)$ccCount; 
         ?>;
         

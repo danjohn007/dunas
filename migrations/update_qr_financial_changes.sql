@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS `capacity_costs` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY `uk_capacity_liters` (`capacity_liters`),
-    INDEX `idx_is_active` (`is_active`)
+    INDEX `idx_is_active` (`is_active`),
+    INDEX `idx_capacity_liters_active` (`capacity_liters`, `is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert default capacity costs (example pricing)

@@ -365,16 +365,27 @@ class SettingsController extends BaseController {
             $existingCosts = $capacityCostModel->getAll(false);
             $existingIds = array_column($existingCosts, 'id');
             $submittedIds = [];
+            $savedCount = 0;
+            $skippedCount = 0;
+            $errors = [];
             
             if (isset($_POST['capacity_costs']) && is_array($_POST['capacity_costs'])) {
-                foreach ($_POST['capacity_costs'] as $cost) {
+                foreach ($_POST['capacity_costs'] as $index => $cost) {
                     $capacityLiters = (int)($cost['capacity_liters'] ?? 0);
                     $costValue = (float)($cost['cost'] ?? 0);
                     $description = trim($cost['description'] ?? '');
                     $isActive = (int)($cost['is_active'] ?? 1);
                     
-                    // Skip invalid entries
-                    if ($capacityLiters <= 0 || $costValue < 0) {
+                    // Validate entries
+                    if ($capacityLiters <= 0) {
+                        $skippedCount++;
+                        $errors[] = "Entrada #" . ($index + 1) . ": La capacidad debe ser mayor que 0";
+                        continue;
+                    }
+                    
+                    if ($costValue < 0) {
+                        $skippedCount++;
+                        $errors[] = "Entrada #" . ($index + 1) . ": El costo no puede ser negativo";
                         continue;
                     }
                     
@@ -394,16 +405,31 @@ class SettingsController extends BaseController {
                         $newId = $capacityCostModel->create($data);
                         $submittedIds[] = $newId;
                     }
+                    $savedCount++;
                 }
             }
             
             // Delete removed items
             $toDelete = array_diff($existingIds, $submittedIds);
+            $deletedCount = count($toDelete);
             foreach ($toDelete as $id) {
                 $capacityCostModel->delete($id);
             }
             
-            $this->setFlash('success', 'Costos por capacidad guardados exitosamente.');
+            // Build success message
+            $message = "Costos por capacidad actualizados: $savedCount guardado(s)";
+            if ($deletedCount > 0) {
+                $message .= ", $deletedCount eliminado(s)";
+            }
+            if ($skippedCount > 0) {
+                $message .= ". $skippedCount entrada(s) ignorada(s) por datos inválidos";
+            }
+            
+            if (!empty($errors)) {
+                $this->setFlash('warning', $message . '. Errores: ' . implode('; ', array_slice($errors, 0, 3)));
+            } else {
+                $this->setFlash('success', $message);
+            }
         } catch (Exception $e) {
             error_log("Error al guardar costos por capacidad: " . $e->getMessage());
             $this->setFlash('error', 'Error al guardar: ' . $e->getMessage());

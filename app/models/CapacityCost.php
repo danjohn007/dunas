@@ -10,6 +10,18 @@ class CapacityCost {
         $this->db = Database::getInstance();
     }
     
+    /**
+     * Get count of capacity costs
+     */
+    public function count($activeOnly = false) {
+        $sql = "SELECT COUNT(*) as total FROM capacity_costs";
+        if ($activeOnly) {
+            $sql .= " WHERE is_active = 1";
+        }
+        $result = $this->db->fetchOne($sql);
+        return (int)$result['total'];
+    }
+    
     public function getAll($activeOnly = true) {
         $sql = "SELECT * FROM capacity_costs";
         $params = [];
