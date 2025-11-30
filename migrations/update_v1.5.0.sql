@@ -1,5 +1,5 @@
 -- =====================================================
--- DUNAS v1.5.0 - Migration Script
+-- DUNAS v1.5.0 - Migration Script (corregido)
 -- Cambios de validación y campos opcionales
 -- Fecha: 2024-11-29
 -- =====================================================
@@ -12,7 +12,42 @@
 ALTER TABLE `drivers` MODIFY `client_id` int(11) DEFAULT NULL;
 
 -- Eliminar FK existente si existe y recrearla con ON DELETE SET NULL
-ALTER TABLE `drivers` DROP FOREIGN KEY IF EXISTS `fk_drivers_client`;
+-- NOTA: MySQL no soporta "DROP FOREIGN KEY IF EXISTS". Usar la siguiente línea si conoces el nombre exacto de la FK:
+ALTER TABLE `drivers` DROP FOREIGN KEY `fk_drivers_client`;
+
+-- Si no estás seguro del nombre de la restricción, puedes obtenerlo con:
+-- SELECT CONSTRAINT_NAME
+-- FROM information_schema.KEY_COLUMN_USAGE
+-- WHERE TABLE_SCHEMA = DATABASE()
+--   AND TABLE_NAME = 'drivers'
+--   AND COLUMN_NAME = 'client_id'
+--   AND REFERENCED_TABLE_NAME = 'clients';
+
+-- Alternativa segura (no lanza error si no existe): (requiere ejecutar varios statements; utilizable en MySQL client)
+-- DELIMITER $$
+-- DROP PROCEDURE IF EXISTS drop_fk_if_exists$$
+-- CREATE PROCEDURE drop_fk_if_exists()
+-- BEGIN
+--   DECLARE v_sql TEXT;
+--   SELECT CONCAT('ALTER TABLE `drivers` DROP FOREIGN KEY `', CONSTRAINT_NAME, '`;')
+--     INTO v_sql
+--     FROM information_schema.KEY_COLUMN_USAGE
+--     WHERE TABLE_SCHEMA = DATABASE()
+--       AND TABLE_NAME = 'drivers'
+--       AND COLUMN_NAME = 'client_id'
+--       AND REFERENCED_TABLE_NAME = 'clients'
+--     LIMIT 1;
+--   IF v_sql IS NOT NULL THEN
+--     PREPARE stmt FROM v_sql;
+--     EXECUTE stmt;
+--     DEALLOCATE PREPARE stmt;
+--   END IF;
+-- END$$
+-- CALL drop_fk_if_exists();
+-- DROP PROCEDURE drop_fk_if_exists$$
+-- DELIMITER ;
+
+-- Re-crear la FK con ON DELETE SET NULL
 ALTER TABLE `drivers` 
     ADD CONSTRAINT `fk_drivers_client` 
     FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) 
