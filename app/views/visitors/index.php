@@ -127,7 +127,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <div class="flex space-x-2">
-                                <a href="<?php echo BASE_URL; ?>/visitors/view/<?php echo $visitor['id']; ?>" 
+                                <a href="<?php echo BASE_URL; ?>/visitors/show/<?php echo $visitor['id']; ?>" 
                                    class="text-blue-600 hover:text-blue-900" title="Ver">
                                     <i class="fas fa-eye"></i>
                                 </a>

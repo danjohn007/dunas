@@ -435,6 +435,7 @@ class AccessLog {
         
         // Then delete access logs
         $sql = "DELETE FROM access_logs WHERE DATE(entry_datetime) < ?";
-        return $this->db->execute($sql, [$date]);
+        $stmt = $this->db->execute($sql, [$date]);
+        return $stmt->rowCount();
     }
 }

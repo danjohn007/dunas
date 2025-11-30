@@ -149,7 +149,7 @@ class VisitorController extends BaseController {
     /**
      * Ver detalle de visitante
      */
-    public function view($id) {
+    public function show($id) {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
         $visitor = $this->visitorModel->getById($id);
