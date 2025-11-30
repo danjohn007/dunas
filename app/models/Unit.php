@@ -114,6 +114,21 @@ class Unit {
         return $this->db->fetchAll($sql, ['%' . $search . '%']);
     }
     
+    /**
+     * Buscar placas para autocompletado con información del cliente
+     */
+    public function searchByPlate($search) {
+        $sql = "SELECT u.id, u.plate_number, u.capacity_liters, u.brand, u.model, 
+                       c.business_name as client_name
+                FROM units u
+                LEFT JOIN clients c ON u.client_id = c.id
+                WHERE u.plate_number LIKE ? 
+                AND u.status = 'active'
+                ORDER BY u.plate_number ASC 
+                LIMIT 10";
+        return $this->db->fetchAll($sql, ['%' . $search . '%']);
+    }
+    
     public function getMaintenanceHistory($unitId, $limit = 10) {
         $sql = "SELECT * FROM maintenance_history 
                 WHERE unit_id = ? 

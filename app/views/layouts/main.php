@@ -20,6 +20,7 @@
             --color-primary: <?php echo $primaryColor; ?>;
             --color-secondary: <?php echo $secondaryColor; ?>;
             --color-accent: <?php echo $accentColor; ?>;
+            --sidebar-width: 260px;
         }
         .bg-primary { background-color: var(--color-primary) !important; }
         .bg-secondary { background-color: var(--color-secondary) !important; }
@@ -30,7 +31,7 @@
         .border-primary { border-color: var(--color-primary) !important; }
         .hover\:bg-primary:hover { background-color: var(--color-secondary) !important; }
         
-        /* Primary button theme styles - replace bg-blue-600/bg-blue-700 */
+        /* Primary button theme styles */
         .btn-primary {
             background-color: var(--color-primary) !important;
         }
@@ -49,98 +50,235 @@
         /* Plate comparison styles */
         #plate-compare-box.match-ok  { border-color: #16a34a !important; }
         #plate-compare-box.match-bad { border-color: #9ca3af !important; }
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .sidebar-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        /* Mobile: sidebar oculta por defecto */
+        @media (max-width: 1023px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Desktop: sidebar siempre visible */
+        @media (min-width: 1024px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+        
+        /* Sidebar nav item hover */
+        .sidebar-nav-item {
+            transition: all 0.2s ease;
+        }
+        .sidebar-nav-item:hover {
+            background-color: var(--color-secondary);
+        }
+        .sidebar-nav-item.active {
+            background-color: var(--color-secondary);
+            border-left: 4px solid white;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     
     <?php if (isset($showNav) && $showNav): ?>
-    <!-- Navegación -->
-    <nav class="bg-primary shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="<?php echo BASE_URL; ?>/dashboard" class="flex items-center">
-                        <?php if (!empty($systemSettings['site_logo'])): ?>
-                            <img src="<?php echo BASE_URL . $systemSettings['site_logo']; ?>" 
-                                 alt="<?php echo $systemSettings['site_name'] ?? APP_NAME; ?>" 
-                                 class="h-10 mr-2">
-                        <?php else: ?>
-                            <i class="fas fa-water text-white text-2xl mr-2"></i>
-                        <?php endif; ?>
-                        <span class="text-white font-bold text-xl"><?php echo $systemSettings['site_name'] ?? 'DUNAS'; ?></span>
-                    </a>
-                    
-                    <div class="hidden md:flex ml-10 space-x-4">
-                        <a href="<?php echo BASE_URL; ?>/dashboard" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-home mr-1"></i> Dashboard
-                        </a>
-                        
-                        <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
-                        <a href="<?php echo BASE_URL; ?>/clients" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-users mr-1"></i> Clientes
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>/units" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-truck mr-1"></i> Unidades
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>/drivers" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-id-card mr-1"></i> Choferes
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>/access" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-door-open mr-1"></i> Accesos
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>/transactions" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-dollar-sign mr-1"></i> Transacciones
-                        </a>
-                        <?php endif; ?>
-                        
-                        <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
-                        <a href="<?php echo BASE_URL; ?>/reports" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-chart-bar mr-1"></i> Reportes
-                        </a>
-                        <?php endif; ?>
-                        
-                        <?php if (Auth::hasRole(['admin'])): ?>
-                        <a href="<?php echo BASE_URL; ?>/users" class="text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-user-cog mr-1"></i> Usuarios
-                        </a>
-                        <?php endif; ?>
-                    </div>
+    
+    <!-- Mobile Header Bar -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 bg-primary shadow-lg z-40 h-16">
+        <div class="flex items-center justify-between h-full px-4">
+            <button id="sidebarToggle" class="text-white p-2 focus:outline-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <a href="<?php echo BASE_URL; ?>/dashboard" class="flex items-center">
+                <?php if (!empty($systemSettings['site_logo'])): ?>
+                    <img src="<?php echo BASE_URL . $systemSettings['site_logo']; ?>" 
+                         alt="<?php echo $systemSettings['site_name'] ?? APP_NAME; ?>" 
+                         class="h-8 mr-2">
+                <?php else: ?>
+                    <i class="fas fa-water text-white text-xl mr-2"></i>
+                <?php endif; ?>
+                <span class="text-white font-bold text-lg"><?php echo $systemSettings['site_name'] ?? 'DUNAS'; ?></span>
+            </a>
+            <div class="w-10"></div> <!-- Spacer para centrar el logo -->
+        </div>
+    </header>
+    
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full bg-primary shadow-xl z-50 overflow-y-auto">
+        <!-- Logo/Header -->
+        <div class="p-4 border-b border-white/20">
+            <a href="<?php echo BASE_URL; ?>/dashboard" class="flex items-center">
+                <?php if (!empty($systemSettings['site_logo'])): ?>
+                    <img src="<?php echo BASE_URL . $systemSettings['site_logo']; ?>" 
+                         alt="<?php echo $systemSettings['site_name'] ?? APP_NAME; ?>" 
+                         class="h-10 mr-3">
+                <?php else: ?>
+                    <i class="fas fa-water text-white text-2xl mr-3"></i>
+                <?php endif; ?>
+                <span class="text-white font-bold text-xl"><?php echo $systemSettings['site_name'] ?? 'DUNAS'; ?></span>
+            </a>
+            <!-- Close button for mobile -->
+            <button class="lg:hidden absolute top-4 right-4 text-white/70 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- User Info -->
+        <div class="p-4 border-b border-white/20">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                    <i class="fas fa-user text-white"></i>
                 </div>
-                
-                <div class="flex items-center">
-                    <div class="relative">
-                        <button id="userMenuButton" type="button" 
-                                class="flex items-center text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium focus:outline-none"
-                                onclick="toggleUserMenu()">
-                            <span class="mr-2"><?php echo Auth::user()['full_name']; ?></span>
-                            <span class="text-xs bg-secondary px-2 py-1 rounded mr-2"><?php echo strtoupper(Auth::user()['role']); ?></span>
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </button>
-                        
-                        <!-- Dropdown Menu -->
-                        <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                            <a href="<?php echo BASE_URL; ?>/profile" 
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-user mr-2"></i>Perfil
-                            </a>
-                            <?php if (Auth::hasRole(['admin'])): ?>
-                            <a href="<?php echo BASE_URL; ?>/settings" 
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-cog mr-2"></i>Configuraciones
-                            </a>
-                            <?php endif; ?>
-                            <div class="border-t border-gray-100"></div>
-                            <a href="<?php echo BASE_URL; ?>/logout" 
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Salir
-                            </a>
-                        </div>
-                    </div>
+                <div>
+                    <p class="text-white font-medium text-sm truncate" style="max-width: 160px;">
+                        <?php echo Auth::user()['full_name']; ?>
+                    </p>
+                    <span class="text-xs bg-white/20 text-white px-2 py-0.5 rounded">
+                        <?php echo strtoupper(Auth::user()['role']); ?>
+                    </span>
                 </div>
             </div>
         </div>
-    </nav>
+        
+        <!-- Navigation -->
+        <nav class="py-4">
+            <ul class="space-y-1">
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/dashboard" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-home w-6 mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                
+                <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/clients" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-users w-6 mr-3"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/units" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-truck w-6 mr-3"></i>
+                        <span>Unidades</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/drivers" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-id-card w-6 mr-3"></i>
+                        <span>Choferes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/access" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-door-open w-6 mr-3"></i>
+                        <span>Accesos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/transactions" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-dollar-sign w-6 mr-3"></i>
+                        <span>Transacciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/visitors" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-user-plus w-6 mr-3"></i>
+                        <span>Visitantes</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/reports" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-chart-bar w-6 mr-3"></i>
+                        <span>Reportes</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <?php if (Auth::hasRole(['admin'])): ?>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/users" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-user-cog w-6 mr-3"></i>
+                        <span>Usuarios</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <li class="border-t border-white/20 mt-4 pt-4">
+                    <a href="<?php echo BASE_URL; ?>/profile" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-user-circle w-6 mr-3"></i>
+                        <span>Mi Perfil</span>
+                    </a>
+                </li>
+                
+                <?php if (Auth::hasRole(['admin'])): ?>
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/settings" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-cog w-6 mr-3"></i>
+                        <span>Configuraciones</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <li>
+                    <a href="<?php echo BASE_URL; ?>/logout" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-sign-out-alt w-6 mr-3"></i>
+                        <span>Cerrar Sesión</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    
     <?php endif; ?>
+    
+    <!-- Main Content Wrapper -->
+    <div class="<?php echo (isset($showNav) && $showNav) ? 'main-content' : ''; ?>">
+        
+        <?php if (isset($showNav) && $showNav): ?>
+        <!-- Spacer for mobile header -->
+        <div class="h-16 lg:h-0"></div>
+        <?php endif; ?>
     
     <!-- Alertas Flash -->
     <?php
@@ -209,7 +347,46 @@
         </div>
     </footer>
     
+    </div><!-- End main-content wrapper -->
+    
     <script>
+        // Sidebar toggle functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.remove('open');
+            overlay.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // Close sidebar on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                closeSidebar();
+            }
+        });
+        
+        // Close sidebar when pressing Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+        
         // Objeto para controlar el Shelly
         window.shellyControl = {
             async openBarrier() {
@@ -264,21 +441,6 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
-        
-        // Toggle user menu dropdown
-        function toggleUserMenu() {
-            const dropdown = document.getElementById('userMenuDropdown');
-            dropdown.classList.toggle('hidden');
-        }
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const button = document.getElementById('userMenuButton');
-            const dropdown = document.getElementById('userMenuDropdown');
-            if (button && dropdown && !button.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>
