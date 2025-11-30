@@ -4,7 +4,11 @@
             <h1 class="text-3xl font-bold text-gray-900">Visitantes</h1>
             <p class="text-gray-600">Gestión de registros de visitantes</p>
         </div>
-        <div>
+        <div class="flex space-x-2">
+            <a href="<?php echo BASE_URL; ?>/visitors/generatePass"
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-qrcode mr-2"></i>Generar Pase de Visita
+            </a>
             <a href="<?php echo BASE_URL; ?>/visitors/register" target="_blank"
                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-external-link-alt mr-2"></i>Formulario Público

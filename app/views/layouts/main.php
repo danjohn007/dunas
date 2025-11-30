@@ -251,6 +251,13 @@
                 
                 <?php if (Auth::hasRole(['admin'])): ?>
                 <li>
+                    <a href="<?php echo BASE_URL; ?>/devices" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-microchip w-6 mr-3"></i>
+                        <span>Dispositivos</span>
+                    </a>
+                </li>
+                <li>
                     <a href="<?php echo BASE_URL; ?>/settings" 
                        class="sidebar-nav-item flex items-center text-white px-4 py-3">
                         <i class="fas fa-cog w-6 mr-3"></i>

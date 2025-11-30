@@ -233,4 +233,104 @@ class VisitorController extends BaseController {
         
         $this->view('visitors/pass', $data);
     }
+    
+    /**
+     * Formulario para generar un pase de visita con vigencia
+     */
+    public function generatePass() {
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+        
+        $data = [
+            'title' => 'Generar Pase de Visita',
+            'showNav' => true
+        ];
+        
+        $this->view('visitors/generate_pass', $data);
+    }
+    
+    /**
+     * Crear pase de visita con vigencia
+     */
+    public function createPass() {
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/visitors');
+            return;
+        }
+        
+        try {
+            $data = [
+                'visitor_name' => $_POST['visitor_name'] ?? null,
+                'plate_number' => strtoupper(trim($_POST['plate_number'] ?? '')),
+                'phone' => $_POST['phone'] ?? null,
+                'identification' => $_POST['identification'] ?? null,
+                'visit_type' => $_POST['visit_type'] ?? 'personal',
+                'valid_from' => $_POST['valid_from'] ?? null,
+                'valid_until' => $_POST['valid_until'] ?? null,
+                'notes' => $_POST['notes'] ?? null
+            ];
+            
+            // Validate required fields
+            if (empty($data['visitor_name'])) {
+                throw new Exception('El nombre del visitante es requerido');
+            }
+            
+            if (empty($data['phone'])) {
+                throw new Exception('El teléfono es requerido');
+            }
+            
+            if (empty($data['valid_from']) || empty($data['valid_until'])) {
+                throw new Exception('Las fechas de vigencia son requeridas');
+            }
+            
+            // Validate date range
+            $validFrom = new DateTime($data['valid_from']);
+            $validUntil = new DateTime($data['valid_until']);
+            
+            if ($validUntil <= $validFrom) {
+                throw new Exception('La fecha de fin debe ser posterior a la fecha de inicio');
+            }
+            
+            $visitorId = $this->visitorModel->createPass($data);
+            
+            $this->setFlash('success', 'Pase de visita generado exitosamente');
+            $this->redirect('/visitors/pass/' . $visitorId);
+            
+        } catch (Exception $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('/visitors/generatePass');
+        }
+    }
+    
+    /**
+     * Página pública para validar código QR
+     */
+    public function validateQr() {
+        // Esta es una página pública, no requiere autenticación
+        
+        $validationResult = null;
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $passCode = trim($_POST['pass_code'] ?? '');
+            
+            if (!empty($passCode)) {
+                $validationResult = $this->visitorModel->validatePass($passCode);
+            } else {
+                $validationResult = [
+                    'valid' => false,
+                    'status' => 'empty',
+                    'message' => 'Por favor ingrese un código QR'
+                ];
+            }
+        }
+        
+        $data = [
+            'title' => 'Validar Código QR',
+            'validationResult' => $validationResult,
+            'showNav' => false
+        ];
+        
+        $this->view('visitors/validate_qr', $data);
+    }
 }

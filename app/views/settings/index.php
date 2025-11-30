@@ -1255,7 +1255,7 @@
             </div>
             
             <!-- Borrado manual por fecha -->
-            <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6">
+            <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6 mb-4">
                 <h3 class="text-lg font-semibold text-yellow-800 mb-4">
                     <i class="fas fa-trash-alt text-yellow-600 mr-2"></i>Borrado Manual de Registros
                 </h3>
@@ -1287,6 +1287,30 @@
                         <strong>¡Advertencia!</strong> Esta acción es irreversible. Los registros borrados no podrán recuperarse.
                         Asegúrese de tener un respaldo antes de proceder.
                     </p>
+                </div>
+            </div>
+            
+            <!-- Respaldo de Base de Datos -->
+            <div class="bg-green-50 border border-green-300 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-green-800 mb-4">
+                    <i class="fas fa-download text-green-600 mr-2"></i>Respaldo de Base de Datos
+                </h3>
+                
+                <p class="text-sm text-gray-600 mb-4">
+                    Descargue un respaldo completo de la base de datos en formato SQL. Este archivo contiene todas las tablas y datos del sistema.
+                </p>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            El respaldo incluirá todas las transacciones, registros de acceso, visitantes, usuarios y configuraciones.
+                        </p>
+                    </div>
+                    <a href="<?php echo BASE_URL; ?>/settings/backupDatabase" 
+                       class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex-shrink-0">
+                        <i class="fas fa-download mr-2"></i>Descargar Respaldo SQL
+                    </a>
                 </div>
             </div>
         </div>

@@ -119,4 +119,48 @@ class UserController extends BaseController {
         
         $this->redirect('/users');
     }
+    
+    public function changePassword($id) {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/users/edit/' . $id);
+            return;
+        }
+        
+        $user = $this->userModel->getById($id);
+        
+        if (!$user) {
+            $this->setFlash('error', 'Usuario no encontrado.');
+            $this->redirect('/users');
+            return;
+        }
+        
+        try {
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+            
+            // Validate passwords
+            if (empty($newPassword)) {
+                throw new Exception('La contraseña es requerida.');
+            }
+            
+            if (strlen($newPassword) < 6) {
+                throw new Exception('La contraseña debe tener al menos 6 caracteres.');
+            }
+            
+            if ($newPassword !== $confirmPassword) {
+                throw new Exception('Las contraseñas no coinciden.');
+            }
+            
+            // Update password
+            $this->userModel->updatePassword($id, $newPassword);
+            
+            $this->setFlash('success', 'Contraseña actualizada exitosamente.');
+        } catch (Exception $e) {
+            $this->setFlash('error', $e->getMessage());
+        }
+        
+        $this->redirect('/users/edit/' . $id);
+    }
 }

@@ -115,7 +115,49 @@
                         </div>
                         <?php endif; ?>
                         
-                        <!-- Entry Time -->
+                        <!-- Visit Type -->
+                        <?php if (!empty($visitor['visit_type'])): ?>
+                        <div>
+                            <p class="text-sm text-gray-500">Tipo de Visita</p>
+                            <p class="text-lg font-semibold text-gray-900 capitalize">
+                                <?php echo htmlspecialchars($visitor['visit_type']); ?>
+                            </p>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Validity Period -->
+                        <?php if (!empty($visitor['valid_from']) && !empty($visitor['valid_until'])): ?>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p class="text-sm text-blue-700 font-semibold mb-2">
+                                <i class="fas fa-calendar-check mr-1"></i> Vigencia del Pase
+                            </p>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span class="text-gray-500">Desde:</span>
+                                    <p class="font-semibold text-gray-900">
+                                        <?php echo date('d/m/Y H:i', strtotime($visitor['valid_from'])); ?>
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">Hasta:</span>
+                                    <p class="font-semibold text-gray-900">
+                                        <?php echo date('d/m/Y H:i', strtotime($visitor['valid_until'])); ?>
+                                    </p>
+                                </div>
+                            </div>
+                            <?php
+                            $now = new DateTime();
+                            $validUntil = new DateTime($visitor['valid_until']);
+                            $isExpired = $now > $validUntil;
+                            ?>
+                            <?php if ($isExpired): ?>
+                            <p class="mt-2 text-red-600 text-sm font-semibold">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Este pase ha expirado
+                            </p>
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <!-- Entry Time (for visitors without validity) -->
                         <div>
                             <p class="text-sm text-gray-500">Entrada</p>
                             <p class="text-lg font-semibold text-gray-900">
@@ -132,6 +174,7 @@
                             </p>
                         </div>
                         <?php endif; ?>
+                        <?php endif; ?>
                         
                         <!-- Status -->
                         <div>
@@ -140,12 +183,14 @@
                             $statusClasses = [
                                 'in' => 'bg-yellow-100 text-yellow-800',
                                 'out' => 'bg-green-100 text-green-800',
-                                'cancelled' => 'bg-red-100 text-red-800'
+                                'cancelled' => 'bg-red-100 text-red-800',
+                                'pending' => 'bg-blue-100 text-blue-800'
                             ];
                             $statusLabels = [
                                 'in' => 'Pendiente',
                                 'out' => 'Completado',
-                                'cancelled' => 'Cancelado'
+                                'cancelled' => 'Cancelado',
+                                'pending' => 'Por Ingresar'
                             ];
                             $statusClass = $statusClasses[$visitor['status']] ?? 'bg-gray-100 text-gray-800';
                             $statusLabel = $statusLabels[$visitor['status']] ?? $visitor['status'];

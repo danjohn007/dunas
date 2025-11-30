@@ -516,4 +516,103 @@ class SettingsController extends BaseController {
         
         $this->redirect('/settings');
     }
+    
+    /**
+     * Genera y descarga un respaldo completo de la base de datos
+     */
+    public function backupDatabase() {
+        Auth::requireRole(['admin']);
+        
+        try {
+            $db = Database::getInstance();
+            $pdo = $db->getConnection();
+            
+            // Get database name from config
+            $dbName = defined('DB_NAME') ? DB_NAME : 'dunas_access_control';
+            
+            // Generate filename with timestamp
+            $filename = 'backup_' . $dbName . '_' . date('Y-m-d_H-i-s') . '.sql';
+            
+            // Start output buffering
+            ob_start();
+            
+            // Add header comment
+            echo "-- Database Backup: {$dbName}\n";
+            echo "-- Generated: " . date('Y-m-d H:i:s') . "\n";
+            echo "-- ----------------------------------------\n\n";
+            
+            echo "SET FOREIGN_KEY_CHECKS=0;\n";
+            echo "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+            echo "SET AUTOCOMMIT = 0;\n";
+            echo "START TRANSACTION;\n\n";
+            
+            // Get all tables
+            $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($tables as $table) {
+                // Get CREATE TABLE statement
+                $createStmt = $pdo->query("SHOW CREATE TABLE `{$table}`")->fetch(PDO::FETCH_ASSOC);
+                $createSql = $createStmt['Create Table'] ?? $createStmt['Create View'] ?? '';
+                
+                echo "-- --------------------------------------------------------\n";
+                echo "-- Table structure for table `{$table}`\n";
+                echo "-- --------------------------------------------------------\n\n";
+                echo "DROP TABLE IF EXISTS `{$table}`;\n";
+                echo $createSql . ";\n\n";
+                
+                // Get table data
+                $rows = $pdo->query("SELECT * FROM `{$table}`")->fetchAll(PDO::FETCH_ASSOC);
+                
+                if (!empty($rows)) {
+                    echo "-- Dumping data for table `{$table}`\n\n";
+                    
+                    // Get column names
+                    $columns = array_keys($rows[0]);
+                    $columnList = implode('`, `', $columns);
+                    
+                    // Generate INSERT statements (batch of 100 rows)
+                    $chunks = array_chunk($rows, 100);
+                    foreach ($chunks as $chunk) {
+                        $values = [];
+                        foreach ($chunk as $row) {
+                            $rowValues = [];
+                            foreach ($row as $value) {
+                                if ($value === null) {
+                                    $rowValues[] = 'NULL';
+                                } else {
+                                    $rowValues[] = $pdo->quote($value);
+                                }
+                            }
+                            $values[] = '(' . implode(', ', $rowValues) . ')';
+                        }
+                        echo "INSERT INTO `{$table}` (`{$columnList}`) VALUES\n" . implode(",\n", $values) . ";\n\n";
+                    }
+                }
+                
+                echo "\n";
+            }
+            
+            echo "SET FOREIGN_KEY_CHECKS=1;\n";
+            echo "COMMIT;\n";
+            echo "\n-- End of backup\n";
+            
+            $content = ob_get_clean();
+            
+            // Set headers for download
+            header('Content-Type: application/sql');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . strlen($content));
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+            
+            echo $content;
+            exit;
+            
+        } catch (Exception $e) {
+            error_log("Error al generar respaldo: " . $e->getMessage());
+            $this->setFlash('error', 'Error al generar respaldo: ' . $e->getMessage());
+            $this->redirect('/settings');
+        }
+    }
 }

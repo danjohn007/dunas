@@ -5,8 +5,12 @@
         <p class="text-gray-600">Actualizar información del usuario</p>
     </div>
     
-    <!-- Formulario -->
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <!-- Formulario de Datos -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-user-edit text-blue-600 mr-2"></i>Información del Usuario
+        </h2>
+        
         <form method="POST" action="<?php echo BASE_URL; ?>/users/edit/<?php echo $user['id']; ?>">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Nombre de Usuario (readonly) -->
@@ -83,4 +87,81 @@
             </div>
         </form>
     </div>
+    
+    <!-- Formulario para Cambiar Contraseña -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-key text-yellow-600 mr-2"></i>Cambiar Contraseña
+        </h2>
+        
+        <form method="POST" action="<?php echo BASE_URL; ?>/users/changePassword/<?php echo $user['id']; ?>">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nueva Contraseña -->
+                <div>
+                    <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Nueva Contraseña <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="new_password" name="new_password" required
+                               minlength="6"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                               placeholder="Mínimo 6 caracteres">
+                        <button type="button" onclick="togglePassword('new_password', this)" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Confirmar Contraseña -->
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar Contraseña <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="confirm_password" name="confirm_password" required
+                               minlength="6"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                               placeholder="Repita la contraseña">
+                        <button type="button" onclick="togglePassword('confirm_password', this)" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    La contraseña debe tener al menos 6 caracteres. Al cambiar la contraseña, el usuario deberá usar la nueva contraseña en su próximo inicio de sesión.
+                </p>
+            </div>
+            
+            <!-- Botón -->
+            <div class="mt-6 flex justify-end">
+                <button type="submit" 
+                        class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-key mr-2"></i>Cambiar Contraseña
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>

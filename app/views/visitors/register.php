@@ -44,13 +44,19 @@
     <!-- Header -->
     <header class="bg-primary shadow-lg">
         <div class="max-w-4xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-center">
-                <?php if (!empty($systemSettings['site_logo'])): ?>
-                    <img src="<?php echo BASE_URL . $systemSettings['site_logo']; ?>" alt="Logo" class="h-10 mr-3">
-                <?php else: ?>
-                    <i class="fas fa-user-plus text-white text-2xl mr-3"></i>
-                <?php endif; ?>
-                <h1 class="text-white text-xl font-bold"><?php echo $systemSettings['site_name'] ?? 'Registro de Visitantes'; ?></h1>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <?php if (!empty($systemSettings['site_logo'])): ?>
+                        <img src="<?php echo BASE_URL . $systemSettings['site_logo']; ?>" alt="Logo" class="h-10 mr-3">
+                    <?php else: ?>
+                        <i class="fas fa-user-plus text-white text-2xl mr-3"></i>
+                    <?php endif; ?>
+                    <h1 class="text-white text-xl font-bold"><?php echo $systemSettings['site_name'] ?? 'Registro de Visitantes'; ?></h1>
+                </div>
+                <a href="<?php echo BASE_URL; ?>/visitors/validateQr" 
+                   class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg text-sm">
+                    <i class="fas fa-qrcode mr-2"></i>Validar QR
+                </a>
             </div>
         </div>
     </header>

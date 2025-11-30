@@ -197,6 +197,91 @@ class Visitor {
     }
     
     /**
+     * Crear un pase de visitante con vigencia
+     */
+    public function createPass($data) {
+        // Generar código de pase único
+        $passCode = $this->generatePassCode();
+        
+        $sql = "INSERT INTO {$this->table} 
+                (pass_code, visitor_name, plate_number, phone, identification, visit_type, valid_from, valid_until, notes, status, entry_datetime)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $passCode,
+            $data['visitor_name'] ?? null,
+            $data['plate_number'] ?? null,
+            $data['phone'] ?? null,
+            $data['identification'] ?? null,
+            $data['visit_type'] ?? 'personal',
+            $data['valid_from'] ?? null,
+            $data['valid_until'] ?? null,
+            $data['notes'] ?? null
+        ]);
+        
+        return $this->db->lastInsertId();
+    }
+    
+    /**
+     * Validar un pase de visitante por código
+     * Returns: array with validation status and visitor data
+     */
+    public function validatePass($passCode) {
+        $visitor = $this->getByPassCode($passCode);
+        
+        if (!$visitor) {
+            return [
+                'valid' => false,
+                'status' => 'not_found',
+                'message' => 'Código de pase no encontrado'
+            ];
+        }
+        
+        // Check if pass has validity dates
+        if (!empty($visitor['valid_from']) && !empty($visitor['valid_until'])) {
+            $now = new DateTime();
+            $validFrom = new DateTime($visitor['valid_from']);
+            $validUntil = new DateTime($visitor['valid_until']);
+            
+            if ($now < $validFrom) {
+                return [
+                    'valid' => false,
+                    'status' => 'not_yet_valid',
+                    'message' => 'El pase aún no es válido. Válido desde: ' . $validFrom->format('d/m/Y H:i'),
+                    'visitor' => $visitor
+                ];
+            }
+            
+            if ($now > $validUntil) {
+                return [
+                    'valid' => false,
+                    'status' => 'expired',
+                    'message' => 'El pase ha expirado. Válido hasta: ' . $validUntil->format('d/m/Y H:i'),
+                    'visitor' => $visitor
+                ];
+            }
+        }
+        
+        // Check visitor status
+        if ($visitor['status'] === 'cancelled') {
+            return [
+                'valid' => false,
+                'status' => 'cancelled',
+                'message' => 'Este pase ha sido cancelado',
+                'visitor' => $visitor
+            ];
+        }
+        
+        return [
+            'valid' => true,
+            'status' => 'valid',
+            'message' => 'Pase válido',
+            'visitor' => $visitor
+        ];
+    }
+    
+    /**
      * Actualizar un visitante
      */
     public function update($id, $data) {
