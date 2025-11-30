@@ -131,6 +131,7 @@ class AccessLog {
         
         // Get cost from capacity if available
         $cost = null;
+        $capacityLiters = 0;
         if (!empty($data['unit_id'])) {
             // Get unit capacity and lookup cost
             require_once APP_PATH . '/models/Unit.php';
@@ -140,6 +141,7 @@ class AccessLog {
             
             $unit = $unitModel->getById($data['unit_id']);
             if ($unit && !empty($unit['capacity_liters'])) {
+                $capacityLiters = $unit['capacity_liters'];
                 $capacityCost = $capacityCostModel->getByCapacity($unit['capacity_liters']);
                 if ($capacityCost) {
                     $cost = $capacityCost['cost'];
@@ -184,6 +186,11 @@ class AccessLog {
         
         // Generar QR y código de barras
         $this->generateCodes($id, $ticketCode);
+        
+        // Crear registro de transacción para el reporte financiero
+        if ($cost !== null && $cost > 0) {
+            $this->createTransaction($id, $data['client_id'], $cost, $paymentMethod, $capacityLiters);
+        }
         
         return $id;
     }
@@ -290,6 +297,41 @@ class AccessLog {
         
         $sql = "UPDATE access_logs SET qr_code = ?, barcode = ? WHERE id = ?";
         $this->db->execute($sql, [$qrCode, $barcode, $id]);
+    }
+    
+    /**
+     * Crea un registro de transacción para el reporte financiero
+     * 
+     * @param int $accessLogId ID del registro de acceso
+     * @param int $clientId ID del cliente
+     * @param float $amount Monto de la transacción
+     * @param string $paymentMethod Método de pago (cash, voucher, bank_transfer)
+     * @param int $litersSupplied Litros suministrados (capacidad de la unidad)
+     */
+    private function createTransaction($accessLogId, $clientId, $amount, $paymentMethod, $litersSupplied) {
+        try {
+            // Calcular precio por litro si hay litros
+            $pricePerLiter = $litersSupplied > 0 ? ($amount / $litersSupplied) : 0;
+            
+            $sql = "INSERT INTO transactions (access_log_id, client_id, total_amount, liters_supplied, 
+                    price_per_liter, payment_method, payment_status, transaction_date, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, 'paid', NOW(), 'Transacción generada automáticamente al emitir ticket')";
+            
+            $params = [
+                $accessLogId,
+                $clientId,
+                $amount,
+                $litersSupplied,
+                $pricePerLiter,
+                $paymentMethod
+            ];
+            
+            $this->db->execute($sql, $params);
+            error_log("✅ Transacción creada exitosamente para access_log_id: {$accessLogId}, monto: {$amount}");
+        } catch (Exception $e) {
+            error_log("❌ Error al crear transacción: " . $e->getMessage());
+            // No lanzamos excepción para que el ticket se cree de todos modos
+        }
     }
     
     public function getInProgress() {

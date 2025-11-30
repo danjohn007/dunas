@@ -30,6 +30,22 @@
         .border-primary { border-color: var(--color-primary) !important; }
         .hover\:bg-primary:hover { background-color: var(--color-secondary) !important; }
         
+        /* Primary button theme styles - replace bg-blue-600/bg-blue-700 */
+        .btn-primary {
+            background-color: var(--color-primary) !important;
+        }
+        .btn-primary:hover {
+            background-color: var(--color-secondary) !important;
+        }
+        
+        /* Override Tailwind blue buttons with theme colors */
+        .bg-blue-600 {
+            background-color: var(--color-primary) !important;
+        }
+        .hover\:bg-blue-700:hover {
+            background-color: var(--color-secondary) !important;
+        }
+        
         /* Plate comparison styles */
         #plate-compare-box.match-ok  { border-color: #16a34a !important; }
         #plate-compare-box.match-bad { border-color: #9ca3af !important; }
