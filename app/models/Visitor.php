@@ -102,15 +102,88 @@ class Visitor {
     }
     
     /**
+     * Obtener un visitante por código de pase
+     */
+    public function getByPassCode($passCode) {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE pass_code = ?");
+        $stmt->execute([$passCode]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Generar código de pase único
+     * Format: VIS-YYYYMMDD-XXXXXXXX
+     * Uses a loop to ensure uniqueness in the database
+     */
+    public function generatePassCode($entryDatetime = null) {
+        $maxAttempts = 10;
+        $attempts = 0;
+        
+        $date = $entryDatetime ? date('Ymd', strtotime($entryDatetime)) : date('Ymd');
+        
+        do {
+            // Use random_bytes for secure random generation when available
+            if (function_exists('random_bytes')) {
+                $random = strtoupper(bin2hex(random_bytes(4)));
+            } else {
+                $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            }
+            $passCode = "VIS-{$date}-{$random}";
+            
+            // Check if code already exists
+            $existing = $this->getByPassCode($passCode);
+            $attempts++;
+            
+            if (!$existing) {
+                return $passCode;
+            }
+        } while ($attempts < $maxAttempts);
+        
+        // Fallback: Use microtime for more entropy with safety limit
+        $fallbackAttempts = 0;
+        $fallbackMaxAttempts = 100;
+        
+        do {
+            if (function_exists('random_bytes')) {
+                $random = strtoupper(bin2hex(random_bytes(4)));
+            } else {
+                $random = strtoupper(substr(md5(uniqid(mt_rand(), true) . microtime(true)), 0, 8));
+            }
+            $passCode = "VIS-{$date}-{$random}";
+            $existing = $this->getByPassCode($passCode);
+            $fallbackAttempts++;
+            
+            if ($fallbackAttempts >= $fallbackMaxAttempts) {
+                throw new Exception('Unable to generate unique pass code after maximum attempts');
+            }
+        } while ($existing);
+        
+        return $passCode;
+    }
+    
+    /**
+     * Actualizar código de pase de un visitante
+     */
+    public function updatePassCode($id, $passCode) {
+        $sql = "UPDATE {$this->table} SET pass_code = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$passCode, $id]);
+    }
+    
+    /**
      * Crear un nuevo registro de visitante
      */
     public function create($data) {
+        // Generar código de pase único
+        $passCode = $this->generatePassCode();
+        
         $sql = "INSERT INTO {$this->table} 
-                (visitor_name, plate_number, phone, id_photo, plate_photo, badge_photo, entry_datetime, notes, status)
-                VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, 'in')";
+                (pass_code, visitor_name, plate_number, phone, id_photo, plate_photo, badge_photo, entry_datetime, notes, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'in')";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
+            $passCode,
             $data['visitor_name'] ?? null,
             $data['plate_number'] ?? null,
             $data['phone'] ?? null,

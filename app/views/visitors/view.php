@@ -4,7 +4,12 @@
             <h1 class="text-3xl font-bold text-gray-900">Detalle de Visitante</h1>
             <p class="text-gray-600">Información del registro #<?php echo $visitor['id']; ?></p>
         </div>
-        <div>
+        <div class="flex space-x-2">
+            <a href="<?php echo BASE_URL; ?>/visitors/pass/<?php echo $visitor['id']; ?>" 
+               target="_blank"
+               class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-qrcode mr-2"></i>Ver Pase
+            </a>
             <a href="<?php echo BASE_URL; ?>/visitors" 
                class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-arrow-left mr-2"></i>Volver

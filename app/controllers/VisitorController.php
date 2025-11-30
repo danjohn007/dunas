@@ -200,4 +200,37 @@ class VisitorController extends BaseController {
         
         $this->redirect('/visitors');
     }
+    
+    /**
+     * Ver pase de visita
+     */
+    public function pass($id) {
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+        
+        $visitor = $this->visitorModel->getById($id);
+        
+        if (!$visitor) {
+            $this->setFlash('error', 'Visitante no encontrado');
+            $this->redirect('/visitors');
+            return;
+        }
+        
+        // Si el visitante no tiene código de pase, generar uno usando el modelo
+        if (empty($visitor['pass_code'])) {
+            $passCode = $this->visitorModel->generatePassCode($visitor['entry_datetime']);
+            
+            // Actualizar en la base de datos usando el método del modelo
+            $this->visitorModel->updatePassCode($id, $passCode);
+            
+            $visitor['pass_code'] = $passCode;
+        }
+        
+        $data = [
+            'title' => 'Pase de Visita',
+            'visitor' => $visitor,
+            'showNav' => false
+        ];
+        
+        $this->view('visitors/pass', $data);
+    }
 }

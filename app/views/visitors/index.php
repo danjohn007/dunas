@@ -131,6 +131,10 @@
                                    class="text-blue-600 hover:text-blue-900" title="Ver">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                <a href="<?php echo BASE_URL; ?>/visitors/pass/<?php echo $visitor['id']; ?>" 
+                                   class="text-purple-600 hover:text-purple-900" title="Ver Pase" target="_blank">
+                                    <i class="fas fa-qrcode"></i>
+                                </a>
                                 <?php if ($visitor['status'] === 'in'): ?>
                                 <a href="<?php echo BASE_URL; ?>/visitors/exit/<?php echo $visitor['id']; ?>" 
                                    class="text-green-600 hover:text-green-900" title="Registrar Salida"

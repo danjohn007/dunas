@@ -93,6 +93,14 @@
                 </div>
             </div>
             
+            <!-- Botón para ver pase -->
+            <a href="<?php echo BASE_URL; ?>/visitors/pass/<?php echo $visitor['id']; ?>" 
+               target="_blank"
+               class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all mr-3 mb-3">
+                <i class="fas fa-qrcode mr-2"></i>
+                Ver Pase de Visita
+            </a>
+            
             <!-- Botón para nuevo registro -->
             <a href="<?php echo BASE_URL; ?>/visitors/register" 
                class="inline-block bg-primary hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition-all">
