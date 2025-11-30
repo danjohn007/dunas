@@ -82,6 +82,27 @@
                     <span class="font-semibold text-gray-700">Chofer:</span>
                     <span class="text-gray-900 text-right"><?php echo htmlspecialchars($access['driver_name']); ?></span>
                 </div>
+                <?php if (!empty($access['cost'])): ?>
+                <div class="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                    <span class="font-semibold text-gray-700">Costo:</span>
+                    <span class="text-gray-900 font-bold">$<?php echo number_format($access['cost'], 2); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($access['payment_method'])): ?>
+                <div class="flex justify-between">
+                    <span class="font-semibold text-gray-700">Método de Pago:</span>
+                    <span class="text-gray-900">
+                        <?php 
+                        $methodLabels = [
+                            'cash' => 'Efectivo',
+                            'voucher' => 'Vales',
+                            'bank_transfer' => 'Transferencia'
+                        ];
+                        echo $methodLabels[$access['payment_method']] ?? 'Efectivo';
+                        ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
             
             <!-- Instrucciones -->
@@ -112,14 +133,26 @@
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Código QR: <strong><?php echo $access['ticket_code']; ?></strong></li>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Al salir, escanee el código para registrar automáticamente</li>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Se registrará con la capacidad máxima de <?php echo number_format($access['capacity_liters']); ?> litros</li>
+                <?php if (!empty($access['cost'])): ?>
+                <li><i class="fas fa-check text-blue-600 mr-2"></i>Costo: <strong>$<?php echo number_format($access['cost'], 2); ?></strong></li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
     
+    <?php
+    // Get QR settings
+    require_once APP_PATH . '/models/Settings.php';
+    $settingsModel = new Settings();
+    $qrSize = (int)$settingsModel->get('qr_size', '120');
+    if ($qrSize < 100) $qrSize = 120;
+    if ($qrSize > 500) $qrSize = 500;
+    ?>
+    
     <script>
-        // Generar código QR
+        // Generar código QR with settings size
         QRCode.toCanvas(document.getElementById('qrcode'), "<?php echo $access['ticket_code']; ?>", {
-            width: 120,
+            width: <?php echo $qrSize; ?>,
             margin: 1,
             color: {
                 dark: '#000000',

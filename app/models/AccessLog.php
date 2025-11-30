@@ -129,8 +129,33 @@ class AccessLog {
     public function create($data) {
         $ticketCode = $this->generateTicketCode();
         
-        $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, license_plate_reading, plate_discrepancy, status) 
-                VALUES (NOW(), ?, ?, ?, ?, ?, ?, 'in_progress')";
+        // Get cost from capacity if available
+        $cost = null;
+        if (!empty($data['unit_id'])) {
+            // Get unit capacity and lookup cost
+            require_once APP_PATH . '/models/Unit.php';
+            require_once APP_PATH . '/models/CapacityCost.php';
+            $unitModel = new Unit();
+            $capacityCostModel = new CapacityCost();
+            
+            $unit = $unitModel->getById($data['unit_id']);
+            if ($unit && !empty($unit['capacity_liters'])) {
+                $capacityCost = $capacityCostModel->getByCapacity($unit['capacity_liters']);
+                if ($capacityCost) {
+                    $cost = $capacityCost['cost'];
+                }
+            }
+        }
+        
+        // Use provided cost if available
+        if (isset($data['cost'])) {
+            $cost = $data['cost'];
+        }
+        
+        $paymentMethod = $data['payment_method'] ?? 'cash';
+        
+        $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, license_plate_reading, plate_discrepancy, cost, payment_method, status) 
+                VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, 'in_progress')";
         
         // Convertir plate_discrepancy a 1 o 0 explícitamente
         $plateDiscrepancy = isset($data['plate_discrepancy']) ? (int)$data['plate_discrepancy'] : 0;
@@ -146,7 +171,9 @@ class AccessLog {
             $data['client_id'],
             $ticketCode,
             $data['license_plate_reading'] ?? null,
-            $plateDiscrepancy
+            $plateDiscrepancy,
+            $cost,
+            $paymentMethod
         ];
         
         $this->db->execute($sql, $params);

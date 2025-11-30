@@ -344,4 +344,97 @@ class SettingsController extends BaseController {
         
         $this->redirect('/settings');
     }
+    
+    /**
+     * Guarda/actualiza los costos por capacidad
+     */
+    public function saveCapacityCosts() {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/settings');
+            return;
+        }
+        
+        try {
+            require_once APP_PATH . '/models/CapacityCost.php';
+            $capacityCostModel = new CapacityCost();
+            $db = Database::getInstance();
+            
+            // Get existing IDs for cleanup
+            $existingCosts = $capacityCostModel->getAll(false);
+            $existingIds = array_column($existingCosts, 'id');
+            $submittedIds = [];
+            $savedCount = 0;
+            $skippedCount = 0;
+            $errors = [];
+            
+            if (isset($_POST['capacity_costs']) && is_array($_POST['capacity_costs'])) {
+                foreach ($_POST['capacity_costs'] as $index => $cost) {
+                    $capacityLiters = (int)($cost['capacity_liters'] ?? 0);
+                    $costValue = (float)($cost['cost'] ?? 0);
+                    $description = trim($cost['description'] ?? '');
+                    $isActive = (int)($cost['is_active'] ?? 1);
+                    
+                    // Validate entries
+                    if ($capacityLiters <= 0) {
+                        $skippedCount++;
+                        $errors[] = "Entrada #" . ($index + 1) . ": La capacidad debe ser mayor que 0";
+                        continue;
+                    }
+                    
+                    if ($costValue < 0) {
+                        $skippedCount++;
+                        $errors[] = "Entrada #" . ($index + 1) . ": El costo no puede ser negativo";
+                        continue;
+                    }
+                    
+                    $data = [
+                        'capacity_liters' => $capacityLiters,
+                        'cost' => $costValue,
+                        'description' => $description,
+                        'is_active' => $isActive
+                    ];
+                    
+                    if (!empty($cost['id'])) {
+                        // Update existing
+                        $capacityCostModel->update($cost['id'], $data);
+                        $submittedIds[] = (int)$cost['id'];
+                    } else {
+                        // Create new
+                        $newId = $capacityCostModel->create($data);
+                        $submittedIds[] = $newId;
+                    }
+                    $savedCount++;
+                }
+            }
+            
+            // Delete removed items
+            $toDelete = array_diff($existingIds, $submittedIds);
+            $deletedCount = count($toDelete);
+            foreach ($toDelete as $id) {
+                $capacityCostModel->delete($id);
+            }
+            
+            // Build success message
+            $message = "Costos por capacidad actualizados: $savedCount guardado(s)";
+            if ($deletedCount > 0) {
+                $message .= ", $deletedCount eliminado(s)";
+            }
+            if ($skippedCount > 0) {
+                $message .= ". $skippedCount entrada(s) ignorada(s) por datos inválidos";
+            }
+            
+            if (!empty($errors)) {
+                $this->setFlash('warning', $message . '. Errores: ' . implode('; ', array_slice($errors, 0, 3)));
+            } else {
+                $this->setFlash('success', $message);
+            }
+        } catch (Exception $e) {
+            error_log("Error al guardar costos por capacidad: " . $e->getMessage());
+            $this->setFlash('error', 'Error al guardar: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/settings');
+    }
 }
