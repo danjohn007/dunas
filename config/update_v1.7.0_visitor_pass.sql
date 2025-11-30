@@ -10,7 +10,8 @@
 -- - XXXXXXXX: 8 character hex string (uppercase)
 -- 
 -- Generation algorithms:
--- - PHP (new records): Uses uniqid + mt_rand for randomness
+-- - PHP (new records): Uses random_bytes() when available, with
+--   fallback to uniqid + mt_rand for older PHP versions
 -- - SQL (legacy records): Uses MD5(id + entry_datetime) for deterministic generation
 -- 
 -- The SQL approach is deterministic for legacy records, ensuring that
