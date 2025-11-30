@@ -93,7 +93,7 @@
                             Código QR
                         </label>
                         <input type="text" name="pass_code" id="passCodeInput"
-                               placeholder="VIS-20241121-ABCD1234"
+                               placeholder="VIS-XXXXXXXX-XXXXXXXX"
                                class="w-full rounded-lg border-2 border-primary focus:border-blue-500 focus:ring-blue-500 text-lg py-3 px-4">
                     </div>
                     

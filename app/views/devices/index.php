@@ -722,8 +722,8 @@
     </template>
     
     <script>
-        let deviceIndex = <?php echo (int)count($shellyDevices); ?>;
-        let hikvisionIndex = <?php echo (int)count($hikvisionDevices); ?>;
+        let deviceIndex = <?php echo json_encode((int)count($shellyDevices)); ?>;
+        let hikvisionIndex = <?php echo json_encode((int)count($hikvisionDevices)); ?>;
         
         function addShellyDevice() {
             const container = document.getElementById('shellyDevicesContainer');

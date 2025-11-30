@@ -146,13 +146,16 @@ class SettingsController extends BaseController {
                     $authToken = trim($d['auth_token'] ?? '');
                     
                     if (!$deviceId && !empty($authToken)) {
-                        // Dispositivo recién insertado: obtenerlo por auth_token y device_id
-                        $device = $db->fetchOne(
-                            "SELECT id FROM shelly_devices WHERE auth_token = ? AND device_id = ? ORDER BY id DESC LIMIT 1",
-                            [$authToken, trim($d['device_id'] ?? '')]
-                        );
-                        if ($device) {
-                            $deviceId = $device['id'];
+                        // For new devices, query by unique auth_token + device_id combo
+                        $deviceSerial = trim($d['device_id'] ?? '');
+                        if (!empty($deviceSerial)) {
+                            $device = $db->fetchOne(
+                                "SELECT id FROM shelly_devices WHERE auth_token = ? AND device_id = ?",
+                                [$authToken, $deviceSerial]
+                            );
+                            if ($device) {
+                                $deviceId = $device['id'];
+                            }
                         }
                     }
                     
@@ -528,7 +531,7 @@ class SettingsController extends BaseController {
             $pdo = $db->getConnection();
             
             // Get database name from config
-            $dbName = defined('DB_NAME') ? DB_NAME : 'dunas_access_control';
+            $dbName = defined('DB_NAME') ? DB_NAME : 'database';
             
             // Generate filename with timestamp
             $filename = 'backup_' . $dbName . '_' . date('Y-m-d_H-i-s') . '.sql';

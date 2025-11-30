@@ -36,7 +36,7 @@ SET @col_exists = (SELECT COUNT(*)
     AND COLUMN_NAME = 'visit_type');
 
 SET @sql = IF(@col_exists = 0,
-    'ALTER TABLE `visitors` ADD COLUMN `visit_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT ''personal'' AFTER `identification`',
+    'ALTER TABLE `visitors` ADD COLUMN `visit_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT \'personal\' AFTER `identification`',
     'SELECT "Column visit_type already exists"');
 
 PREPARE stmt FROM @sql;
