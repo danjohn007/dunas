@@ -1,32 +1,27 @@
--- Sistema de Control de Acceso con IoT
--- Script de Actualización de Base de Datos
--- Fecha: 2025-11-30
--- Versión: 1.5.0 - Reparación de registros financieros y QR
+-- Script seguro para MySQL 5.7 (sin information_schema / PREPARE)
+-- Usa: residenc_dunas (ajusta si tu esquema es otro)
+-- IMPORTANTE: hacer backup antes de ejecutar
 
-USE dunas_access_control;
+USE residenc_dunas;
 
--- ============================================================
--- MODIFICACIONES A LA TABLA access_logs
--- ============================================================
+-- 1) (Opcional) Añadir columna 'cost' si no existe:
+-- Ejecuta este ALTER solo si SHOW COLUMNS FROM access_logs LIKE 'cost' devuelve 0 filas.
+-- ALTER TABLE access_logs ADD COLUMN cost DECIMAL(10,2) DEFAULT NULL AFTER plate_discrepancy;
 
--- Agregar campo de costo para registrar el monto de cada entrada
+-- 2) (Opcional) Añadir columna 'payment_method' si no existe:
+-- Ejecuta este ALTER solo si SHOW COLUMNS FROM access_logs LIKE 'payment_method' devuelve 0 filas.
+-- ALTER TABLE access_logs ADD COLUMN payment_method ENUM('cash','voucher','bank_transfer') NOT NULL DEFAULT 'cash' AFTER cost;
+
+-- 3) Crear índice para búsquedas por método de pago (ejecutar solo si no existe)
+-- Antes de ejecutar, verifica con: SHOW INDEX FROM access_logs WHERE Key_name = 'idx_payment_method';
 ALTER TABLE access_logs
-ADD COLUMN cost DECIMAL(10, 2) NULL DEFAULT NULL AFTER plate_discrepancy,
-ADD COLUMN payment_method ENUM('cash', 'voucher', 'bank_transfer') NOT NULL DEFAULT 'cash' AFTER cost;
+  ADD INDEX idx_payment_method (payment_method);
 
--- Agregar índice para búsquedas por método de pago
-ALTER TABLE access_logs
-ADD INDEX idx_payment_method (payment_method);
-
--- ============================================================
--- TABLA DE COSTOS POR CAPACIDAD (si no existe)
--- ============================================================
-
--- Crear tabla capacity_costs si no existe
+-- 4) Crear tabla capacity_costs si no existe e insertar valores por defecto
 CREATE TABLE IF NOT EXISTS capacity_costs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     capacity_liters INT NOT NULL,
-    cost DECIMAL(10, 2) NOT NULL,
+    cost DECIMAL(10,2) NOT NULL,
     description VARCHAR(100) NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -34,23 +29,11 @@ CREATE TABLE IF NOT EXISTS capacity_costs (
     UNIQUE KEY idx_capacity (capacity_liters)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insertar costos de capacidad por defecto (si la tabla está vacía)
--- NOTA: Estos son valores de ejemplo. Ajuste los costos según su instalación específica.
 INSERT IGNORE INTO capacity_costs (capacity_liters, cost, description, is_active) VALUES
 (10000, 400.00, 'Pipa 10,000 litros', 1),
 (12000, 480.00, 'Pipa 12,000 litros', 1),
 (15000, 600.00, 'Pipa 15,000 litros', 1);
 
--- ============================================================
--- MENSAJES FINALES
--- ============================================================
-
-SELECT 'Actualización de base de datos completada exitosamente.' as mensaje;
-SELECT 'Versión: 1.5.0 - Reparación de registros financieros y QR' as version;
-SELECT 'Cambios aplicados:' as titulo;
-SELECT '1. Agregado campo cost en access_logs' as cambio;
-SELECT '2. Agregado campo payment_method en access_logs' as cambio;
-SELECT '3. Cada emisión de ticket ahora genera una transacción para el reporte financiero' as cambio;
-SELECT '4. Código QR reparado en impresión de tickets' as cambio;
-SELECT '5. Estilos de botones ahora usan colores del tema personalizado' as cambio;
-SELECT NOW() as fecha_actualizacion;
+-- Mensaje final (consulta para confirmar)
+SELECT 'Script ejecutado (si hubo errores por índice/columna, revisa las comprobaciones anteriores).' AS mensaje;
+SELECT NOW() AS fecha_ejecucion;
