@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS capacity_costs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar costos de capacidad por defecto (si la tabla está vacía)
+-- NOTA: Estos son valores de ejemplo. Ajuste los costos según su instalación específica.
 INSERT IGNORE INTO capacity_costs (capacity_liters, cost, description, is_active) VALUES
 (10000, 400.00, 'Pipa 10,000 litros', 1),
 (12000, 480.00, 'Pipa 12,000 litros', 1),

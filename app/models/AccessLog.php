@@ -306,12 +306,12 @@ class AccessLog {
      * @param int $clientId ID del cliente
      * @param float $amount Monto de la transacción
      * @param string $paymentMethod Método de pago (cash, voucher, bank_transfer)
-     * @param int $litersSupplied Litros suministrados (capacidad de la unidad)
+     * @param int $capacityLiters Capacidad de la unidad (usado como litros estimados en el ticket)
      */
-    private function createTransaction($accessLogId, $clientId, $amount, $paymentMethod, $litersSupplied) {
+    private function createTransaction($accessLogId, $clientId, $amount, $paymentMethod, $capacityLiters) {
         try {
-            // Calcular precio por litro si hay litros
-            $pricePerLiter = $litersSupplied > 0 ? ($amount / $litersSupplied) : 0;
+            // Calcular precio por litro si hay capacidad
+            $pricePerLiter = $capacityLiters > 0 ? ($amount / $capacityLiters) : 0;
             
             $sql = "INSERT INTO transactions (access_log_id, client_id, total_amount, liters_supplied, 
                     price_per_liter, payment_method, payment_status, transaction_date, notes) 
@@ -321,7 +321,7 @@ class AccessLog {
                 $accessLogId,
                 $clientId,
                 $amount,
-                $litersSupplied,
+                $capacityLiters,
                 $pricePerLiter,
                 $paymentMethod
             ];

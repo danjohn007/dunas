@@ -176,7 +176,7 @@
                     height: <?php echo $qrSize; ?>,
                     colorDark: '#000000',
                     colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H
+                    correctLevel: QRCode.CorrectLevel.L
                 });
             } else {
                 console.error('QRCode library not loaded');
