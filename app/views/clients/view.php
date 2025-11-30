@@ -36,7 +36,7 @@
                 <p class="mt-1 text-lg text-gray-900"><?php echo htmlspecialchars($client['address']); ?></p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-500">Teléfono</label>
+                <label class="block text-sm font-medium text-gray-500">Teléfono/WhatsApp</label>
                 <p class="mt-1 text-lg text-gray-900"><?php echo htmlspecialchars($client['phone']); ?></p>
             </div>
             <div>

@@ -6,7 +6,7 @@
     <title>Ticket de Entrada - <?php echo $access['ticket_code']; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
         @media print {
             .no-print {
@@ -50,9 +50,9 @@
                 <p class="text-xs text-gray-500 mt-1">Ticket de Entrada</p>
             </div>
             
-            <!-- Código de Barras -->
+            <!-- Código QR -->
             <div class="text-center mb-4">
-                <svg id="barcode"></svg>
+                <canvas id="qrcode" class="mx-auto"></canvas>
                 <p class="text-2xl font-mono font-bold text-gray-900 mt-2"><?php echo $access['ticket_code']; ?></p>
             </div>
             
@@ -91,7 +91,7 @@
                     Presente este ticket al salir
                 </p>
                 <p class="text-xs text-gray-600 text-center mt-1">
-                    El código de barras será escaneado automáticamente
+                    El código QR será escaneado automáticamente
                 </p>
             </div>
             
@@ -109,7 +109,7 @@
             </h3>
             <ul class="text-sm text-blue-800 space-y-1">
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Entrada registrada exitosamente</li>
-                <li><i class="fas fa-check text-blue-600 mr-2"></i>Código de barras: <strong><?php echo $access['ticket_code']; ?></strong></li>
+                <li><i class="fas fa-check text-blue-600 mr-2"></i>Código QR: <strong><?php echo $access['ticket_code']; ?></strong></li>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Al salir, escanee el código para registrar automáticamente</li>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Se registrará con la capacidad máxima de <?php echo number_format($access['capacity_liters']); ?> litros</li>
             </ul>
@@ -117,13 +117,16 @@
     </div>
     
     <script>
-        // Generar código de barras
-        JsBarcode("#barcode", "<?php echo $access['ticket_code']; ?>", {
-            format: "CODE128",
-            width: 2,
-            height: 60,
-            displayValue: false,
-            margin: 0
+        // Generar código QR
+        QRCode.toCanvas(document.getElementById('qrcode'), "<?php echo $access['ticket_code']; ?>", {
+            width: 120,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#ffffff'
+            }
+        }, function (error) {
+            if (error) console.error(error);
         });
         
         // Redirigir a la vista de registro de salida después de imprimir (donde está el botón de permitir acceso)

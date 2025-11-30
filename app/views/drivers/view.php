@@ -56,7 +56,7 @@
                 </div>
                 
                 <div>
-                    <p class="text-sm text-gray-500">Teléfono</p>
+                    <p class="text-sm text-gray-500">Teléfono/WhatsApp</p>
                     <p class="text-lg font-semibold text-gray-900"><?php echo htmlspecialchars($driver['phone']); ?></p>
                 </div>
                 
