@@ -84,11 +84,15 @@
             </h3>
             
             <div class="flex gap-3">
-                <div class="flex-1">
+                <div class="flex-1 relative">
                     <input type="text" id="manualPlateInput" 
                            placeholder="Escriba la placa manualmente (ej: ABC1059)"
                            class="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 uppercase"
-                           maxlength="10">
+                           maxlength="10"
+                           autocomplete="off">
+                    <!-- Autocomplete dropdown -->
+                    <div id="plateAutocomplete" class="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden max-h-60 overflow-y-auto">
+                    </div>
                 </div>
                 <button type="button" id="manualRegistrationBtn" 
                         class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-6 rounded-lg whitespace-nowrap">
@@ -107,6 +111,26 @@
     <form method="POST" action="<?php echo BASE_URL; ?>/access/quickEntry" id="registrationForm" class="hidden">
         <input type="hidden" name="plate_number" id="plateNumber">
         <input type="hidden" name="unit_id" id="unitId" value="">
+        
+        <!-- Método de Pago -->
+        <div id="paymentMethodSection" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-credit-card text-blue-600 mr-2"></i>Método de Pago
+            </h2>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Método de Pago <span class="text-red-500">*</span>
+                </label>
+                <select name="payment_method" id="paymentMethod" required
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <option value="cash" selected>Efectivo</option>
+                    <option value="voucher">Vales</option>
+                    <option value="bank_transfer">Transferencia Bancaria</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">El método de pago se reflejará en el ticket y en el reporte financiero</p>
+            </div>
+        </div>
         
         <!-- Paso 2: Datos de la Unidad (si no existe) -->
         <div id="step2Unit" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
@@ -337,9 +361,82 @@ document.addEventListener('DOMContentLoaded', function() {
     const newDriverCheck = document.getElementById('newDriverCheck');
     const newDriverFields = document.getElementById('newDriverFields');
     const searchButtonContainer = document.getElementById('searchButtonContainer');
+    const paymentMethodSection = document.getElementById('paymentMethodSection');
     
     // Variable global para almacenar la última placa detectada
     window.lastDetectedPlate = null;
+    
+    // Autocomplete para placas
+    const manualPlateInput = document.getElementById('manualPlateInput');
+    const plateAutocomplete = document.getElementById('plateAutocomplete');
+    let autocompleteTimeout = null;
+    
+    manualPlateInput.addEventListener('input', function() {
+        const query = this.value.trim().toUpperCase();
+        this.value = query;
+        
+        // Clear previous timeout
+        if (autocompleteTimeout) {
+            clearTimeout(autocompleteTimeout);
+        }
+        
+        if (query.length < 2) {
+            plateAutocomplete.classList.add('hidden');
+            plateAutocomplete.innerHTML = '';
+            return;
+        }
+        
+        // Debounce the search
+        autocompleteTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`<?php echo BASE_URL; ?>/access/searchPlates?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.success && data.plates && data.plates.length > 0) {
+                    plateAutocomplete.innerHTML = data.plates.map(plate => `
+                        <div class="autocomplete-item px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                             data-plate="${plate.plate_number}"
+                             data-unit-id="${plate.id}">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-mono font-semibold text-gray-900">${plate.plate_number}</span>
+                                    <span class="text-sm text-gray-500 ml-2">${plate.brand || ''} ${plate.model || ''}</span>
+                                </div>
+                                <span class="text-xs text-gray-400">${parseInt(plate.capacity_liters || 0).toLocaleString()} L</span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-building mr-1"></i>${plate.client_name || 'Sin cliente'}
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // Add click handlers
+                    plateAutocomplete.querySelectorAll('.autocomplete-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            manualPlateInput.value = this.dataset.plate;
+                            plateAutocomplete.classList.add('hidden');
+                            // Trigger the registration button click
+                            document.getElementById('manualRegistrationBtn').click();
+                        });
+                    });
+                    
+                    plateAutocomplete.classList.remove('hidden');
+                } else {
+                    plateAutocomplete.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+                plateAutocomplete.classList.add('hidden');
+            }
+        }, 300);
+    });
+    
+    // Hide autocomplete when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!manualPlateInput.contains(e.target) && !plateAutocomplete.contains(e.target)) {
+            plateAutocomplete.classList.add('hidden');
+        }
+    });
     
     // Toggle para nuevo cliente
     newClientCheck.addEventListener('change', function() {
@@ -459,6 +556,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         newDriverCheck.checked = true;
                         newDriverFields.classList.remove('hidden');
                     }
+                    
+                    // Show payment method section
+                    paymentMethodSection.classList.remove('hidden');
                 } else {
                     // Unidad no existe - mostrar formulario completo
                     searchResult.className = 'mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg';
@@ -484,6 +584,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     newClientFields.classList.remove('hidden');
                     newDriverCheck.checked = true;
                     newDriverFields.classList.remove('hidden');
+                    
+                    // Show payment method section
+                    paymentMethodSection.classList.remove('hidden');
                 }
                 
                 searchResult.classList.remove('hidden');
@@ -500,7 +603,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Evento para el botón de registro manual
     const manualRegistrationBtn = document.getElementById('manualRegistrationBtn');
-    const manualPlateInput = document.getElementById('manualPlateInput');
     
     // Convertir a mayúsculas mientras escribe
     manualPlateInput.addEventListener('input', function() {
@@ -612,6 +714,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     newDriverFields.classList.remove('hidden');
                 }
                 
+                // Show payment method section
+                paymentMethodSection.classList.remove('hidden');
+                
                 // Limpiar el input manual
                 manualPlateInput.value = '';
             } else {
@@ -641,6 +746,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 newClientFields.classList.remove('hidden');
                 newDriverCheck.checked = true;
                 newDriverFields.classList.remove('hidden');
+                
+                // Show payment method section
+                paymentMethodSection.classList.remove('hidden');
                 
                 // Limpiar el input manual
                 manualPlateInput.value = '';

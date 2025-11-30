@@ -423,4 +423,18 @@ class AccessLog {
         
         return $this->db->fetchAll($sql, $params);
     }
+    
+    /**
+     * Eliminar registros anteriores a una fecha
+     */
+    public function deleteBeforeDate($date) {
+        // First delete related transactions
+        $sqlTrans = "DELETE FROM transactions WHERE access_log_id IN 
+                     (SELECT id FROM access_logs WHERE DATE(entry_datetime) < ?)";
+        $this->db->execute($sqlTrans, [$date]);
+        
+        // Then delete access logs
+        $sql = "DELETE FROM access_logs WHERE DATE(entry_datetime) < ?";
+        return $this->db->execute($sql, [$date]);
+    }
 }

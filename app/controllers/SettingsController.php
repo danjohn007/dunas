@@ -437,4 +437,83 @@ class SettingsController extends BaseController {
         
         $this->redirect('/settings');
     }
+    
+    /**
+     * Guarda la configuración de optimización del sistema
+     */
+    public function optimizeSystem() {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/settings');
+            return;
+        }
+        
+        try {
+            $autoDeleteEnabled = isset($_POST['auto_delete_enabled']) ? '1' : '0';
+            $autoDeleteDays = (int)($_POST['auto_delete_days'] ?? 0);
+            
+            // Guardar configuración
+            $this->settingsModel->updateMultiple([
+                'auto_delete_enabled' => $autoDeleteEnabled,
+                'auto_delete_days' => (string)$autoDeleteDays
+            ]);
+            
+            $this->setFlash('success', 'Configuración de optimización guardada exitosamente.');
+        } catch (Exception $e) {
+            error_log("Error al guardar configuración de optimización: " . $e->getMessage());
+            $this->setFlash('error', 'Error al guardar: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/settings');
+    }
+    
+    /**
+     * Borra registros anteriores a una fecha
+     */
+    public function deleteOldRecords() {
+        Auth::requireRole(['admin']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/settings');
+            return;
+        }
+        
+        try {
+            $deleteBeforeDate = $_POST['delete_before_date'] ?? '';
+            
+            if (empty($deleteBeforeDate)) {
+                throw new Exception('Fecha no proporcionada');
+            }
+            
+            // Validar formato de fecha
+            $date = DateTime::createFromFormat('Y-m-d', $deleteBeforeDate);
+            if (!$date) {
+                throw new Exception('Formato de fecha inválido');
+            }
+            
+            // No permitir borrar registros futuros
+            if ($date > new DateTime()) {
+                throw new Exception('No se pueden borrar registros futuros');
+            }
+            
+            require_once APP_PATH . '/models/AccessLog.php';
+            $accessModel = new AccessLog();
+            
+            // Borrar registros anteriores a la fecha
+            $deletedCount = $accessModel->deleteBeforeDate($deleteBeforeDate);
+            
+            // También borrar visitantes antiguos
+            require_once APP_PATH . '/models/Visitor.php';
+            $visitorModel = new Visitor();
+            $deletedVisitors = $visitorModel->deleteBeforeDate($deleteBeforeDate);
+            
+            $this->setFlash('success', "Se eliminaron {$deletedCount} registros de acceso y {$deletedVisitors} registros de visitantes anteriores al {$deleteBeforeDate}.");
+        } catch (Exception $e) {
+            error_log("Error al borrar registros: " . $e->getMessage());
+            $this->setFlash('error', 'Error al borrar registros: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/settings');
+    }
 }

@@ -566,4 +566,36 @@ class ReportController extends BaseController {
         
         $this->view('reports/plate_verification', $data);
     }
+    
+    /**
+     * Reporte de visitantes
+     */
+    public function visitors() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        require_once APP_PATH . '/models/Visitor.php';
+        $visitorModel = new Visitor();
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        $filters = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo
+        ];
+        
+        $visitors = $visitorModel->getAll($filters);
+        $stats = $visitorModel->getStats($dateFrom, $dateTo);
+        
+        $data = [
+            'title' => 'Reporte de Visitantes',
+            'visitors' => $visitors,
+            'stats' => $stats,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'showNav' => true
+        ];
+        
+        $this->view('reports/visitors', $data);
+    }
 }
