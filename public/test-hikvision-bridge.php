@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message .= "ID: {$testUserId}<br>";
                 $message .= "Nombre: {$testName}<br>";
                 $message .= "PIN: <strong>{$testPin}</strong><br>";
+                $message .= "Tarjeta: <strong>{$testPin}</strong> (mismo número que PIN)<br>";
                 $message .= "Válido: {$testHours} hora(s)";
                 $messageType = 'success';
             } else {

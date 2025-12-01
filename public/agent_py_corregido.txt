@@ -1,0 +1,251 @@
+from flask import Flask, request
+import requests
+import json
+import logging
+from datetime import datetime, timedelta
+from requests.auth import HTTPDigestAuth
+import urllib3
+
+# Desactivar warnings de certificado inseguro (porque usamos HTTPS interno con certificado propio)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+app = Flask(__name__)
+
+# ------------------------
+# CONFIG
+# ------------------------
+SERVIDOR_WEB = "https://fix360.app/dunas/tu_endpoint.php"  # <-- ajusta este endpoint
+PUERTO_LOCAL = 8080  # puerto del agente
+
+# ------------------------
+# CONFIGURACIÓN DEL LECTOR HIKVISION
+# ------------------------
+DEVICE_IP = "192.168.1.129"        # IP del lector
+DEVICE_USER = "admin"              # usuario del lector
+DEVICE_PASS = "Impactos01"         # contraseña del lector
+
+# ------------------------
+# LOGGING
+# ------------------------
+logging.basicConfig(
+    filename="agent.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+# ------------------------
+# FUNCIÓN PARA CREAR/ACTUALIZAR USUARIO EN EL LECTOR
+# ------------------------
+
+
+def create_device_user(user_id, name, pin, valid_from, valid_to):
+    """
+    Crea/actualiza un usuario en el lector con un PIN.
+
+    1) Llama a /UserInfo/Record para asegurarse de que el usuario exista.
+    2) Llama a /UserInfo/Modify para asignar el PIN usando localPassword (PIN plano).
+    """
+
+    base_userinfo = {
+        "employeeNo": user_id,
+        "name": name,
+        "userType": "normal",
+        "doorRight": "1",
+        "RightPlan": [
+            {
+                "doorNo": 1,
+                "planTemplateNo": "1"
+            }
+        ],
+        "Valid": {
+            "enable": True,
+            "beginTime": valid_from,
+            "endTime": valid_to,
+            "timeType": "local"
+        },
+        "gender": "male",
+        "localUIRight": False,
+        "maxOpenDoorTime": 0,
+        "userVerifyMode": ""
+    }
+
+    try:
+        # 1) Asegurar que el usuario exista
+        record_url = f"https://{DEVICE_IP}/ISAPI/AccessControl/UserInfo/Record?format=json"
+        record_payload = {
+            "UserInfo": {
+                **base_userinfo,
+                "password": "",
+                "localPassword": ""
+            }
+        }
+
+        resp_record = requests.post(
+            record_url,
+            auth=HTTPDigestAuth(DEVICE_USER, DEVICE_PASS),
+            json=record_payload,
+            timeout=5,
+            verify=False
+        )
+        logging.info(f"create_device_user RECORD RESP {resp_record.status_code}: {resp_record.text}")
+
+        # 2) Modificar para establecer el PIN (máx 8 dígitos)
+        modify_url = f"https://{DEVICE_IP}/ISAPI/AccessControl/UserInfo/Modify?format=json"
+
+        modify_payload = {
+            "UserInfo": {
+                **base_userinfo,
+                "password": pin,        # por si acaso también lo usa
+                "localPassword": pin    # PIN en claro, <= 8 caracteres
+            }
+        }
+
+        resp_modify = requests.put(
+            modify_url,
+            auth=HTTPDigestAuth(DEVICE_USER, DEVICE_PASS),
+            json=modify_payload,
+            timeout=5,
+            verify=False
+        )
+        logging.info(f"create_device_user MODIFY RESP {resp_modify.status_code}: {resp_modify.text}")
+
+        return resp_modify.status_code in (200, 201, 204)
+
+    except Exception as e:
+        logging.error(f"Error en create_device_user: {e}")
+        return False
+
+
+# ------------------------
+# FUNCIÓN PARA CREAR TARJETA (CARD) EN EL LECTOR
+# ------------------------
+
+
+def create_device_card(user_id, card_no, valid_from, valid_to):
+    """
+    Crea una tarjeta (cardNo) ligada al usuario en el lector.
+    Usamos el mismo número que el PIN para que el QR funcione.
+
+    Si en algún momento el lector exige un mínimo de dígitos,
+    puedes usar card_no.zfill(5) o similar.
+    """
+    # Si necesitas rellenar con ceros a la izquierda, descomenta:
+    # card_no_formatted = card_no.zfill(5)
+    card_no_formatted = card_no
+
+    payload = {
+        "CardInfo": {
+            "employeeNo": user_id,
+            "cardNo": card_no_formatted,
+            "cardType": "normalCard",
+            "Valid": {
+                "enable": True,
+                "beginTime": valid_from,
+                "endTime": valid_to,
+                "timeType": "local"
+            }
+        }
+    }
+
+    try:
+        url = f"https://{DEVICE_IP}/ISAPI/AccessControl/CardInfo/Record?format=json"
+        resp = requests.post(
+            url,
+            auth=HTTPDigestAuth(DEVICE_USER, DEVICE_PASS),
+            json=payload,
+            timeout=5,
+            verify=False
+        )
+        logging.info(f"create_device_card RESP {resp.status_code}: {resp.text}")
+        return resp.status_code in (200, 201, 204)
+    except Exception as e:
+        logging.error(f"Error en create_device_card: {e}")
+        return False
+
+
+# ------------------------
+# RUTA QUE RECIBE EVENTOS DEL LECTOR
+# ------------------------
+@app.route('/hik-event', methods=['POST'])
+def hik_event():
+    try:
+        logging.info("===== EVENTO RECIBIDO DEL LECTOR =====")
+
+        data = request.form.to_dict()
+        if data:
+            logging.info(f"FORM DATA: {json.dumps(data, indent=4)}")
+        else:
+            try:
+                data = request.json
+                logging.info(f"JSON RAW: {json.dumps(data, indent=4)}")
+            except Exception:
+                logging.info("No se recibió JSON válido")
+
+        try:
+            r = requests.post(SERVIDOR_WEB, json=data, timeout=3)
+            logging.info(f"Respuesta del servidor remoto: {r.text}")
+        except Exception as e:
+            logging.error(f"ERROR enviando a servidor remoto: {e}")
+
+        return "OK", 200
+
+    except Exception as e:
+        logging.error(f"ERROR en hik-event: {e}")
+        return "ERROR", 500
+
+
+# ------------------------
+# RUTA PARA CREAR USUARIO TEMPORAL (TICKET) EN EL LECTOR
+# ------------------------
+@app.route('/create-ticket-user', methods=['POST'])
+def create_ticket_user():
+    """
+    Endpoint que el servidor web llamará cuando se genere un ticket.
+
+    Espera un JSON como:
+    {
+        "device_user_id": "TKT-000307",
+        "name": "Ticket-307",
+        "pin": "1734",
+        "card_number": "1734",
+        "hours_valid": 2
+    }
+    """
+    try:
+        data = request.json or {}
+        logging.info(f"create-ticket-user recibido: {json.dumps(data, indent=4)}")
+
+        user_id = data.get("device_user_id")
+        name = data.get("name", user_id)
+        pin = data.get("pin")
+        card_number = data.get("card_number", pin)  # CORREGIDO: Extraer card_number, usar pin si no viene
+        hours_valid = int(data.get("hours_valid", 8))
+
+        if not user_id or not pin:
+            return {"ok": False, "error": "Faltan device_user_id o pin"}, 400
+
+        now = datetime.now()
+        valid_from = now.strftime("%Y-%m-%dT%H:%M:%S")
+        valid_to = (now + timedelta(hours=hours_valid)).strftime("%Y-%m-%dT%H:%M:%S")
+
+        # 1) Crear/actualizar usuario con PIN
+        ok_user = create_device_user(user_id, name, pin, valid_from, valid_to)
+
+        # 2) Crear tarjeta usando card_number (CORREGIDO: usar card_number en lugar de pin)
+        ok_card = create_device_card(user_id, card_number, valid_from, valid_to)
+
+        ok = ok_user and ok_card
+
+        return {"ok": ok}, 200 if ok else 500
+
+    except Exception as e:
+        logging.error(f"Error en /create-ticket-user: {e}")
+        return {"ok": False, "error": str(e)}, 500
+
+
+# ------------------------
+# LEVANTAR SERVIDOR LOCAL
+# ------------------------
+if __name__ == '__main__':
+    print("=== Agente escuchando en puerto", PUERTO_LOCAL, "===")
+    app.run(host="0.0.0.0", port=PUERTO_LOCAL)

@@ -40,6 +40,7 @@ class HikvisionBridgeService {
                 'device_user_id' => $deviceUserId,
                 'name' => $name,
                 'pin' => $pin,
+                'card_number' => $pin, // Usar el mismo número del PIN para la tarjeta
                 'hours_valid' => $hoursValid
             ];
             
