@@ -6,7 +6,7 @@
     </div>
     
     <!-- Tarjetas de Reportes -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         <!-- Reporte de Accesos -->
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
             <div class="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
@@ -68,6 +68,19 @@
             <p class="text-gray-600 text-center mb-4">Placas que coincidieron</p>
             <a href="<?php echo BASE_URL; ?>/reports/plateVerification" 
                class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-semibold py-2 px-4 rounded-lg">
+                Ver Reporte
+            </a>
+        </div>
+        
+        <!-- Reporte de Visitantes -->
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4 mx-auto">
+                <i class="fas fa-user-plus text-orange-600 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">Visitantes</h3>
+            <p class="text-gray-600 text-center mb-4">Registro de visitantes</p>
+            <a href="<?php echo BASE_URL; ?>/reports/visitors" 
+               class="block w-full bg-orange-600 hover:bg-orange-700 text-white text-center font-semibold py-2 px-4 rounded-lg">
                 Ver Reporte
             </a>
         </div>

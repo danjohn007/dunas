@@ -378,6 +378,27 @@ class AccessController extends BaseController {
         }
     }
     
+    /**
+     * Buscar placas para autocompletado
+     */
+    public function searchPlates() {
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+        
+        $query = $_GET['q'] ?? '';
+        
+        if (strlen($query) < 2) {
+            $this->json(['success' => true, 'plates' => []]);
+            return;
+        }
+        
+        $plates = $this->unitModel->searchByPlate($query);
+        
+        $this->json([
+            'success' => true,
+            'plates' => $plates
+        ]);
+    }
+    
     public function quickEntry() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
@@ -450,7 +471,8 @@ class AccessController extends BaseController {
             $accessData = [
                 'driver_id' => $driverId,
                 'unit_id' => $unitId,
-                'client_id' => $clientId
+                'client_id' => $clientId,
+                'payment_method' => $_POST['payment_method'] ?? 'cash'
             ];
             
             // Leer placa desde cámara Hikvision

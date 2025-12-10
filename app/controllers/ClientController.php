@@ -62,16 +62,31 @@ class ClientController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'business_name' => 'required',
-                'rfc_curp' => 'required',
-                'address' => 'required',
-                'phone' => 'required|phone',
-                'email' => 'required|email',
-                'client_type' => 'required'
+                'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $this->clientModel->create($_POST);
+                    // Verificar que el teléfono no esté duplicado
+                    $phone = $_POST['phone'] ?? '';
+                    if ($this->clientModel->phoneExists($phone)) {
+                        $this->setFlash('error', 'El número de Teléfono/WhatsApp ya está registrado para otro cliente.');
+                        $data = [
+                            'title' => 'Nuevo Cliente',
+                            'showNav' => true
+                        ];
+                        $this->view('clients/create', $data);
+                        return;
+                    }
+                    
+                    // Establecer valores por defecto para campos opcionales
+                    $data = $_POST;
+                    $data['rfc_curp'] = $data['rfc_curp'] ?? '';
+                    $data['address'] = $data['address'] ?? '';
+                    $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
+                    $data['client_type'] = $data['client_type'] ?: 'commercial';
+                    
+                    $this->clientModel->create($data);
                     $this->setFlash('success', 'Cliente registrado exitosamente.');
                     $this->redirect('/clients');
                 } catch (Exception $e) {
@@ -104,16 +119,32 @@ class ClientController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'business_name' => 'required',
-                'rfc_curp' => 'required',
-                'address' => 'required',
-                'phone' => 'required|phone',
-                'email' => 'required|email',
-                'client_type' => 'required'
+                'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $this->clientModel->update($id, $_POST);
+                    // Verificar que el teléfono no esté duplicado (excluyendo el cliente actual)
+                    $phone = $_POST['phone'] ?? '';
+                    if ($this->clientModel->phoneExists($phone, $id)) {
+                        $this->setFlash('error', 'El número de Teléfono/WhatsApp ya está registrado para otro cliente.');
+                        $data = [
+                            'title' => 'Editar Cliente',
+                            'client' => $client,
+                            'showNav' => true
+                        ];
+                        $this->view('clients/edit', $data);
+                        return;
+                    }
+                    
+                    // Establecer valores por defecto para campos opcionales
+                    $data = $_POST;
+                    $data['rfc_curp'] = $data['rfc_curp'] ?? '';
+                    $data['address'] = $data['address'] ?? '';
+                    $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
+                    $data['client_type'] = $data['client_type'] ?: 'commercial';
+                    
+                    $this->clientModel->update($id, $data);
                     $this->setFlash('success', 'Cliente actualizado exitosamente.');
                     $this->redirect('/clients');
                 } catch (Exception $e) {

@@ -5,6 +5,7 @@
 require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/AccessLog.php';
+require_once APP_PATH . '/models/CapacityCost.php';
 
 class UnitController extends BaseController {
     
@@ -92,16 +93,18 @@ class UnitController extends BaseController {
             }
         }
         
-        // Obtener clientes y drivers para el formulario
+        // Obtener clientes, drivers y capacidades para el formulario
         require_once APP_PATH . '/models/Client.php';
         require_once APP_PATH . '/models/Driver.php';
         $clientModel = new Client();
         $driverModel = new Driver();
+        $capacityCostModel = new CapacityCost();
         
         $data = [
             'title' => 'Nueva Unidad',
             'clients' => $clientModel->getAll(['status' => 'active']),
             'drivers' => $driverModel->getAll(['status' => 'active']),
+            'capacities' => $capacityCostModel->getAll(true),
             'showNav' => true
         ];
         
@@ -156,17 +159,19 @@ class UnitController extends BaseController {
             }
         }
         
-        // Obtener clientes y drivers para el formulario
+        // Obtener clientes, drivers y capacidades para el formulario
         require_once APP_PATH . '/models/Client.php';
         require_once APP_PATH . '/models/Driver.php';
         $clientModel = new Client();
         $driverModel = new Driver();
+        $capacityCostModel = new CapacityCost();
         
         $data = [
             'title' => 'Editar Unidad',
             'unit' => $unit,
             'clients' => $clientModel->getAll(['status' => 'active']),
             'drivers' => $driverModel->getAll(['status' => 'active']),
+            'capacities' => $capacityCostModel->getAll(true),
             'showNav' => true
         ];
         

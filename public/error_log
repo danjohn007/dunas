@@ -1,0 +1,557 @@
+[28-Nov-2025 10:29:39 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[28-Nov-2025 10:29:39 America/Mexico_City] Marcando plate_discrepancy = 1
+[28-Nov-2025 10:29:39 America/Mexico_City] === MODEL DEBUG ===
+[28-Nov-2025 10:29:39 America/Mexico_City] plate_discrepancy recibido: 1
+[28-Nov-2025 10:29:39 America/Mexico_City] plateDiscrepancy a guardar: 1
+[28-Nov-2025 10:29:39 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[28-Nov-2025 10:29:39 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[28-Nov-2025 10:29:39 America/Mexico_City] Data: {"device_user_id":"TKT-000277","name":"Constructora ABC S.A. de C.V.","pin":"9994","hours_valid":1}
+[28-Nov-2025 10:29:43 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3089 ms: Could not connect to server
+[28-Nov-2025 10:29:43 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3089 ms: Could not connect to server
+[28-Nov-2025 10:29:57 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:29:57 America/Mexico_City] ShellyLockHelper - Error checking pulse existence: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:29:57 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[28-Nov-2025 10:29:58 America/Mexico_City] ShellyCloudClient - HTTP 200 in 748.19ms - channel=1, turn=off
+[28-Nov-2025 10:29:58 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:29:58 America/Mexico_City] ShellyLockHelper - Error logging pulse: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:29:58 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[28-Nov-2025 10:29:58 America/Mexico_City] ShellyActionService::executeByActionType() - quick_register open - device=34987A67DA6C channel=1 correlation=access:277:entry
+[28-Nov-2025 10:31:12 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:31:12 America/Mexico_City] ShellyLockHelper - Error checking pulse existence: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:31:12 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[28-Nov-2025 10:31:13 America/Mexico_City] ShellyCloudClient - HTTP 200 in 752.72ms - channel=1, turn=off
+[28-Nov-2025 10:31:13 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:31:13 America/Mexico_City] ShellyLockHelper - Error logging pulse: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:31:13 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[28-Nov-2025 10:31:13 America/Mexico_City] ShellyActionService::executeByActionType() - quick_register open - device=34987A67DA6C channel=1 correlation=access:262:entry
+[28-Nov-2025 10:33:02 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[28-Nov-2025 10:33:02 America/Mexico_City] Marcando plate_discrepancy = 1
+[28-Nov-2025 10:33:02 America/Mexico_City] === MODEL DEBUG ===
+[28-Nov-2025 10:33:02 America/Mexico_City] plate_discrepancy recibido: 1
+[28-Nov-2025 10:33:02 America/Mexico_City] plateDiscrepancy a guardar: 1
+[28-Nov-2025 10:33:02 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[28-Nov-2025 10:33:02 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[28-Nov-2025 10:33:02 America/Mexico_City] Data: {"device_user_id":"TKT-000278","name":"Constructora ABC S.A. de C.V.","pin":"1952","hours_valid":1}
+[28-Nov-2025 10:33:06 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3088 ms: Could not connect to server
+[28-Nov-2025 10:33:06 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3088 ms: Could not connect to server
+[28-Nov-2025 10:33:23 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:33:23 America/Mexico_City] ShellyLockHelper - Error checking pulse existence: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:33:23 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[28-Nov-2025 10:33:24 America/Mexico_City] ShellyCloudClient - HTTP 200 in 760.36ms - channel=1, turn=on
+[28-Nov-2025 10:33:24 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:33:24 America/Mexico_City] ShellyLockHelper - Error logging pulse: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:33:24 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[28-Nov-2025 10:33:24 America/Mexico_City] ShellyActionService::executeByActionType() - quick_register open - device=34987A67DA6C channel=1 correlation=access:278:entry
+[28-Nov-2025 10:33:56 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[28-Nov-2025 10:33:56 America/Mexico_City] Marcando plate_discrepancy = 1
+[28-Nov-2025 10:33:56 America/Mexico_City] === MODEL DEBUG ===
+[28-Nov-2025 10:33:56 America/Mexico_City] plate_discrepancy recibido: 1
+[28-Nov-2025 10:33:56 America/Mexico_City] plateDiscrepancy a guardar: 1
+[28-Nov-2025 10:33:56 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[28-Nov-2025 10:33:56 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[28-Nov-2025 10:33:56 America/Mexico_City] Data: {"device_user_id":"TKT-000279","name":"Constructora ABC S.A. de C.V.","pin":"6795","hours_valid":1}
+[28-Nov-2025 10:33:59 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3087 ms: Could not connect to server
+[28-Nov-2025 10:33:59 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3087 ms: Could not connect to server
+[28-Nov-2025 10:34:10 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:34:10 America/Mexico_City] ShellyLockHelper - Error checking pulse existence: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:34:10 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[28-Nov-2025 10:34:11 America/Mexico_City] ShellyCloudClient - HTTP 200 in 751.58ms - channel=1, turn=on
+[28-Nov-2025 10:34:11 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:34:11 America/Mexico_City] ShellyLockHelper - Error logging pulse: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:34:11 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[28-Nov-2025 10:34:11 America/Mexico_City] ShellyActionService::executeByActionType() - quick_register open - device=34987A67DA6C channel=1 correlation=access:279:entry
+[28-Nov-2025 10:36:15 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:36:15 America/Mexico_City] ShellyLockHelper - Error checking pulse existence: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:36:15 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[28-Nov-2025 10:36:16 America/Mexico_City] ShellyCloudClient - HTTP 200 in 738.93ms - channel=1, turn=on
+[28-Nov-2025 10:36:16 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:36:16 America/Mexico_City] ShellyLockHelper - Error logging pulse: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:36:16 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[28-Nov-2025 10:36:16 America/Mexico_City] ShellyActionService::executeByActionType() - quick_register open - device=34987A67DA6C channel=1 correlation=access:259:entry
+[28-Nov-2025 10:37:13 America/Mexico_City] === MODEL DEBUG ===
+[28-Nov-2025 10:37:13 America/Mexico_City] plate_discrepancy recibido: 1
+[28-Nov-2025 10:37:13 America/Mexico_City] plateDiscrepancy a guardar: 1
+[28-Nov-2025 10:37:13 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[28-Nov-2025 10:37:13 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[28-Nov-2025 10:37:13 America/Mexico_City] Data: {"device_user_id":"TKT-000280","name":"Ticket-280","pin":"3373","hours_valid":1}
+[28-Nov-2025 10:37:16 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3086 ms: Could not connect to server
+[28-Nov-2025 10:37:16 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3086 ms: Could not connect to server
+[28-Nov-2025 10:37:33 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:37:33 America/Mexico_City] ShellyLockHelper - Error checking pulse existence: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:37:33 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[28-Nov-2025 10:37:34 America/Mexico_City] ShellyCloudClient - HTTP 200 in 754.2ms - channel=1, turn=on
+[28-Nov-2025 10:37:34 America/Mexico_City] Database Query Error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:37:34 America/Mexico_City] ShellyLockHelper - Error logging pulse: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'residenc_dunas.io_pulse_log' doesn't exist
+[28-Nov-2025 10:37:34 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[28-Nov-2025 10:37:34 America/Mexico_City] ShellyActionService::executeByActionType() - quick_register open - device=34987A67DA6C channel=1 correlation=access:280:entry
+[09-Dec-2025 13:01:52 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 13:01:52 America/Mexico_City] plate_discrepancy recibido: 0
+[09-Dec-2025 13:01:52 America/Mexico_City] plateDiscrepancy a guardar: 0
+[09-Dec-2025 13:01:52 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 13:01:52 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 13:01:52 America/Mexico_City] Data: {"device_user_id":"TKT-000316","name":"Constructora ABC S.A. de C.V.","pin":"3065","hours_valid":1}
+[09-Dec-2025 13:02:02 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Connection timed out after 10002 milliseconds
+[09-Dec-2025 13:02:02 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Connection timed out after 10002 milliseconds
+[09-Dec-2025 13:02:02 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 316, monto: 400.00
+[09-Dec-2025 15:37:07 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 15:37:07 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 15:37:07 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 15:37:07 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 15:37:07 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 15:37:07 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 15:37:07 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 15:37:07 America/Mexico_City] Data: {"device_user_id":"TKT-000317","name":"Constructora ABC S.A. de C.V.","pin":"3671","hours_valid":1}
+[09-Dec-2025 15:37:17 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Connection timed out after 10002 milliseconds
+[09-Dec-2025 15:37:17 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Connection timed out after 10002 milliseconds
+[09-Dec-2025 15:37:17 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 317, monto: 400.00
+[09-Dec-2025 15:38:30 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 15:38:30 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 15:38:31 America/Mexico_City] ShellyCloudClient - HTTP 200 in 809.37ms - channel=1, turn=on
+[09-Dec-2025 15:38:32 America/Mexico_City] ShellyCloudClient - HTTP 401 in 535.54ms - channel=1, turn=off
+[09-Dec-2025 15:38:32 America/Mexico_City] ShellyCloudClient - HTTP error 401: {"isok":false,"errors":{"max_req":"Request limit reached!"}}
+[09-Dec-2025 15:38:32 America/Mexico_City] ShellyLockHelper - Pulse logged: access:317:entry
+[09-Dec-2025 15:38:32 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 15:38:32 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:317:entry
+[09-Dec-2025 16:31:16 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:31:16 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:31:16 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:31:16 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:31:16 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:31:16 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:31:16 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:31:16 America/Mexico_City] Data: {"device_user_id":"TKT-000318","name":"Constructora ABC S.A. de C.V.","pin":"9798","hours_valid":1}
+[09-Dec-2025 16:31:26 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Operation timed out after 10001 milliseconds with 0 bytes received
+[09-Dec-2025 16:31:26 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Operation timed out after 10001 milliseconds with 0 bytes received
+[09-Dec-2025 16:31:26 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 318, monto: 400.00
+[09-Dec-2025 16:32:56 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 16:32:56 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 16:32:57 America/Mexico_City] ShellyCloudClient - HTTP 200 in 761.39ms - channel=1, turn=on
+[09-Dec-2025 16:32:58 America/Mexico_City] ShellyCloudClient - HTTP 401 in 540.13ms - channel=1, turn=off
+[09-Dec-2025 16:32:58 America/Mexico_City] ShellyCloudClient - HTTP error 401: {"isok":false,"errors":{"max_req":"Request limit reached!"}}
+[09-Dec-2025 16:32:58 America/Mexico_City] ShellyLockHelper - Pulse logged: access:318:entry
+[09-Dec-2025 16:32:58 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 16:32:58 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:318:entry
+[09-Dec-2025 16:35:11 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:35:11 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:35:11 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:35:11 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:35:11 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:35:11 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:35:11 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:35:11 America/Mexico_City] Data: {"device_user_id":"TKT-000319","name":"Constructora ABC S.A. de C.V.","pin":"8468","hours_valid":1}
+[09-Dec-2025 16:35:12 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:35:12 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:35:12 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000319 con PIN: 8468 (válido 1h)
+[09-Dec-2025 16:35:12 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 319, monto: 400.00
+[09-Dec-2025 16:36:34 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 16:36:34 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 16:36:35 America/Mexico_City] ShellyCloudClient - HTTP 200 in 771.43ms - channel=1, turn=on
+[09-Dec-2025 16:36:36 America/Mexico_City] ShellyCloudClient - HTTP 401 in 540.05ms - channel=1, turn=off
+[09-Dec-2025 16:36:36 America/Mexico_City] ShellyCloudClient - HTTP error 401: {"isok":false,"errors":{"max_req":"Request limit reached!"}}
+[09-Dec-2025 16:36:36 America/Mexico_City] ShellyLockHelper - Pulse logged: access:319:entry
+[09-Dec-2025 16:36:36 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 16:36:36 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:319:entry
+[09-Dec-2025 16:37:18 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:37:18 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:37:18 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:37:18 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:37:18 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:37:18 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:37:18 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:37:18 America/Mexico_City] Data: {"device_user_id":"TKT-000320","name":"Constructora ABC S.A. de C.V.","pin":"5738","hours_valid":10}
+[09-Dec-2025 16:37:19 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:37:19 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:37:19 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000320 con PIN: 5738 (válido 10h)
+[09-Dec-2025 16:37:19 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 320, monto: 400.00
+[09-Dec-2025 16:38:35 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 16:38:35 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 16:38:35 America/Mexico_City] ShellyCloudClient - HTTP 200 in 740ms - channel=1, turn=on
+[09-Dec-2025 16:38:37 America/Mexico_City] ShellyCloudClient - HTTP 200 in 762.3ms - channel=1, turn=off
+[09-Dec-2025 16:38:37 America/Mexico_City] ShellyLockHelper - Pulse logged: access:320:entry
+[09-Dec-2025 16:38:37 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 16:38:37 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:320:entry
+[09-Dec-2025 16:39:49 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:39:49 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:39:49 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:39:49 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:39:49 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:39:49 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:39:49 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:39:49 America/Mexico_City] Data: {"device_user_id":"TKT-000321","name":"Constructora ABC S.A. de C.V.","pin":"7562","hours_valid":12}
+[09-Dec-2025 16:39:50 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:39:50 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:39:50 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000321 con PIN: 7562 (válido 12h)
+[09-Dec-2025 16:39:50 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 321, monto: 400.00
+[09-Dec-2025 16:41:39 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:41:39 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:41:39 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:41:39 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:41:39 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:41:39 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:41:39 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:41:39 America/Mexico_City] Data: {"device_user_id":"TKT-000322","name":"Constructora ABC S.A. de C.V.","pin":"1152","hours_valid":1}
+[09-Dec-2025 16:41:42 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3083 ms: Could not connect to server
+[09-Dec-2025 16:41:42 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3083 ms: Could not connect to server
+[09-Dec-2025 16:41:42 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 322, monto: 400.00
+[09-Dec-2025 16:42:31 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:42:31 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:42:31 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:42:31 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:42:31 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:42:31 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:42:31 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:42:31 America/Mexico_City] Data: {"device_user_id":"TKT-000323","name":"Constructora ABC S.A. de C.V.","pin":"6482","hours_valid":1}
+[09-Dec-2025 16:42:32 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:42:32 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:42:32 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000323 con PIN: 6482 (válido 1h)
+[09-Dec-2025 16:42:32 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 323, monto: 400.00
+[09-Dec-2025 16:45:50 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:45:50 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:45:50 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:45:50 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:45:50 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:45:50 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:45:50 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:45:50 America/Mexico_City] Data: {"device_user_id":"TKT-000324","name":"Constructora ABC S.A. de C.V.","pin":"3474","hours_valid":1}
+[09-Dec-2025 16:45:51 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:45:51 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:45:51 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000324 con PIN: 3474 (válido 1h)
+[09-Dec-2025 16:45:51 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 324, monto: 400.00
+[09-Dec-2025 16:48:16 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 16:48:16 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 16:48:17 America/Mexico_City] ShellyCloudClient - HTTP 200 in 763.14ms - channel=1, turn=on
+[09-Dec-2025 16:48:18 America/Mexico_City] ShellyCloudClient - HTTP 200 in 770.76ms - channel=1, turn=off
+[09-Dec-2025 16:48:18 America/Mexico_City] ShellyLockHelper - Pulse logged: access:323:entry
+[09-Dec-2025 16:48:18 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 16:48:18 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:323:entry
+[09-Dec-2025 16:48:35 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:48:35 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:48:35 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:48:35 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:48:35 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:48:35 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:48:35 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:48:35 America/Mexico_City] Data: {"device_user_id":"TKT-000325","name":"Constructora ABC S.A. de C.V.","pin":"3074","hours_valid":2}
+[09-Dec-2025 16:48:36 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:48:36 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:48:36 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000325 con PIN: 3074 (válido 2h)
+[09-Dec-2025 16:48:36 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 325, monto: 400.00
+[09-Dec-2025 16:49:29 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:49:29 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:49:29 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:49:29 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:49:29 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:49:29 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:49:29 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:49:29 America/Mexico_City] Data: {"device_user_id":"TKT-000326","name":"Constructora ABC S.A. de C.V.","pin":"4178","hours_valid":2}
+[09-Dec-2025 16:49:29 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:49:29 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:49:29 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:49:29 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:49:29 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:49:29 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:49:29 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:49:29 America/Mexico_City] Data: {"device_user_id":"TKT-000327","name":"Constructora ABC S.A. de C.V.","pin":"9708","hours_valid":2}
+[09-Dec-2025 16:49:30 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:49:30 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:49:30 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000326 con PIN: 4178 (válido 2h)
+[09-Dec-2025 16:49:30 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 326, monto: 400.00
+[09-Dec-2025 16:49:31 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:49:31 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:49:31 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000327 con PIN: 9708 (válido 2h)
+[09-Dec-2025 16:49:31 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 327, monto: 400.00
+[09-Dec-2025 16:51:06 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 16:51:06 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 16:51:07 America/Mexico_City] ShellyCloudClient - HTTP 200 in 766.64ms - channel=1, turn=on
+[09-Dec-2025 16:51:08 America/Mexico_City] ShellyCloudClient - HTTP 401 in 538.13ms - channel=1, turn=off
+[09-Dec-2025 16:51:08 America/Mexico_City] ShellyCloudClient - HTTP error 401: {"isok":false,"errors":{"max_req":"Request limit reached!"}}
+[09-Dec-2025 16:51:08 America/Mexico_City] ShellyLockHelper - Pulse logged: access:326:entry
+[09-Dec-2025 16:51:08 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 16:51:08 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:326:entry
+[09-Dec-2025 16:51:27 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:51:27 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:51:27 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:51:27 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:51:27 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:51:27 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:51:27 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:51:27 America/Mexico_City] Data: {"device_user_id":"TKT-000328","name":"Constructora ABC S.A. de C.V.","pin":"3098","hours_valid":2}
+[09-Dec-2025 16:51:28 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:51:28 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:51:28 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000328 con PIN: 3098 (válido 2h)
+[09-Dec-2025 16:51:28 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 328, monto: 400.00
+[09-Dec-2025 16:51:58 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:51:58 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:51:58 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:51:58 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:51:58 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:51:58 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:51:58 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:51:58 America/Mexico_City] Data: {"device_user_id":"TKT-000329","name":"Constructora ABC S.A. de C.V.","pin":"5193","hours_valid":2}
+[09-Dec-2025 16:51:59 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 16:51:59 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 16:51:59 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000329 con PIN: 5193 (válido 2h)
+[09-Dec-2025 16:51:59 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 329, monto: 400.00
+[09-Dec-2025 16:52:56 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:52:56 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:52:56 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:52:56 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:52:56 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:52:56 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:52:56 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:52:56 America/Mexico_City] Data: {"device_user_id":"TKT-000330","name":"Constructora ABC S.A. de C.V.","pin":"4156","hours_valid":2}
+[09-Dec-2025 16:52:59 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3081 ms: Could not connect to server
+[09-Dec-2025 16:52:59 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3081 ms: Could not connect to server
+[09-Dec-2025 16:52:59 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 330, monto: 400.00
+[09-Dec-2025 16:55:43 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[09-Dec-2025 16:55:43 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[09-Dec-2025 16:55:44 America/Mexico_City] ShellyCloudClient - HTTP 200 in 758.48ms - channel=1, turn=on
+[09-Dec-2025 16:55:45 America/Mexico_City] ShellyCloudClient - HTTP 200 in 746.44ms - channel=1, turn=off
+[09-Dec-2025 16:55:45 America/Mexico_City] ShellyLockHelper - Pulse logged: access:330:entry
+[09-Dec-2025 16:55:45 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[09-Dec-2025 16:55:45 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:330:entry
+[09-Dec-2025 16:55:53 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 16:55:53 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 16:55:53 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 16:55:53 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 16:55:53 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 16:55:53 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 16:55:53 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 16:55:53 America/Mexico_City] Data: {"device_user_id":"TKT-000331","name":"Constructora ABC S.A. de C.V.","pin":"4895","hours_valid":2}
+[09-Dec-2025 16:55:55 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 1454 ms: Could not connect to server
+[09-Dec-2025 16:55:55 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 1454 ms: Could not connect to server
+[09-Dec-2025 16:55:55 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 331, monto: 400.00
+[09-Dec-2025 17:01:08 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 17:01:08 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 17:01:08 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 17:01:08 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 17:01:08 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 17:01:08 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 17:01:08 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 17:01:08 America/Mexico_City] Data: {"device_user_id":"TKT-000332","name":"Constructora ABC S.A. de C.V.","pin":"6430","hours_valid":2}
+[09-Dec-2025 17:01:09 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 17:01:09 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 17:01:09 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000332 con PIN: 6430 (válido 2h)
+[09-Dec-2025 17:01:09 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 332, monto: 400.00
+[09-Dec-2025 17:01:57 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 17:01:57 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 17:01:57 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 17:01:57 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 17:01:57 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 17:01:57 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 17:01:57 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 17:01:57 America/Mexico_City] Data: {"device_user_id":"TKT-000333","name":"Constructora ABC S.A. de C.V.","pin":"4849","hours_valid":2}
+[09-Dec-2025 17:01:58 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 17:01:58 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 17:01:58 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000333 con PIN: 4849 (válido 2h)
+[09-Dec-2025 17:01:58 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 333, monto: 400.00
+[09-Dec-2025 17:02:51 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 17:02:51 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 17:02:51 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 17:02:51 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 17:02:51 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 17:02:51 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 17:02:51 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 17:02:51 America/Mexico_City] Data: {"device_user_id":"TKT-000334","name":"Constructora ABC S.A. de C.V.","pin":"3867","hours_valid":2}
+[09-Dec-2025 17:02:52 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 17:02:52 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 17:02:52 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000334 con PIN: 3867 (válido 2h)
+[09-Dec-2025 17:02:52 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 334, monto: 400.00
+[09-Dec-2025 17:04:09 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 17:04:09 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 17:04:09 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 17:04:09 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 17:04:09 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 17:04:09 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 17:04:09 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 17:04:09 America/Mexico_City] Data: {"device_user_id":"TKT-000335","name":"Constructora ABC S.A. de C.V.","pin":"1278","hours_valid":2}
+[09-Dec-2025 17:04:10 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 17:04:10 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 17:04:10 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000335 con PIN: 1278 (válido 2h)
+[09-Dec-2025 17:04:10 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 335, monto: 400.00
+[09-Dec-2025 17:09:33 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 17:09:33 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 17:09:33 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 17:09:33 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 17:09:33 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 17:09:33 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 17:09:33 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 17:09:33 America/Mexico_City] Data: {"device_user_id":"TKT-000336","name":"Constructora ABC S.A. de C.V.","pin":"9773","hours_valid":2}
+[09-Dec-2025 17:09:34 America/Mexico_City] Response: {"ok":true}
+[09-Dec-2025 17:09:34 America/Mexico_City] === END BRIDGE REQUEST ===
+[09-Dec-2025 17:09:34 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000336 con PIN: 9773 (válido 2h)
+[09-Dec-2025 17:09:34 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 336, monto: 400.00
+[09-Dec-2025 19:41:19 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 19:41:19 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 19:41:19 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 19:41:19 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 19:41:19 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 19:41:19 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 19:41:19 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 19:41:19 America/Mexico_City] Data: {"device_user_id":"TKT-000337","name":"Constructora ABC S.A. de C.V.","pin":"8428","hours_valid":2}
+[09-Dec-2025 19:41:22 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3079 ms: Could not connect to server
+[09-Dec-2025 19:41:22 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3079 ms: Could not connect to server
+[09-Dec-2025 19:41:22 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 337, monto: 400.00
+[09-Dec-2025 19:46:58 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[09-Dec-2025 19:46:58 America/Mexico_City] Marcando plate_discrepancy = 1
+[09-Dec-2025 19:46:58 America/Mexico_City] === MODEL DEBUG ===
+[09-Dec-2025 19:46:58 America/Mexico_City] plate_discrepancy recibido: 1
+[09-Dec-2025 19:46:58 America/Mexico_City] plateDiscrepancy a guardar: 1
+[09-Dec-2025 19:46:58 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[09-Dec-2025 19:46:58 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[09-Dec-2025 19:46:58 America/Mexico_City] Data: {"device_user_id":"TKT-000338","name":"LUIS","pin":"1019","hours_valid":2}
+[09-Dec-2025 19:47:01 America/Mexico_City] Error en HikvisionBridgeService: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3082 ms: Could not connect to server
+[09-Dec-2025 19:47:01 America/Mexico_City] ⚠️ No se pudo crear usuario en dispositivo: Error de comunicación con el puente: cURL Error: Failed to connect to 187.145.46.170 port 8080 after 3082 ms: Could not connect to server
+[09-Dec-2025 19:47:01 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 338, monto: 400.00
+[10-Dec-2025 10:28:52 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 10:28:52 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 10:28:52 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 10:28:52 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 10:28:52 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 10:28:52 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 10:28:52 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 10:28:52 America/Mexico_City] Data: {"device_user_id":"TKT-000339","name":"Constructora ABC S.A. de C.V.","pin":"1126","hours_valid":2}
+[10-Dec-2025 10:28:53 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 10:28:53 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 10:28:53 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000339 con PIN: 1126 (válido 2h)
+[10-Dec-2025 10:28:53 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 339, monto: 400.00
+[10-Dec-2025 10:30:27 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 10:30:27 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 10:30:27 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 10:30:27 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 10:30:27 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 10:30:27 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 10:30:27 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 10:30:27 America/Mexico_City] Data: {"device_user_id":"TKT-000340","name":"Constructora ABC S.A. de C.V.","pin":"9307","hours_valid":2}
+[10-Dec-2025 10:30:28 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 10:30:28 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 10:30:28 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000340 con PIN: 9307 (válido 2h)
+[10-Dec-2025 10:30:28 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 340, monto: 400.00
+[10-Dec-2025 10:33:01 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[10-Dec-2025 10:33:01 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[10-Dec-2025 10:33:02 America/Mexico_City] ShellyCloudClient - HTTP 200 in 761ms - channel=1, turn=on
+[10-Dec-2025 10:33:03 America/Mexico_City] ShellyCloudClient - HTTP 401 in 535.01ms - channel=1, turn=off
+[10-Dec-2025 10:33:03 America/Mexico_City] ShellyCloudClient - HTTP error 401: {"isok":false,"errors":{"max_req":"Request limit reached!"}}
+[10-Dec-2025 10:33:03 America/Mexico_City] ShellyLockHelper - Pulse logged: access:340:entry
+[10-Dec-2025 10:33:03 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[10-Dec-2025 10:33:03 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:340:entry
+[10-Dec-2025 10:35:08 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 10:35:08 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 10:35:08 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 10:35:08 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 10:35:08 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 10:35:08 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 10:35:08 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 10:35:08 America/Mexico_City] Data: {"device_user_id":"TKT-000341","name":"Constructora ABC S.A. de C.V.","pin":"4669","hours_valid":2}
+[10-Dec-2025 10:35:09 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 10:35:09 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 10:35:09 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000341 con PIN: 4669 (válido 2h)
+[10-Dec-2025 10:35:09 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 341, monto: 400.00
+[10-Dec-2025 10:46:02 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 10:46:02 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 10:46:02 America/Mexico_City] Data: {"device_user_id":"TEST-1765385162","name":"Usuario Test","pin":"0000","hours_valid":1}
+[10-Dec-2025 10:46:03 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 10:46:03 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 11:04:07 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:04:07 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:04:07 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:04:07 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:04:07 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:04:07 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:04:07 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:04:07 America/Mexico_City] Data: {"device_user_id":"TKT-000342","name":"Constructora ABC S.A. de C.V.","pin":"1017","card_number":"1017","hours_valid":2}
+[10-Dec-2025 11:04:08 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 11:04:08 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 11:04:08 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000342 con PIN: 1017 (válido 2h)
+[10-Dec-2025 11:04:09 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 342, monto: 400.00
+[10-Dec-2025 11:06:02 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:06:02 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:06:02 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:06:02 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:06:02 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:06:02 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:06:02 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:06:02 America/Mexico_City] Data: {"device_user_id":"TKT-000343","name":"Constructora ABC S.A. de C.V.","pin":"7623","card_number":"7623","hours_valid":2}
+[10-Dec-2025 11:06:03 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 11:06:03 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 11:06:03 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000343 con PIN: 7623 (válido 2h)
+[10-Dec-2025 11:06:04 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 343, monto: 400.00
+[10-Dec-2025 11:08:03 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:08:03 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:08:03 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:08:03 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:08:03 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:08:03 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:08:03 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:08:03 America/Mexico_City] Data: {"device_user_id":"TKT-000344","name":"Constructora ABC S.A. de C.V.","pin":"9254","card_number":"9254","hours_valid":2}
+[10-Dec-2025 11:08:04 America/Mexico_City] Response: {"ok":true}
+[10-Dec-2025 11:08:04 America/Mexico_City] === END BRIDGE REQUEST ===
+[10-Dec-2025 11:08:04 America/Mexico_City] ✅ Usuario creado en dispositivo Hikvision: TKT-000344 con PIN: 9254 (válido 2h)
+[10-Dec-2025 11:08:04 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 344, monto: 400.00
+[10-Dec-2025 11:15:35 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:15:35 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:15:35 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:15:35 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:15:35 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:15:35 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:15:35 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:15:35 America/Mexico_City] Data: {"device_user_id":"TKT-000345","name":"Constructora ABC S.A. de C.V.","pin":"9128","card_number":"9128","hours_valid":2}
+[10-Dec-2025 11:15:35 America/Mexico_City] Async mode: YES
+[10-Dec-2025 11:15:35 America/Mexico_City] ✅ Petición enviada de forma asíncrona
+[10-Dec-2025 11:15:35 America/Mexico_City] ✅ Usuario enviado a dispositivo Hikvision: TKT-000345 con PIN: 9128 (válido 2h)
+[10-Dec-2025 11:15:35 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 345, monto: 400.00
+[10-Dec-2025 11:16:28 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' acquired
+[10-Dec-2025 11:16:28 America/Mexico_City] ShellyCloudClient::pulse() - Relay 1, duration 600ms, invert=true
+[10-Dec-2025 11:16:29 America/Mexico_City] ShellyCloudClient - HTTP 200 in 749.09ms - channel=1, turn=on
+[10-Dec-2025 11:16:30 America/Mexico_City] ShellyCloudClient - HTTP 401 in 541.58ms - channel=1, turn=off
+[10-Dec-2025 11:16:30 America/Mexico_City] ShellyCloudClient - HTTP error 401: {"isok":false,"errors":{"max_req":"Request limit reached!"}}
+[10-Dec-2025 11:16:30 America/Mexico_City] ShellyLockHelper - Pulse logged: access:345:entry
+[10-Dec-2025 11:16:30 America/Mexico_City] ShellyLockHelper - Lock 'shelly_port_1' released
+[10-Dec-2025 11:16:30 America/Mexico_City] ShellyActionService::execute() - abrir_cerrar open - device=34987A67DA6C channel=1 correlation=access:345:entry
+[10-Dec-2025 11:17:49 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:17:49 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:17:49 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:17:49 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:17:49 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:17:49 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:17:49 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:17:49 America/Mexico_City] Data: {"device_user_id":"TKT-000346","name":"Ticket-346","pin":"1150","card_number":"1150","hours_valid":2}
+[10-Dec-2025 11:17:49 America/Mexico_City] Async mode: YES
+[10-Dec-2025 11:17:49 America/Mexico_City] ✅ Petición enviada de forma asíncrona
+[10-Dec-2025 11:17:49 America/Mexico_City] ✅ Usuario enviado a dispositivo Hikvision: TKT-000346 con PIN: 1150 (válido 2h)
+[10-Dec-2025 11:17:49 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 346, monto: 600.00
+[10-Dec-2025 11:21:22 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:21:22 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:21:22 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:21:22 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:21:22 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:21:22 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:21:22 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:21:22 America/Mexico_City] Data: {"device_user_id":"TKT-000347","name":"Ticket-347","pin":"5317","card_number":"5317","hours_valid":2}
+[10-Dec-2025 11:21:22 America/Mexico_City] Async mode: YES
+[10-Dec-2025 11:21:23 America/Mexico_City] ✅ Petición enviada de forma asíncrona
+[10-Dec-2025 11:21:23 America/Mexico_City] ✅ Usuario enviado a dispositivo Hikvision: TKT-000347 con PIN: 5317 (válido 2h)
+[10-Dec-2025 11:21:23 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 347, monto: 600.00
+[10-Dec-2025 11:23:23 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:23:23 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:23:23 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:23:23 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:23:23 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:23:23 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:23:23 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:23:23 America/Mexico_City] Data: {"device_user_id":"TKT-000348","name":"Constructora ABC S.A. de C.V.","pin":"3548","card_number":"3548","hours_valid":2}
+[10-Dec-2025 11:23:23 America/Mexico_City] Async mode: YES
+[10-Dec-2025 11:23:24 America/Mexico_City] ✅ Petición enviada de forma asíncrona
+[10-Dec-2025 11:23:24 America/Mexico_City] ✅ Usuario enviado a dispositivo Hikvision: TKT-000348 con PIN: 3548 (válido 2h)
+[10-Dec-2025 11:23:24 America/Mexico_City] ✅ Transacción creada exitosamente para access_log_id: 348, monto: 400.00
+[10-Dec-2025 11:25:44 America/Mexico_City] === QuickEntry - PLACA NO DETECTADA ===
+[10-Dec-2025 11:25:44 America/Mexico_City] Marcando plate_discrepancy = 1
+[10-Dec-2025 11:25:44 America/Mexico_City] === MODEL DEBUG ===
+[10-Dec-2025 11:25:44 America/Mexico_City] plate_discrepancy recibido: 1
+[10-Dec-2025 11:25:44 America/Mexico_City] plateDiscrepancy a guardar: 1
+[10-Dec-2025 11:25:44 America/Mexico_City] === HIKVISION BRIDGE REQUEST ===
+[10-Dec-2025 11:25:44 America/Mexico_City] Endpoint: http://187.145.46.170:8080/create-ticket-user
+[10-Dec-2025 11:25:44 America/Mexico_City] Data: {"device_user_id":"TKT-000349","name":"Ticket-349","pin":"4964","card_number":"4964","hours_valid":2}
+[10-Dec-2025 11:25:44 America/Mexico_City] Async mode: YES
+[10-Dec-2025 11:25:45 America/Mexico_City] ✅ Petición enviada de forma asíncrona
+[10-Dec-2025 11:25:45 America/Mexico_City] ✅ Usuario enviado a dispositivo Hikvision: TKT-000349 con PIN: 4964 (válido 2h)

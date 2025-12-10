@@ -192,6 +192,52 @@
             </div>
         </div>
         
+        <!-- Configuración de Códigos QR -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-start mb-4">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-purple-100 mr-4">
+                    <i class="fas fa-qrcode text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Configuración de Códigos QR</h2>
+                    <p class="text-gray-600 text-sm">Para generación de códigos QR en eventos</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        API para Generación de QR
+                    </label>
+                    <select name="qr_api_provider" 
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="qrserver" <?php echo ($settings['qr_api_provider'] ?? 'qrserver') === 'qrserver' ? 'selected' : ''; ?>>QR Server API</option>
+                        <option value="goqr" <?php echo ($settings['qr_api_provider'] ?? '') === 'goqr' ? 'selected' : ''; ?>>GoQR.me API</option>
+                        <option value="local" <?php echo ($settings['qr_api_provider'] ?? '') === 'local' ? 'selected' : ''; ?>>Generación Local (JavaScript)</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Seleccione el proveedor de API para generar códigos QR</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tamaño de QR (píxeles)
+                    </label>
+                    <input type="number" name="qr_size" min="100" max="1000" step="50"
+                           value="<?php echo htmlspecialchars($settings['qr_size'] ?? '350'); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="350">
+                    <p class="mt-1 text-xs text-gray-500">Tamaño del código QR para impresión (recomendado: 400px)</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Nota:</strong> La configuración de API de QR permite cambiar el proveedor de generación de códigos QR. Un tamaño mayor mejora la calidad de la impresión.
+                </p>
+            </div>
+        </div>
+        
         <!-- Configuración de Tickets -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
@@ -223,6 +269,162 @@
             </button>
         </div>
     </form>
+    
+    <!-- Configuración de Costos por Capacidad -->
+    <form method="POST" action="<?php echo BASE_URL; ?>/settings/saveCapacityCosts" id="capacityCostsForm">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-start">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-green-100 mr-4">
+                        <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">Costos por Capacidad de Pipa</h2>
+                        <p class="text-gray-600 text-sm">Configure los precios para cada capacidad disponible en el sistema</p>
+                    </div>
+                </div>
+                <button type="button" onclick="addCapacityCost()" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i>Agregar Capacidad
+                </button>
+            </div>
+            
+            <div id="capacityCostsContainer" class="space-y-4">
+                <?php 
+                // Get capacity costs from database
+                require_once APP_PATH . '/models/CapacityCost.php';
+                $capacityCostModel = new CapacityCost();
+                $capacityCosts = $capacityCostModel->getAll(false);
+                
+                if (empty($capacityCosts)): 
+                ?>
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-info-circle text-4xl mb-4"></i>
+                        <p>No hay costos configurados. Haga clic en "Agregar Capacidad" para comenzar.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($capacityCosts as $index => $cost): ?>
+                        <div class="capacity-cost-item border border-gray-200 rounded-lg p-4 bg-gray-50" id="capacity-cost-<?php echo $index; ?>">
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                <input type="hidden" name="capacity_costs[<?php echo $index; ?>][id]" value="<?php echo $cost['id']; ?>">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad (Litros)</label>
+                                    <input type="number" name="capacity_costs[<?php echo $index; ?>][capacity_liters]" 
+                                           value="<?php echo $cost['capacity_liters']; ?>" required min="1"
+                                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                           placeholder="Ej: 10000">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Costo ($)</label>
+                                    <input type="number" name="capacity_costs[<?php echo $index; ?>][cost]" 
+                                           value="<?php echo $cost['cost']; ?>" required min="0" step="0.01"
+                                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                           placeholder="Ej: 50000.00">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                    <input type="text" name="capacity_costs[<?php echo $index; ?>][description]" 
+                                           value="<?php echo htmlspecialchars($cost['description'] ?? ''); ?>"
+                                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                           placeholder="Ej: Pipa estándar">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                    <select name="capacity_costs[<?php echo $index; ?>][is_active]"
+                                            class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                                        <option value="1" <?php echo $cost['is_active'] ? 'selected' : ''; ?>>Activo</option>
+                                        <option value="0" <?php echo !$cost['is_active'] ? 'selected' : ''; ?>>Inactivo</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <button type="button" onclick="removeCapacityCost(this)"
+                                            class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg w-full">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Importante:</strong> Los costos configurados aquí se utilizarán automáticamente en los registros de entrada y se reflejarán en el Reporte Financiero.
+                </p>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button type="submit" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Guardar Costos por Capacidad
+                </button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Configuración FTP -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-folder text-cyan-600 mr-2"></i>Configuración FTP
+        </h2>
+        
+        <p class="text-sm text-gray-600 mb-4">
+            Configure las rutas de las carpetas para el movimiento automático de imágenes de placas detectadas.
+        </p>
+        
+        <form method="POST" action="<?php echo BASE_URL; ?>/settings/update" id="ftpConfigForm">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Carpeta Origen (FTP)
+                    </label>
+                    <input type="text" name="ftp_source_dir" 
+                           value="<?php echo htmlspecialchars($settings['ftp_source_dir'] ?? '/home2/residencial/placas/'); ?>"
+                           placeholder="/home2/residencial/placas/"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    <p class="mt-1 text-xs text-gray-500">
+                        Ruta completa de la carpeta donde la cámara HikVision guarda las imágenes de placas detectadas.
+                    </p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Carpeta Destino (Público)
+                    </label>
+                    <input type="text" name="ftp_destination_dir" 
+                           value="<?php echo htmlspecialchars($settings['ftp_destination_dir'] ?? '/home2/residencial/public_html/dunas/imagenes/'); ?>"
+                           placeholder="/home2/residencial/public_html/dunas/imagenes/"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    <p class="mt-1 text-xs text-gray-500">
+                        Ruta completa de la carpeta pública donde se moverán las imágenes para su procesamiento.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Nota:</strong> Estas rutas son utilizadas por el script <code class="bg-blue-100 px-1 rounded">move_ftp_images.php</code> 
+                    que se ejecuta automáticamente cada 10 segundos en las vistas de Control de Acceso y Registro Rápido. 
+                    Asegúrese de que ambas carpetas existan y tengan los permisos correctos.
+                </p>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Guardar Configuración FTP
+                </button>
+            </div>
+        </form>
+    </div>
     
     <!-- Configuración de Dispositivos Shelly Cloud -->
     <form method="POST" action="<?php echo BASE_URL; ?>/settings/saveShellyDevices" id="shellyDevicesForm">
@@ -1054,6 +1256,163 @@
         </div>
     </form>
     
+    <!-- Optimización del Sistema -->
+    <form method="POST" action="<?php echo BASE_URL; ?>/settings/optimizeSystem" id="optimizeSystemForm">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-start mb-4">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-red-100 mr-4">
+                    <i class="fas fa-database text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Optimización del Sistema</h2>
+                    <p class="text-gray-600 text-sm">Gestión de historial y limpieza de registros antiguos</p>
+                </div>
+            </div>
+            
+            <!-- Autoborrado de registros -->
+            <div class="bg-gray-50 border border-gray-300 rounded-lg p-6 mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-clock text-gray-600 mr-2"></i>Autoborrado de Registros
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Borrar automáticamente después de
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <select name="auto_delete_days" id="autoDeleteDays"
+                                    class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                <option value="0" <?php echo ($settings['auto_delete_days'] ?? '0') === '0' ? 'selected' : ''; ?>>No borrar historial</option>
+                                <option value="30" <?php echo ($settings['auto_delete_days'] ?? '') === '30' ? 'selected' : ''; ?>>30 días</option>
+                                <option value="60" <?php echo ($settings['auto_delete_days'] ?? '') === '60' ? 'selected' : ''; ?>>60 días</option>
+                                <option value="90" <?php echo ($settings['auto_delete_days'] ?? '') === '90' ? 'selected' : ''; ?>>90 días</option>
+                                <option value="180" <?php echo ($settings['auto_delete_days'] ?? '') === '180' ? 'selected' : ''; ?>>180 días (6 meses)</option>
+                                <option value="365" <?php echo ($settings['auto_delete_days'] ?? '') === '365' ? 'selected' : ''; ?>>365 días (1 año)</option>
+                            </select>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Los registros de entrada de unidad más antiguos que el período seleccionado serán eliminados automáticamente.
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="auto_delete_enabled" value="1" 
+                                   <?php echo ($settings['auto_delete_enabled'] ?? '0') === '1' ? 'checked' : ''; ?>
+                                   class="rounded border-gray-300 text-red-600 focus:ring-red-500 mr-2">
+                            <span class="text-sm text-gray-700">Habilitar autoborrado</span>
+                        </label>
+                        <p class="mt-2 text-xs text-gray-500">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>
+                            El autoborrado se ejecutará diariamente a las 3:00 AM (requiere cron job configurado).
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Borrado manual por fecha -->
+            <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6 mb-4">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-4">
+                    <i class="fas fa-trash-alt text-yellow-600 mr-2"></i>Borrado Manual de Registros
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Borrar registros anteriores a
+                        </label>
+                        <input type="date" name="delete_before_date" id="deleteBeforeDate"
+                               class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                               max="<?php echo date('Y-m-d'); ?>">
+                        <p class="mt-1 text-xs text-gray-500">
+                            Seleccione una fecha. Se eliminarán todos los registros de entrada de unidad anteriores a esta fecha.
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button type="button" onclick="confirmManualDelete()"
+                                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg w-full">
+                            <i class="fas fa-trash mr-2"></i>Borrar Registros Antiguos
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm text-red-700">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        <strong>¡Advertencia!</strong> Esta acción es irreversible. Los registros borrados no podrán recuperarse.
+                        Asegúrese de tener un respaldo antes de proceder.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Respaldo de Base de Datos -->
+            <div class="bg-green-50 border border-green-300 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-green-800 mb-4">
+                    <i class="fas fa-download text-green-600 mr-2"></i>Respaldo de Base de Datos
+                </h3>
+                
+                <p class="text-sm text-gray-600 mb-4">
+                    Descargue un respaldo completo de la base de datos en formato SQL. Este archivo contiene todas las tablas y datos del sistema.
+                </p>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            El respaldo incluirá todas las transacciones, registros de acceso, visitantes, usuarios y configuraciones.
+                        </p>
+                    </div>
+                    <a href="<?php echo BASE_URL; ?>/settings/backupDatabase" 
+                       class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex-shrink-0">
+                        <i class="fas fa-download mr-2"></i>Descargar Respaldo SQL
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones para optimización -->
+        <div class="flex justify-end space-x-4 mb-6">
+            <a href="<?php echo BASE_URL; ?>/dashboard" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-save mr-2"></i>Guardar Configuración de Optimización
+            </button>
+        </div>
+    </form>
+    
+    <script>
+        function confirmManualDelete() {
+            const dateInput = document.getElementById('deleteBeforeDate');
+            if (!dateInput.value) {
+                alert('Por favor seleccione una fecha');
+                return;
+            }
+            
+            const confirmMsg = `¿Está seguro de que desea borrar TODOS los registros de entrada de unidad anteriores al ${dateInput.value}?\n\nEsta acción es IRREVERSIBLE.`;
+            
+            if (confirm(confirmMsg)) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '<?php echo BASE_URL; ?>/settings/deleteOldRecords';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'delete_before_date';
+                input.value = dateInput.value;
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+    
     <script>
         let deviceIndex = <?php echo (int)count($shellyDevices); ?>;
         let hikvisionIndex = <?php echo (int)count($hikvisionDevices); ?>;
@@ -1150,6 +1509,92 @@
                 input.type = 'password';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Capacity Cost functions
+        let capacityCostIndex = <?php 
+            require_once APP_PATH . '/models/CapacityCost.php';
+            $ccModel = new CapacityCost();
+            $ccCount = $ccModel->count(false);
+            echo (int)$ccCount; 
+        ?>;
+        
+        function addCapacityCost() {
+            const container = document.getElementById('capacityCostsContainer');
+            
+            // Remove "no costs" message if present
+            const noDataMsg = container.querySelector('.text-center');
+            if (noDataMsg && noDataMsg.textContent.includes('No hay costos')) {
+                noDataMsg.remove();
+            }
+            
+            const html = `
+                <div class="capacity-cost-item border border-gray-200 rounded-lg p-4 bg-gray-50" id="capacity-cost-${capacityCostIndex}">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <input type="hidden" name="capacity_costs[${capacityCostIndex}][id]" value="">
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad (Litros)</label>
+                            <input type="number" name="capacity_costs[${capacityCostIndex}][capacity_liters]" 
+                                   required min="1"
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                   placeholder="Ej: 10000">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Costo ($)</label>
+                            <input type="number" name="capacity_costs[${capacityCostIndex}][cost]" 
+                                   required min="0" step="0.01"
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                   placeholder="Ej: 50000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                            <input type="text" name="capacity_costs[${capacityCostIndex}][description]" 
+                                   class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                                   placeholder="Ej: Pipa estándar">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                            <select name="capacity_costs[${capacityCostIndex}][is_active]"
+                                    class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                                <option value="1" selected>Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <button type="button" onclick="removeCapacityCost(this)"
+                                    class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg w-full">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', html);
+            capacityCostIndex++;
+        }
+        
+        function removeCapacityCost(btn) {
+            if (confirm('¿Está seguro de eliminar este costo de capacidad?')) {
+                const item = btn.closest('.capacity-cost-item');
+                item.remove();
+                
+                // Check if container is empty
+                const container = document.getElementById('capacityCostsContainer');
+                if (container.querySelectorAll('.capacity-cost-item').length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-info-circle text-4xl mb-4"></i>
+                            <p>No hay costos configurados. Haga clic en "Agregar Capacidad" para comenzar.</p>
+                        </div>
+                    `;
+                }
             }
         }
     </script>

@@ -1,40 +1,39 @@
 <?php
 /**
- * API Endpoint: Register New Plates (FIX ruta /dunas/Imagenes)
- * - Escanea /dunas/Imagenes (NO /public/Imagenes).
- * - Detecta archivos *_VEHICLE_DETECTION_Hik__PLATE.jpg (jpg/JPG).
- * - Extrae la placa del nombre y registra en detected_plates.
- * - Evita reprocesar por filename con processed_plate_files.
+ * API Endpoint: Register New Plates
+ * - Escanea carpeta /imagenes (raíz del proyecto)
+ * - Detecta archivos con formato de placa
+ * - Soporta dos formatos: *_VEHICLE_DETECTION_Hik__PLATE.jpg y *_VEHICLE_DETECTION_PLATE.jpg
+ * - Extrae la placa del nombre y registra en detected_plates
+ * - Evita reprocesar por filename con processed_plate_files
  */
 
 require_once __DIR__ . '/../../config/config.php';
 header('Content-Type: application/json');
 
 try {
-    // 0) Resolver SIEMPRE /dunas/Imagenes como ruta de disco
-    //    (coincide con la URL pública https://fix360.app/dunas/Imagenes)
-    $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? rtrim($_SERVER['DOCUMENT_ROOT'], '/') : '';
-    $dir = $docRoot . '/dunas/Imagenes';
-
-    // Fallback por si el host no expone DOCUMENT_ROOT correctamente
-    if (!is_dir($dir)) {
-        // intenta relativo a este archivo: ../../Imagenes (sube dos niveles desde /dunas/api/)
-        $alt = realpath(__DIR__ . '/../../Imagenes');
-        if ($alt && is_dir($alt)) {
-            $dir = $alt;
-        }
+    // Determinar directorio de imágenes (carpeta /imagenes en la raíz del proyecto)
+    $dir = realpath(__DIR__ . '/../../imagenes');
+    
+    // Fallback: intentar desde DOCUMENT_ROOT
+    if (!$dir || !is_dir($dir)) {
+        $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? rtrim($_SERVER['DOCUMENT_ROOT'], '/') : '';
+        $dir = $docRoot . '/dunas/imagenes';
     }
 
     if (!is_dir($dir)) {
         throw new Exception("No existe el directorio de imágenes esperado: {$dir}");
     }
 
-    // 1) Escanear SOLO archivos *_PLATE.jpg / *_PLATE.JPG
-    //    glob con brace puede no estar disponible en algunos builds;
-    //    por eso, hacemos dos globs y los unimos.
-    $filesJpg = glob($dir . '/*_VEHICLE_DETECTION_Hik__PLATE.jpg', GLOB_NOSORT) ?: [];
-    $filesJPG = glob($dir . '/*_VEHICLE_DETECTION_Hik__PLATE.JPG', GLOB_NOSORT) ?: [];
-    $files = array_merge($filesJpg, $filesJPG);
+    // Escanear archivos con ambos formatos:
+    // Formato antiguo: *_VEHICLE_DETECTION_Hik__PLATE.jpg
+    // Formato nuevo: *_VEHICLE_DETECTION_PLATE.jpg
+    $filesOldJpg = glob($dir . '/*_VEHICLE_DETECTION_Hik__PLATE.jpg', GLOB_NOSORT) ?: [];
+    $filesOldJPG = glob($dir . '/*_VEHICLE_DETECTION_Hik__PLATE.JPG', GLOB_NOSORT) ?: [];
+    $filesNewJpg = glob($dir . '/*_VEHICLE_DETECTION_PLATE.jpg', GLOB_NOSORT) ?: [];
+    $filesNewJPG = glob($dir . '/*_VEHICLE_DETECTION_PLATE.JPG', GLOB_NOSORT) ?: [];
+    
+    $files = array_merge($filesOldJpg, $filesOldJPG, $filesNewJpg, $filesNewJPG);
 
     if (empty($files)) {
         echo json_encode([
@@ -66,11 +65,21 @@ try {
         }
 
         // 3.2 Extraer placa y timestamp del nombre
-        //     Ej: 20251110154755988_XYA100F_VEHICLE_DETECTION_Hik__PLATE.jpg
+        //     Formato antiguo: 20251110154755988_XYA100F_VEHICLE_DETECTION_Hik__PLATE.jpg
+        //     Formato nuevo:   20251208135059640_XCZ138V_VEHICLE_DETECTION_PLATE.jpg
         //     - ts: primeros dígitos (>=14). Tomamos 14 (YmdHis)
         //     - plate: bloque al medio
-        if (!preg_match('/^(?<ts>\d{14,})_(?<plate>[A-Za-z0-9]+)_VEHICLE_DETECTION_Hik__PLATE\.(jpg|JPG)$/', $filename, $m)) {
-            // si no matchea, saltar silenciosamente
+        
+        // Intentar con formato antiguo (Hik__)
+        if (preg_match('/^(?<ts>\d{14,})_(?<plate>[A-Za-z0-9]+)_VEHICLE_DETECTION_Hik__PLATE\.(jpg|JPG)$/i', $filename, $m)) {
+            // Formato antiguo encontrado
+        } 
+        // Intentar con formato nuevo (sin Hik__)
+        elseif (preg_match('/^(?<ts>\d{14,})_(?<plate>[A-Za-z0-9]+)_VEHICLE_DETECTION_PLATE\.(jpg|JPG)$/i', $filename, $m)) {
+            // Formato nuevo encontrado
+        } 
+        else {
+            // No matchea ningún formato, saltar
             continue;
         }
 
@@ -96,7 +105,13 @@ try {
         'inserted' => $inserted,
         'message'  => $inserted > 0
             ? "Se registraron {$inserted} placas nuevas"
-            : 'No hay placas nuevas para procesar'
+            : 'No hay placas nuevas para procesar',
+        'debug' => [
+            'directory' => $dir,
+            'total_files_found' => count($files),
+            'directory_exists' => is_dir($dir),
+            'directory_readable' => is_readable($dir)
+        ]
     ]);
 
 } catch (Throwable $e) {

@@ -44,6 +44,8 @@ $controllerMap = [
     'reports' => 'ReportController',
     'profile' => 'ProfileController',
     'settings' => 'SettingsController',
+    'visitors' => 'VisitorController',
+    'devices' => 'DevicesController',
     'access-denied' => 'HomeController',
 ];
 

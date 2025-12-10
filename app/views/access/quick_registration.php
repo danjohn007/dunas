@@ -66,6 +66,14 @@
                         <i class="fas fa-info-circle mr-1"></i>Estado: <span id="plate-compare-status">Esperando detección...</span>
                     </div>
                 </div>
+                
+                <!-- Botón Refrescar -->
+                <div class="mt-3 text-center">
+                    <button type="button" id="refreshDetectionBtnQuick" 
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm">
+                        <i class="fas fa-sync-alt mr-2"></i>Actualizar Detección
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -84,11 +92,15 @@
             </h3>
             
             <div class="flex gap-3">
-                <div class="flex-1">
+                <div class="flex-1 relative">
                     <input type="text" id="manualPlateInput" 
                            placeholder="Escriba la placa manualmente (ej: ABC1059)"
                            class="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 uppercase"
-                           maxlength="10">
+                           maxlength="10"
+                           autocomplete="off">
+                    <!-- Autocomplete dropdown -->
+                    <div id="plateAutocomplete" class="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden max-h-60 overflow-y-auto">
+                    </div>
                 </div>
                 <button type="button" id="manualRegistrationBtn" 
                         class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-6 rounded-lg whitespace-nowrap">
@@ -107,6 +119,26 @@
     <form method="POST" action="<?php echo BASE_URL; ?>/access/quickEntry" id="registrationForm" class="hidden">
         <input type="hidden" name="plate_number" id="plateNumber">
         <input type="hidden" name="unit_id" id="unitId" value="">
+        
+        <!-- Método de Pago -->
+        <div id="paymentMethodSection" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-credit-card text-blue-600 mr-2"></i>Método de Pago
+            </h2>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Método de Pago <span class="text-red-500">*</span>
+                </label>
+                <select name="payment_method" id="paymentMethod" required
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <option value="cash" selected>Efectivo</option>
+                    <option value="voucher">Vales</option>
+                    <option value="bank_transfer">Transferencia Bancaria</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">El método de pago se reflejará en el ticket y en el reporte financiero</p>
+            </div>
+        </div>
         
         <!-- Paso 2: Datos de la Unidad (si no existe) -->
         <div id="step2Unit" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
@@ -206,7 +238,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Teléfono <span class="text-red-500">*</span>
+                            Teléfono/WhatsApp <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" name="client_phone" id="clientPhone"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
@@ -270,7 +302,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Teléfono <span class="text-red-500">*</span>
+                            Teléfono/WhatsApp <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" name="driver_phone" id="driverPhone"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
@@ -337,9 +369,82 @@ document.addEventListener('DOMContentLoaded', function() {
     const newDriverCheck = document.getElementById('newDriverCheck');
     const newDriverFields = document.getElementById('newDriverFields');
     const searchButtonContainer = document.getElementById('searchButtonContainer');
+    const paymentMethodSection = document.getElementById('paymentMethodSection');
     
     // Variable global para almacenar la última placa detectada
     window.lastDetectedPlate = null;
+    
+    // Autocomplete para placas
+    const manualPlateInput = document.getElementById('manualPlateInput');
+    const plateAutocomplete = document.getElementById('plateAutocomplete');
+    let autocompleteTimeout = null;
+    
+    manualPlateInput.addEventListener('input', function() {
+        const query = this.value.trim().toUpperCase();
+        this.value = query;
+        
+        // Clear previous timeout
+        if (autocompleteTimeout) {
+            clearTimeout(autocompleteTimeout);
+        }
+        
+        if (query.length < 2) {
+            plateAutocomplete.classList.add('hidden');
+            plateAutocomplete.innerHTML = '';
+            return;
+        }
+        
+        // Debounce the search
+        autocompleteTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`<?php echo BASE_URL; ?>/access/searchPlates?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.success && data.plates && data.plates.length > 0) {
+                    plateAutocomplete.innerHTML = data.plates.map(plate => `
+                        <div class="autocomplete-item px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                             data-plate="${plate.plate_number}"
+                             data-unit-id="${plate.id}">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-mono font-semibold text-gray-900">${plate.plate_number}</span>
+                                    <span class="text-sm text-gray-500 ml-2">${plate.brand || ''} ${plate.model || ''}</span>
+                                </div>
+                                <span class="text-xs text-gray-400">${parseInt(plate.capacity_liters || 0).toLocaleString()} L</span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-building mr-1"></i>${plate.client_name || 'Sin cliente'}
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // Add click handlers
+                    plateAutocomplete.querySelectorAll('.autocomplete-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            manualPlateInput.value = this.dataset.plate;
+                            plateAutocomplete.classList.add('hidden');
+                            // Trigger the registration button click
+                            document.getElementById('manualRegistrationBtn').click();
+                        });
+                    });
+                    
+                    plateAutocomplete.classList.remove('hidden');
+                } else {
+                    plateAutocomplete.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+                plateAutocomplete.classList.add('hidden');
+            }
+        }, 300);
+    });
+    
+    // Hide autocomplete when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!manualPlateInput.contains(e.target) && !plateAutocomplete.contains(e.target)) {
+            plateAutocomplete.classList.add('hidden');
+        }
+    });
     
     // Toggle para nuevo cliente
     newClientCheck.addEventListener('change', function() {
@@ -459,6 +564,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         newDriverCheck.checked = true;
                         newDriverFields.classList.remove('hidden');
                     }
+                    
+                    // Show payment method section
+                    paymentMethodSection.classList.remove('hidden');
                 } else {
                     // Unidad no existe - mostrar formulario completo
                     searchResult.className = 'mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg';
@@ -484,6 +592,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     newClientFields.classList.remove('hidden');
                     newDriverCheck.checked = true;
                     newDriverFields.classList.remove('hidden');
+                    
+                    // Show payment method section
+                    paymentMethodSection.classList.remove('hidden');
                 }
                 
                 searchResult.classList.remove('hidden');
@@ -500,7 +611,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Evento para el botón de registro manual
     const manualRegistrationBtn = document.getElementById('manualRegistrationBtn');
-    const manualPlateInput = document.getElementById('manualPlateInput');
     
     // Convertir a mayúsculas mientras escribe
     manualPlateInput.addEventListener('input', function() {
@@ -612,6 +722,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     newDriverFields.classList.remove('hidden');
                 }
                 
+                // Show payment method section
+                paymentMethodSection.classList.remove('hidden');
+                
                 // Limpiar el input manual
                 manualPlateInput.value = '';
             } else {
@@ -642,6 +755,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 newDriverCheck.checked = true;
                 newDriverFields.classList.remove('hidden');
                 
+                // Show payment method section
+                paymentMethodSection.classList.remove('hidden');
+                
                 // Limpiar el input manual
                 manualPlateInput.value = '';
             }
@@ -667,8 +783,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 (function(){
   const compareUrl = "<?php echo BASE_URL; ?>/api/compare_plate.php";
+  const latestPlateUrl = "<?php echo BASE_URL; ?>/api/get_latest_plate.php";
   
   console.log('Quick Registration - Compare URL:', compareUrl);
+  console.log('Quick Registration - Latest Plate URL:', latestPlateUrl);
   
   const plateInput = document.querySelector('#plateSearch');
   const detectedEl = document.querySelector('#plate-detected-text');
@@ -701,35 +819,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function doCompareQuick() {
     try {
-      console.log('Quick Registration - Checking for detected plates');
+      console.log('Quick Registration - Getting latest detected plate');
       
-      const formData = new FormData();
-      // No enviar parámetros - la API buscará automáticamente
-      
-      const response = await fetch(compareUrl, {
-        method: 'POST',
-        body: formData,
+      // Primero obtener la última placa detectada
+      const latestResponse = await fetch(latestPlateUrl, {
+        method: 'GET',
         cache: 'no-cache',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
-
-      console.log('Quick Registration - Response status:', response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      
+      if (!latestResponse.ok) {
+        throw new Error(`HTTP ${latestResponse.status}`);
       }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Quick Registration - Non-JSON response:', text.slice(0, 500));
-        throw new Error('Respuesta no válida del servidor');
-      }
-
-      const data = await response.json();
-      console.log('Quick Registration - API Response:', data);
+      
+      const latestData = await latestResponse.json();
+      console.log('Quick Registration - Latest Plate:', latestData);
+      
+      // Actualizar placa detectada
+      if (latestData.success && latestData.plate) {
+        if (detectedEl) {
+          detectedEl.innerHTML = `<span class="text-gray-900">${latestData.plate}</span>`;
+        }
+        
+        // Ahora buscar si esa placa coincide con alguna unidad registrada
+        const compareResponse = await fetch(compareUrl, {
+          method: 'POST',
+          body: new URLSearchParams({ unit_plate: latestData.plate }),
+          cache: 'no-cache',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+        
+        if (!compareResponse.ok) {
+          throw new Error(`HTTP ${compareResponse.status}`);
+        }
+        
+        const data = await compareResponse.json();
+        console.log('Quick Registration - Compare Result:', data);
 
       if (data.success) {
         const detected = data.detected || 'Sin detección';
@@ -792,15 +920,34 @@ document.addEventListener('DOMContentLoaded', function() {
           if (searchBtnContainer) searchBtnContainer.classList.add('hidden');
         }
       } else {
-        console.error('Quick Registration - API error:', data.error);
+        console.error('Quick Registration - Compare error:', data.error);
+        // La placa está detectada pero no coincide con ninguna unidad
+        if (statusEl) {
+          statusEl.innerHTML = '<span class="text-orange-600"><i class="fas fa-exclamation-triangle mr-1"></i>Placa detectada pero no registrada en el sistema</span>';
+        }
+        if (savedPlateEl) {
+          savedPlateEl.innerHTML = '<span class="text-gray-400">No registrada</span>';
+        }
+        window.lastDetectedPlate = latestData.plate;
+        window.lastMatchedUnitId = null;
+        const searchBtnContainer = document.getElementById('searchButtonContainer');
+        if (searchBtnContainer) searchBtnContainer.classList.add('hidden');
+      }
+      } else {
+        // No hay placas detectadas recientemente
         if (detectedEl) {
-          detectedEl.innerHTML = '<span class="text-red-500">Error</span>';
+          detectedEl.innerHTML = '<span class="text-gray-400">Sin detección</span>';
         }
         if (statusEl) {
-          statusEl.innerHTML = '<span class="text-red-600">' + (data.error || 'Error en la consulta') + '</span>';
+          statusEl.innerHTML = '<span class="text-gray-600">Esperando detección de cámara...</span>';
+        }
+        if (savedPlateEl) {
+          savedPlateEl.innerHTML = '<span class="text-gray-400">---</span>';
         }
         window.lastDetectedPlate = null;
         window.lastMatchedUnitId = null;
+        const searchBtnContainer = document.getElementById('searchButtonContainer');
+        if (searchBtnContainer) searchBtnContainer.classList.add('hidden');
       }
       
     } catch (error) {
@@ -814,6 +961,15 @@ document.addEventListener('DOMContentLoaded', function() {
       window.lastDetectedPlate = null;
       window.lastMatchedUnitId = null;
     }
+  }
+
+  // Botón refrescar detección manual
+  const refreshBtnQuick = document.querySelector('#refreshDetectionBtnQuick');
+  if (refreshBtnQuick) {
+    refreshBtnQuick.addEventListener('click', () => {
+      console.log('Quick Registration - Manual refresh triggered');
+      doCompareQuick();
+    });
   }
 
   // Ejecutar comparación inicial automática

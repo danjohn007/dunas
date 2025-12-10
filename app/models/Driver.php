@@ -120,4 +120,23 @@ class Driver {
         
         return $this->db->fetchAll($sql, [$days]);
     }
+    
+    /**
+     * Verificar si un teléfono ya existe para otro chofer
+     * @param string $phone Número de teléfono
+     * @param int|null $excludeId ID del chofer a excluir (para edición)
+     * @return bool
+     */
+    public function phoneExists($phone, $excludeId = null) {
+        $sql = "SELECT COUNT(*) as count FROM drivers WHERE phone = ?";
+        $params = [$phone];
+        
+        if ($excludeId !== null) {
+            $sql .= " AND id != ?";
+            $params[] = $excludeId;
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['count'] > 0;
+    }
 }

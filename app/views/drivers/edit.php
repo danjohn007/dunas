@@ -9,14 +9,14 @@
     <div class="bg-white rounded-lg shadow-md p-6">
         <form method="POST" action="<?php echo BASE_URL; ?>/drivers/edit/<?php echo $driver['id']; ?>" enctype="multipart/form-data">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Cliente -->
+                <!-- Empresa (Cliente) -->
                 <div class="md:col-span-2">
                     <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1">
-                        Cliente <span class="text-red-500">*</span>
+                        Empresa
                     </label>
-                    <select id="client_id" name="client_id" required
+                    <select id="client_id" name="client_id"
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Seleccione un cliente</option>
+                        <option value="">Seleccione una empresa (opcional)</option>
                         <?php foreach ($data['clients'] as $client): ?>
                             <option value="<?php echo $client['id']; ?>"
                                 <?php echo ($driver['client_id'] == $client['id']) ? 'selected' : ''; ?>>
@@ -24,6 +24,7 @@
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <p class="mt-1 text-xs text-gray-500">Seleccione la empresa a la que pertenece el chofer (opcional)</p>
                 </div>
                 
                 <!-- Nombre Completo -->
@@ -58,10 +59,10 @@
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 
-                <!-- Teléfono -->
+                <!-- Teléfono/WhatsApp -->
                 <div>
                     <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-                        Teléfono <span class="text-red-500">*</span>
+                        Teléfono/WhatsApp <span class="text-red-500">*</span>
                     </label>
                     <input type="tel" id="phone" name="phone" required maxlength="10"
                            pattern="[0-9]{10}"

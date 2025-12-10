@@ -256,6 +256,17 @@ class ReportController extends BaseController {
                 $filename = "reporte_verificacion_placas_{$dateFrom}_{$dateTo}.csv";
                 $headers = ['Ticket', 'Fecha Entrada', 'Cliente', 'Placa Registrada', 'Placa Detectada', 'Verificación', 'Chofer', 'Estado'];
                 break;
+            case 'visitors':
+                require_once APP_PATH . '/models/Visitor.php';
+                $visitorModel = new Visitor();
+                $filters = [
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo
+                ];
+                $data = $visitorModel->getAll($filters);
+                $filename = "reporte_visitantes_{$dateFrom}_{$dateTo}.csv";
+                $headers = ['ID', 'Nombre', 'Placa', 'Teléfono', 'Entrada', 'Salida', 'Estado'];
+                break;
             default:
                 $this->setFlash('error', 'Tipo de reporte no válido.');
                 $this->redirect('/reports');
@@ -350,6 +361,23 @@ class ReportController extends BaseController {
                     $verification,
                     $row['driver_name'],
                     $statusLabels[$row['status']]
+                ]);
+            }
+        } elseif ($type === 'visitors') {
+            $statusLabels = [
+                'in' => 'Dentro',
+                'out' => 'Salió',
+                'cancelled' => 'Cancelado'
+            ];
+            foreach ($data as $row) {
+                fputcsv($output, [
+                    $row['id'],
+                    $row['visitor_name'] ?? '-',
+                    $row['plate_number'] ?? '-',
+                    $row['phone'] ?? '-',
+                    date('d/m/Y H:i', strtotime($row['entry_datetime'])),
+                    $row['exit_datetime'] ? date('d/m/Y H:i', strtotime($row['exit_datetime'])) : '-',
+                    $statusLabels[$row['status']] ?? $row['status']
                 ]);
             }
         }
@@ -565,5 +593,37 @@ class ReportController extends BaseController {
         ];
         
         $this->view('reports/plate_verification', $data);
+    }
+    
+    /**
+     * Reporte de visitantes
+     */
+    public function visitors() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        require_once APP_PATH . '/models/Visitor.php';
+        $visitorModel = new Visitor();
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        $filters = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo
+        ];
+        
+        $visitors = $visitorModel->getAll($filters);
+        $stats = $visitorModel->getStats($dateFrom, $dateTo);
+        
+        $data = [
+            'title' => 'Reporte de Visitantes',
+            'visitors' => $visitors,
+            'stats' => $stats,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'showNav' => true
+        ];
+        
+        $this->view('reports/visitors', $data);
     }
 }

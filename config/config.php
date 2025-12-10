@@ -13,8 +13,8 @@ ini_set('display_errors', 1);
 
 // Configuración de base de datos
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'fix360_dunas');
-define('DB_USER', 'fix360_dunas');
+define('DB_NAME', 'residenc_dunas');
+define('DB_USER', 'residenc_dunas');
 define('DB_PASS', 'Danjohn007!');
 define('DB_CHARSET', 'utf8mb4');
 
@@ -62,7 +62,7 @@ define('SHELLY_ENABLED', true); // Habilitado con Cloud API
 // Firewall configurado correctamente ✅
 define('HIKVISION_BRIDGE_URL', 'http://187.145.46.170:8080'); // URL del PC puente
 define('HIKVISION_BRIDGE_TIMEOUT', 10); // Timeout en segundos
-define('HIKVISION_USER_VALIDITY_HOURS', 1); // Horas de validez del PIN (default: 1 hora)
+define('HIKVISION_USER_VALIDITY_HOURS', 2); // Horas de validez del PIN (default: 1 hora)
 define('HIKVISION_ENABLED', true); // Integración habilitada
 
 // Configuración de archivos
@@ -80,3 +80,4 @@ require_once ROOT_PATH . '/app/helpers/Session.php';
 require_once ROOT_PATH . '/app/helpers/Validator.php';
 require_once ROOT_PATH . '/app/helpers/FileUpload.php';
 require_once ROOT_PATH . '/app/helpers/ShellyAPI.php';
+

@@ -6,7 +6,16 @@
     <title>Ticket de Entrada - <?php echo $access['ticket_code']; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- QRCode library with fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <?php
+    // Get theme colors from settings
+    require_once APP_PATH . '/models/Settings.php';
+    $settingsModel = new Settings();
+    $themeSettings = $settingsModel->getAll();
+    $primaryColor = $themeSettings['theme_primary_color'] ?? '#2563eb';
+    $secondaryColor = $themeSettings['theme_secondary_color'] ?? '#1e40af';
+    ?>
     <style>
         @media print {
             .no-print {
@@ -25,6 +34,14 @@
             padding: 10mm;
             border: 2px dashed #ccc;
         }
+        
+        /* Theme button styles */
+        .btn-primary {
+            background-color: <?php echo $primaryColor; ?>;
+        }
+        .btn-primary:hover {
+            background-color: <?php echo $secondaryColor; ?>;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -36,7 +53,7 @@
                 <i class="fas fa-arrow-left mr-2"></i>Volver
             </a>
             <button onclick="window.print()" 
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    class="btn-primary text-white font-semibold py-2 px-4 rounded-lg">
                 <i class="fas fa-print mr-2"></i>Imprimir Ticket
             </button>
         </div>
@@ -50,10 +67,10 @@
                 <p class="text-xs text-gray-500 mt-1">Ticket de Entrada</p>
             </div>
             
-            <!-- Código de Barras -->
+            <!-- Código QR -->
             <div class="text-center mb-4">
-                <svg id="barcode"></svg>
-                <p class="text-2xl font-mono font-bold text-gray-900 mt-2"><?php echo $access['ticket_code']; ?></p>
+                <div id="qrcode" class="mx-auto inline-block"></div>
+                <p class="text-2xl font-mono font-bold text-gray-900 mt-2"><?php echo $access['ticket_code']; ?>#</p>
             </div>
             
             <!-- Información -->
@@ -82,6 +99,27 @@
                     <span class="font-semibold text-gray-700">Chofer:</span>
                     <span class="text-gray-900 text-right"><?php echo htmlspecialchars($access['driver_name']); ?></span>
                 </div>
+                <?php if (!empty($access['cost'])): ?>
+                <div class="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                    <span class="font-semibold text-gray-700">Costo:</span>
+                    <span class="text-gray-900 font-bold">$<?php echo number_format($access['cost'], 2); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($access['payment_method'])): ?>
+                <div class="flex justify-between">
+                    <span class="font-semibold text-gray-700">Método de Pago:</span>
+                    <span class="text-gray-900">
+                        <?php 
+                        $methodLabels = [
+                            'cash' => 'Efectivo',
+                            'voucher' => 'Vales',
+                            'bank_transfer' => 'Transferencia'
+                        ];
+                        echo $methodLabels[$access['payment_method']] ?? 'Efectivo';
+                        ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
             
             <!-- Instrucciones -->
@@ -91,7 +129,7 @@
                     Presente este ticket al salir
                 </p>
                 <p class="text-xs text-gray-600 text-center mt-1">
-                    El código de barras será escaneado automáticamente
+                    El código QR será escaneado automáticamente
                 </p>
             </div>
             
@@ -109,22 +147,45 @@
             </h3>
             <ul class="text-sm text-blue-800 space-y-1">
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Entrada registrada exitosamente</li>
-                <li><i class="fas fa-check text-blue-600 mr-2"></i>Código de barras: <strong><?php echo $access['ticket_code']; ?></strong></li>
+                <li><i class="fas fa-check text-blue-600 mr-2"></i>Código QR: <strong><?php echo $access['ticket_code']; ?></strong></li>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Al salir, escanee el código para registrar automáticamente</li>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Se registrará con la capacidad máxima de <?php echo number_format($access['capacity_liters']); ?> litros</li>
+                <?php if (!empty($access['cost'])): ?>
+                <li><i class="fas fa-check text-blue-600 mr-2"></i>Costo: <strong>$<?php echo number_format($access['cost'], 2); ?></strong></li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
     
+    <?php
+    // Get QR settings
+    require_once APP_PATH . '/models/Settings.php';
+    $settingsModel = new Settings();
+    $qrSize = (int)$settingsModel->get('qr_size', '120');
+    if ($qrSize < 100) $qrSize = 120;
+    if ($qrSize > 500) $qrSize = 500;
+    ?>
+    
     <script>
-        // Generar código de barras
-        JsBarcode("#barcode", "<?php echo $access['ticket_code']; ?>", {
-            format: "CODE128",
-            width: 2,
-            height: 60,
-            displayValue: false,
-            margin: 0
-        });
+        // Generar código QR with settings size using QRCode.js library
+        try {
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(document.getElementById('qrcode'), {
+                    text: "<?php echo $access['ticket_code']; ?>",
+                    width: <?php echo $qrSize; ?>,
+                    height: <?php echo $qrSize; ?>,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            } else {
+                console.error('QRCode library not loaded');
+                document.getElementById('qrcode').innerHTML = '<p class="text-red-500">Error: No se pudo cargar el código QR</p>';
+            }
+        } catch (error) {
+            console.error('Error generating QR code:', error);
+            document.getElementById('qrcode').innerHTML = '<p class="text-red-500">Error: ' + error.message + '</p>';
+        }
         
         // Redirigir a la vista de registro de salida después de imprimir (donde está el botón de permitir acceso)
         let hasRedirected = false;

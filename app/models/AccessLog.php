@@ -129,8 +129,35 @@ class AccessLog {
     public function create($data) {
         $ticketCode = $this->generateTicketCode();
         
-        $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, license_plate_reading, plate_discrepancy, status) 
-                VALUES (NOW(), ?, ?, ?, ?, ?, ?, 'in_progress')";
+        // Get cost from capacity if available
+        $cost = null;
+        $capacityLiters = 0;
+        if (!empty($data['unit_id'])) {
+            // Get unit capacity and lookup cost
+            require_once APP_PATH . '/models/Unit.php';
+            require_once APP_PATH . '/models/CapacityCost.php';
+            $unitModel = new Unit();
+            $capacityCostModel = new CapacityCost();
+            
+            $unit = $unitModel->getById($data['unit_id']);
+            if ($unit && !empty($unit['capacity_liters'])) {
+                $capacityLiters = $unit['capacity_liters'];
+                $capacityCost = $capacityCostModel->getByCapacity($unit['capacity_liters']);
+                if ($capacityCost) {
+                    $cost = $capacityCost['cost'];
+                }
+            }
+        }
+        
+        // Use provided cost if available
+        if (isset($data['cost'])) {
+            $cost = $data['cost'];
+        }
+        
+        $paymentMethod = $data['payment_method'] ?? 'cash';
+        
+        $sql = "INSERT INTO access_logs (entry_datetime, driver_id, unit_id, client_id, ticket_code, license_plate_reading, plate_discrepancy, cost, payment_method, status) 
+                VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, 'in_progress')";
         
         // Convertir plate_discrepancy a 1 o 0 explícitamente
         $plateDiscrepancy = isset($data['plate_discrepancy']) ? (int)$data['plate_discrepancy'] : 0;
@@ -146,7 +173,9 @@ class AccessLog {
             $data['client_id'],
             $ticketCode,
             $data['license_plate_reading'] ?? null,
-            $plateDiscrepancy
+            $plateDiscrepancy,
+            $cost,
+            $paymentMethod
         ];
         
         $this->db->execute($sql, $params);
@@ -157,6 +186,11 @@ class AccessLog {
         
         // Generar QR y código de barras
         $this->generateCodes($id, $ticketCode);
+        
+        // Crear registro de transacción para el reporte financiero
+        if ($cost !== null && $cost > 0) {
+            $this->createTransaction($id, $data['client_id'], $cost, $paymentMethod, $capacityLiters);
+        }
         
         return $id;
     }
@@ -194,13 +228,14 @@ class AccessLog {
                 $deviceUserId,
                 $userName,
                 $pin,
-                $hoursValid
+                $hoursValid,
+                true // Modo asíncrono para evitar bloqueos
             );
             
             if ($result['success']) {
-                error_log("✅ Usuario creado en dispositivo Hikvision: {$deviceUserId} con PIN: {$pin} (válido {$hoursValid}h)");
+                error_log("✅ Usuario enviado a dispositivo Hikvision: {$deviceUserId} con PIN: {$pin} (válido {$hoursValid}h)");
             } else {
-                error_log("⚠️ No se pudo crear usuario en dispositivo: " . $result['message']);
+                error_log("⚠️ No se pudo enviar usuario a dispositivo: " . $result['message']);
                 // No lanzamos excepción para que el ticket se cree de todos modos
             }
             
@@ -263,6 +298,41 @@ class AccessLog {
         
         $sql = "UPDATE access_logs SET qr_code = ?, barcode = ? WHERE id = ?";
         $this->db->execute($sql, [$qrCode, $barcode, $id]);
+    }
+    
+    /**
+     * Crea un registro de transacción para el reporte financiero
+     * 
+     * @param int $accessLogId ID del registro de acceso
+     * @param int $clientId ID del cliente
+     * @param float $amount Monto de la transacción
+     * @param string $paymentMethod Método de pago (cash, voucher, bank_transfer)
+     * @param int $capacityLiters Capacidad de la unidad (usado como litros estimados en el ticket)
+     */
+    private function createTransaction($accessLogId, $clientId, $amount, $paymentMethod, $capacityLiters) {
+        try {
+            // Calcular precio por litro si hay capacidad
+            $pricePerLiter = $capacityLiters > 0 ? ($amount / $capacityLiters) : 0;
+            
+            $sql = "INSERT INTO transactions (access_log_id, client_id, total_amount, liters_supplied, 
+                    price_per_liter, payment_method, payment_status, transaction_date, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, 'paid', NOW(), 'Transacción generada automáticamente al emitir ticket')";
+            
+            $params = [
+                $accessLogId,
+                $clientId,
+                $amount,
+                $capacityLiters,
+                $pricePerLiter,
+                $paymentMethod
+            ];
+            
+            $this->db->execute($sql, $params);
+            error_log("✅ Transacción creada exitosamente para access_log_id: {$accessLogId}, monto: {$amount}");
+        } catch (Exception $e) {
+            error_log("❌ Error al crear transacción: " . $e->getMessage());
+            // No lanzamos excepción para que el ticket se cree de todos modos
+        }
     }
     
     public function getInProgress() {
@@ -353,5 +423,20 @@ class AccessLog {
         $sql .= " ORDER BY al.entry_datetime DESC";
         
         return $this->db->fetchAll($sql, $params);
+    }
+    
+    /**
+     * Eliminar registros anteriores a una fecha
+     */
+    public function deleteBeforeDate($date) {
+        // First delete related transactions
+        $sqlTrans = "DELETE FROM transactions WHERE access_log_id IN 
+                     (SELECT id FROM access_logs WHERE DATE(entry_datetime) < ?)";
+        $this->db->execute($sqlTrans, [$date]);
+        
+        // Then delete access logs
+        $sql = "DELETE FROM access_logs WHERE DATE(entry_datetime) < ?";
+        $stmt = $this->db->execute($sql, [$date]);
+        return $stmt->rowCount();
     }
 }

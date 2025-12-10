@@ -64,26 +64,35 @@ class DriverController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
-                'client_id' => 'required|integer',
                 'full_name' => 'required',
                 'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $data = $_POST;
-                    
-                    // Manejar foto
-                    if (!empty($_FILES['photo']['name'])) {
-                        $uploadResult = FileUpload::upload($_FILES['photo'], UPLOAD_PATH . '/drivers');
-                        if ($uploadResult['success']) {
-                            $data['photo'] = $uploadResult['filename'];
+                    // Verificar que el teléfono no esté duplicado
+                    if ($this->driverModel->phoneExists($_POST['phone'])) {
+                        $this->setFlash('error', 'El teléfono ya está registrado para otro chofer.');
+                    } else {
+                        $data = $_POST;
+                        
+                        // Convertir client_id vacío a null
+                        if (empty($data['client_id'])) {
+                            $data['client_id'] = null;
                         }
+                        
+                        // Manejar foto
+                        if (!empty($_FILES['photo']['name'])) {
+                            $uploadResult = FileUpload::upload($_FILES['photo'], UPLOAD_PATH . '/drivers');
+                            if ($uploadResult['success']) {
+                                $data['photo'] = $uploadResult['filename'];
+                            }
+                        }
+                        
+                        $this->driverModel->create($data);
+                        $this->setFlash('success', 'Chofer registrado exitosamente.');
+                        $this->redirect('/drivers');
                     }
-                    
-                    $this->driverModel->create($data);
-                    $this->setFlash('success', 'Chofer registrado exitosamente.');
-                    $this->redirect('/drivers');
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al registrar el chofer: ' . $e->getMessage());
                 }
@@ -118,30 +127,39 @@ class DriverController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
-                'client_id' => 'required|integer',
                 'full_name' => 'required',
                 'phone' => 'required|phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
-                    $data = $_POST;
-                    
-                    // Manejar foto
-                    if (!empty($_FILES['photo']['name'])) {
-                        $uploadResult = FileUpload::upload($_FILES['photo'], UPLOAD_PATH . '/drivers');
-                        if ($uploadResult['success']) {
-                            // Eliminar foto anterior
-                            if (!empty($driver['photo'])) {
-                                FileUpload::delete(UPLOAD_PATH . '/drivers/' . $driver['photo']);
-                            }
-                            $data['photo'] = $uploadResult['filename'];
+                    // Verificar que el teléfono no esté duplicado (excepto para este chofer)
+                    if ($this->driverModel->phoneExists($_POST['phone'], $id)) {
+                        $this->setFlash('error', 'El teléfono ya está registrado para otro chofer.');
+                    } else {
+                        $data = $_POST;
+                        
+                        // Convertir client_id vacío a null
+                        if (empty($data['client_id'])) {
+                            $data['client_id'] = null;
                         }
+                        
+                        // Manejar foto
+                        if (!empty($_FILES['photo']['name'])) {
+                            $uploadResult = FileUpload::upload($_FILES['photo'], UPLOAD_PATH . '/drivers');
+                            if ($uploadResult['success']) {
+                                // Eliminar foto anterior
+                                if (!empty($driver['photo'])) {
+                                    FileUpload::delete(UPLOAD_PATH . '/drivers/' . $driver['photo']);
+                                }
+                                $data['photo'] = $uploadResult['filename'];
+                            }
+                        }
+                        
+                        $this->driverModel->update($id, $data);
+                        $this->setFlash('success', 'Chofer actualizado exitosamente.');
+                        $this->redirect('/drivers');
                     }
-                    
-                    $this->driverModel->update($id, $data);
-                    $this->setFlash('success', 'Chofer actualizado exitosamente.');
-                    $this->redirect('/drivers');
                 } catch (Exception $e) {
                     $this->setFlash('error', 'Error al actualizar el chofer: ' . $e->getMessage());
                 }
