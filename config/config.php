@@ -60,7 +60,7 @@ define('SHELLY_ENABLED', true); // Habilitado con Cloud API
 // que se encuentra en la red local
 // IP Pública: 187.145.46.170 (obtenida de whatismyip.com)
 // Firewall configurado correctamente ✅
-define('HIKVISION_BRIDGE_URL', 'http://187.145.46.170:8080'); // URL del PC puente
+define('HIKVISION_BRIDGE_URL', 'http://189.141.177.2:8080'); // URL del PC puente
 define('HIKVISION_BRIDGE_TIMEOUT', 10); // Timeout en segundos
 define('HIKVISION_USER_VALIDITY_HOURS', 2); // Horas de validez del PIN (default: 1 hora)
 define('HIKVISION_ENABLED', true); // Integración habilitada
