@@ -23,15 +23,19 @@
             }
             body {
                 margin: 0;
-                padding: 20px;
+                padding: 0;
+            }
+            .ticket {
+                border: none;
+                padding: 5mm;
             }
         }
         
         .ticket {
-            width: 80mm;
+            width: 58mm;
             margin: 0 auto;
             background: white;
-            padding: 10mm;
+            padding: 5mm;
             border: 2px dashed #ccc;
         }
         
@@ -60,21 +64,21 @@
         
         <!-- Ticket -->
         <div class="ticket">
-            <!-- Encabezado -->
-            <div class="text-center mb-4 border-b-2 border-gray-300 pb-4">
-                <h1 class="text-2xl font-bold text-gray-900">DUNAS</h1>
-                <p class="text-sm text-gray-600">Control de Acceso</p>
-                <p class="text-xs text-gray-500 mt-1">Ticket de Entrada</p>
+            <!-- Código QR -->
+            <div class="text-center mb-3">
+                <div id="qrcode" class="mx-auto inline-block"></div>
             </div>
             
-            <!-- Código QR -->
-            <div class="text-center mb-4">
-                <div id="qrcode" class="mx-auto inline-block"></div>
-                <p class="text-2xl font-mono font-bold text-gray-900 mt-2"><?php echo $access['ticket_code']; ?>#</p>
+            <!-- Código del Ticket -->
+            <div class="text-center mb-3">
+                <p class="text-3xl font-mono font-bold text-gray-900"><?php echo $access['ticket_code']; ?>#</p>
             </div>
+            
+            <!-- Separador -->
+            <div class="border-t border-gray-400 mb-3"></div>
             
             <!-- Información -->
-            <div class="space-y-2 text-sm border-t-2 border-gray-300 pt-4">
+            <div class="space-y-1 text-sm">
                 <div class="flex justify-between">
                     <span class="font-semibold text-gray-700">Fecha:</span>
                     <span class="text-gray-900"><?php echo date('d/m/Y', strtotime($access['entry_datetime'])); ?></span>
@@ -89,18 +93,18 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold text-gray-700">Capacidad:</span>
-                    <span class="text-gray-900"><?php echo number_format($access['capacity_liters']); ?> L</span>
+                    <span class="text-gray-900"><?php echo number_format($access['capacity_liters'], 0); ?> L</span>
                 </div>
-                <div class="flex justify-between">
+                <div class="flex justify-between items-start">
                     <span class="font-semibold text-gray-700">Cliente:</span>
-                    <span class="text-gray-900 text-right"><?php echo htmlspecialchars($access['client_name']); ?></span>
+                    <span class="text-gray-900 text-right text-xs break-words max-w-[60%]"><?php echo htmlspecialchars($access['client_name']); ?></span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold text-gray-700">Chofer:</span>
-                    <span class="text-gray-900 text-right"><?php echo htmlspecialchars($access['driver_name']); ?></span>
+                    <span class="text-gray-900 text-right text-xs"><?php echo htmlspecialchars($access['driver_name']); ?></span>
                 </div>
                 <?php if (!empty($access['cost'])): ?>
-                <div class="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                <div class="flex justify-between">
                     <span class="font-semibold text-gray-700">Costo:</span>
                     <span class="text-gray-900 font-bold">$<?php echo number_format($access['cost'], 2); ?></span>
                 </div>
@@ -108,7 +112,7 @@
                 <?php if (!empty($access['payment_method'])): ?>
                 <div class="flex justify-between">
                     <span class="font-semibold text-gray-700">Método de Pago:</span>
-                    <span class="text-gray-900">
+                    <span class="text-gray-900 text-xs">
                         <?php 
                         $methodLabels = [
                             'cash' => 'Efectivo',
@@ -120,23 +124,6 @@
                     </span>
                 </div>
                 <?php endif; ?>
-            </div>
-            
-            <!-- Instrucciones -->
-            <div class="mt-4 pt-4 border-t-2 border-gray-300">
-                <p class="text-xs text-gray-600 text-center">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Presente este ticket al salir
-                </p>
-                <p class="text-xs text-gray-600 text-center mt-1">
-                    El código QR será escaneado automáticamente
-                </p>
-            </div>
-            
-            <!-- Footer -->
-            <div class="mt-4 text-center border-t border-gray-300 pt-3">
-                <p class="text-xs text-gray-500">Gracias por su preferencia</p>
-                <p class="text-xs text-gray-400 mt-1">Sistema DUNAS v1.2</p>
             </div>
         </div>
         
