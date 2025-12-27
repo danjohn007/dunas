@@ -287,7 +287,8 @@
         <div class="h-16 lg:h-0"></div>
         <?php endif; ?>
     
-    <!-- Alertas Flash -->
+    <!-- Alertas Flash (only show when showNav is true) -->
+    <?php if (isset($showNav) && $showNav): ?>
     <?php
     $successMsg = Session::getFlash('success');
     $errorMsg = Session::getFlash('error');
@@ -326,6 +327,7 @@
         </div>
     </div>
     <?php endif; ?>
+    <?php endif; ?>
     
     <!-- Contenido Principal -->
     <main class="py-6">
@@ -342,7 +344,8 @@
     </a>
     <?php endif; ?>
     
-    <!-- Footer -->
+    <!-- Footer (only show when showNav is true) -->
+    <?php if (isset($showNav) && $showNav): ?>
     <footer class="bg-white border-t mt-12">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <p class="text-center text-gray-500 text-sm">
@@ -353,6 +356,7 @@
             </p>
         </div>
     </footer>
+    <?php endif; ?>
     
     </div><!-- End main-content wrapper -->
     
