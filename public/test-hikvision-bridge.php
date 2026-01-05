@@ -16,6 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $bridge = new HikvisionBridgeService();
     
+    // Si está en modo local, usar URL local
+    if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE) {
+        $localUrl = defined('HIKVISION_BRIDGE_LOCAL_URL') ? HIKVISION_BRIDGE_LOCAL_URL : 'http://127.0.0.1:8080';
+        $bridge->setBridgeUrl($localUrl);
+    }
+    
     switch ($action) {
         case 'test_connection':
             if ($bridge->testConnection()) {
@@ -220,6 +226,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="status-badge status-disabled">DESHABILITADO</span>
                     <?php endif; ?>
                 </div>
+                <?php if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE): ?>
+                <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px;">
+                    <strong>🏠 MODO LOCAL ACTIVO</strong><br>
+                    <small>URL Local: <?php echo defined('HIKVISION_BRIDGE_LOCAL_URL') ? HIKVISION_BRIDGE_LOCAL_URL : 'http://127.0.0.1:8080'; ?></small><br>
+                    <small style="color: #856404;">Las pruebas se harán a localhost en lugar de la IP pública</small>
+                </div>
+                <?php endif; ?>
             </div>
             
             <!-- Mensaje de resultado -->
@@ -230,15 +243,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <!-- Test de conexión -->
+            <?php if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE): ?>
+            <!-- Modo Local: Usar JavaScript (client-side) -->
+            <button onclick="testConnectionLocal()" class="btn btn-primary">🔌 Probar Conexión (Client-Side)</button>
+            <div id="connection-result" style="margin-top: 15px;"></div>
+            <?php else: ?>
+            <!-- Modo Remoto: Usar PHP (server-side) -->
             <form method="POST">
                 <input type="hidden" name="action" value="test_connection">
-                <button type="submit" class="btn btn-primary">🔌 Probar Conexión</button>
+                <button type="submit" class="btn btn-primary">🔌 Probar Conexión (Server-Side)</button>
             </form>
+            <?php endif; ?>
             
             <!-- Crear usuario de prueba -->
             <div class="test-section">
                 <h3 style="margin-bottom: 15px;">👤 Crear Usuario de Prueba</h3>
                 
+                <?php if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE): ?>
+                <!-- Modo Local: Usar JavaScript (client-side) -->
+                <div>
+                    <div class="form-group">
+                        <label>Nombre del Usuario</label>
+                        <input type="text" id="test_name" value="Usuario Test" placeholder="Nombre del usuario">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>PIN (4 dígitos)</label>
+                        <input type="text" id="test_pin" value="<?php echo rand(1000, 9999); ?>" 
+                               pattern="\d{4}" maxlength="4" placeholder="1234">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Horas de Validez</label>
+                        <input type="number" id="test_hours" value="1" min="1" max="24" placeholder="1">
+                    </div>
+                    
+                    <button onclick="createTestUserLocal()" class="btn btn-primary">➕ Crear Usuario de Prueba (Client-Side)</button>
+                    <div id="create-result" style="margin-top: 15px;"></div>
+                </div>
+                <?php else: ?>
+                <!-- Modo Remoto: Usar PHP (server-side) -->
                 <form method="POST">
                     <input type="hidden" name="action" value="create_test_user">
                     
@@ -258,8 +302,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="number" name="test_hours" value="1" min="1" max="24" placeholder="1">
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">➕ Crear Usuario de Prueba</button>
+                    <button type="submit" class="btn btn-primary">➕ Crear Usuario de Prueba (Server-Side)</button>
                 </form>
+                <?php endif; ?>
             </div>
             
             <!-- Información adicional -->
@@ -282,5 +327,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
+    
+    <?php if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE): ?>
+    <script>
+        const BRIDGE_LOCAL_URL = '<?php echo defined('HIKVISION_BRIDGE_LOCAL_URL') ? HIKVISION_BRIDGE_LOCAL_URL : 'http://127.0.0.1:8080'; ?>';
+        
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.className = 'message ' + type;
+            element.innerHTML = message;
+        }
+        
+        function testConnectionLocal() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.innerHTML = '<p style="color: #666;">⏳ Probando conexión a ' + BRIDGE_LOCAL_URL + '...</p>';
+            
+            fetch(BRIDGE_LOCAL_URL + '/test', {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Respuesta del bridge:', data);
+                showResult('connection-result', 
+                    `✅ Conexión exitosa con el PC puente: ${BRIDGE_LOCAL_URL}<br>` +
+                    `<small>Respuesta: ${JSON.stringify(data)}</small>`,
+                    'success'
+                );
+            })
+            .catch(error => {
+                console.error('❌ Error de conexión:', error);
+                showResult('connection-result', 
+                    `❌ No se pudo conectar con el PC puente: ${BRIDGE_LOCAL_URL}<br>` +
+                    `<small>Error: ${error.message}</small><br>` +
+                    `<small><strong>IMPORTANTE:</strong> Este test SOLO funciona si lo ejecutas desde la PC donde corre el bridge.<br>` +
+                    `Si estás en otra PC, verás este error (esto es normal y esperado).</small>`,
+                    'error'
+                );
+            });
+        }
+        
+        function createTestUserLocal() {
+            const name = document.getElementById('test_name').value;
+            const pin = document.getElementById('test_pin').value;
+            const hours = parseInt(document.getElementById('test_hours').value);
+            
+            if (!name || !pin || !hours) {
+                showResult('create-result', '❌ Por favor completa todos los campos', 'error');
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(pin)) {
+                showResult('create-result', '❌ El PIN debe ser de 4 dígitos', 'error');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('create-result');
+            resultDiv.innerHTML = '<p style="color: #666;">⏳ Creando usuario...</p>';
+            
+            const testUserId = "TEST-" + Date.now();
+            const userData = {
+                device_user_id: testUserId,
+                name: name,
+                pin: pin,
+                card_number: '',
+                hours_valid: hours
+            };
+            
+            console.log('📤 Enviando usuario:', userData);
+            
+            fetch(BRIDGE_LOCAL_URL + '/create-ticket-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(userData),
+                mode: 'cors',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Usuario creado:', data);
+                if (data.ok === true || data.success === true) {
+                    showResult('create-result', 
+                        `✅ Usuario de prueba creado exitosamente<br>` +
+                        `ID: ${testUserId}<br>` +
+                        `Nombre: ${name}<br>` +
+                        `PIN: <strong>${pin}</strong><br>` +
+                        `Válido: ${hours} hora(s)`,
+                        'success'
+                    );
+                } else {
+                    showResult('create-result', 
+                        `⚠️ Respuesta inesperada del bridge<br>` +
+                        `<small>${JSON.stringify(data)}</small>`,
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error al crear usuario:', error);
+                showResult('create-result', 
+                    `❌ Error al crear usuario: ${error.message}<br>` +
+                    `<small><strong>IMPORTANTE:</strong> Este test SOLO funciona si lo ejecutas desde la PC donde corre el bridge.<br>` +
+                    `Si estás en otra PC, verás este error (esto es normal y esperado).</small>`,
+                    'error'
+                );
+            });
+        }
+    </script>
+    <?php endif; ?>
 </body>
 </html>

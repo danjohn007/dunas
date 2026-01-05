@@ -209,19 +209,35 @@ class AccessLog {
             return;
         }
         
+        // Generar datos del usuario
+        $deviceUserId = "TKT-" . str_pad($ticketId, 6, '0', STR_PAD_LEFT);
+        $clientName = $this->getClientName($data['client_id']);
+        $userName = $clientName ? substr($clientName, 0, 30) : "Ticket-{$ticketId}";
+        $hoursValid = defined('HIKVISION_USER_VALIDITY_HOURS') ? HIKVISION_USER_VALIDITY_HOURS : 1;
+        
+        // MODO LOCAL: Guardar en sesión para que JavaScript lo envíe
+        if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE) {
+            if (!isset($_SESSION['hikvision_pending_users'])) {
+                $_SESSION['hikvision_pending_users'] = [];
+            }
+            
+            $_SESSION['hikvision_pending_users'][] = [
+                'device_user_id' => $deviceUserId,
+                'name' => $userName,
+                'pin' => $pin,
+                'card_number' => $pin,
+                'hours_valid' => $hoursValid,
+                'ticket_id' => $ticketId
+            ];
+            
+            error_log("🏠 Modo Local: Usuario guardado en sesión para envío client-side: {$deviceUserId} PIN: {$pin}");
+            return;
+        }
+        
+        // MODO REMOTO: Enviar por PHP (actual)
         try {
             require_once __DIR__ . '/../services/HikvisionBridgeService.php';
             $bridge = new HikvisionBridgeService();
-            
-            // Generar ID único para el dispositivo basado en el ticket
-            $deviceUserId = "TKT-" . str_pad($ticketId, 6, '0', STR_PAD_LEFT);
-            
-            // Obtener nombre del cliente para el usuario
-            $clientName = $this->getClientName($data['client_id']);
-            $userName = $clientName ? substr($clientName, 0, 30) : "Ticket-{$ticketId}";
-            
-            // Obtener horas de validez de la configuración
-            $hoursValid = defined('HIKVISION_USER_VALIDITY_HOURS') ? HIKVISION_USER_VALIDITY_HOURS : 1;
             
             // Crear usuario en el dispositivo
             $result = $bridge->createTicketUser(
@@ -236,12 +252,10 @@ class AccessLog {
                 error_log("✅ Usuario enviado a dispositivo Hikvision: {$deviceUserId} con PIN: {$pin} (válido {$hoursValid}h)");
             } else {
                 error_log("⚠️ No se pudo enviar usuario a dispositivo: " . $result['message']);
-                // No lanzamos excepción para que el ticket se cree de todos modos
             }
             
         } catch (Exception $e) {
             error_log("❌ Error al crear usuario en Hikvision: " . $e->getMessage());
-            // No lanzamos excepción para que el ticket se cree de todos modos
         }
     }
     

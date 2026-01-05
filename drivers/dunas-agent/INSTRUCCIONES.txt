@@ -1,0 +1,55 @@
+1. Ejecutar instal_agent.bat para instalar las los archivos correspondientes
+
+2. Fijar ip de la PC que servirá como puente
+    
+    /-----Ejemplo-----/
+    
+    IP: 192.168.1.60
+    Longitud del prefijo: 24
+    Puerta de enlace 192.168.1.254
+    DNS preferido: 1.1.1.1
+    DNS alternativo: 8.8.4.4
+    
+    /------------------/
+    
+3. En el módeml del lugar entrar a Internet ---> Mapeo de puertos ---> Reenvio de puertos
+
+     /------------------/
+     
+     Nombre: Hikvision Puente
+     IP: La misma de arriba ya fijada
+     Protocolo: TCP
+     Puerto LAN: 8080
+     Puerto Publico: 8080
+     
+     /------------------/
+
+4. En la PC Puente ejecutar como administrador Powershell y ejecutar lo siguiente 
+   para hacer una regla para el firewall:
+
+New-NetFirewallRule -DisplayName "Hikvision Bridge" -Direction Inbound -LocalPort 8080 -Protocol TCP -Action Allow
+
+
+5. Dentro de los ajustes del Lector 
+   Entrar a Configuración --> Red --> Servicio de Red --> HTTP(S) Audición HTTP
+      IP de alarma de evento: IP de la PC Puente (192.168.1.60)
+      URL: /hik-event
+      Puerto: 8080
+      Protocolo: HTTP
+
+      
+6. Ejecutar run_agent.bat o configurar para que se ejecute siempre al iniciar 
+   equipo tras haber hecho los primeros 5 pasos.
+   
+   
+   ---------------------------o-----------------------
+   
+   
+7. Pasos para archivos
+- instal_agent.bat
+- open_firewall_8080.bat
+- run_agent.bat
+
+
+     
+    

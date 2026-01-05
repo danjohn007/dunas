@@ -183,5 +183,97 @@
             }
         });
     </script>
+    
+    <?php 
+    // Si está habilitado el modo local del bridge Hikvision, ejecutar petición client-side
+    if (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE && 
+        defined('HIKVISION_ENABLED') && HIKVISION_ENABLED): 
+    ?>
+    <script>
+        // Configuración del bridge local
+        const BRIDGE_LOCAL_URL = '<?php echo defined('HIKVISION_BRIDGE_LOCAL_URL') ? HIKVISION_BRIDGE_LOCAL_URL : 'http://127.0.0.1:8080'; ?>';
+        
+        <?php if (isset($_SESSION['hikvision_pending_users']) && !empty($_SESSION['hikvision_pending_users'])): ?>
+        // Usuarios pendientes para enviar al bridge
+        const pendingUsers = <?php echo json_encode($_SESSION['hikvision_pending_users']); ?>;
+        
+        console.log('🏠 Modo Local Hikvision:', pendingUsers.length, 'usuario(s) pendientes');
+        
+        // Enviar cada usuario al bridge local
+        pendingUsers.forEach(userData => {
+            const endpoint = BRIDGE_LOCAL_URL + '/create-ticket-user';
+            
+            console.log('📤 Enviando a:', endpoint, userData);
+            
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    device_user_id: userData.device_user_id,
+                    name: userData.name,
+                    pin: userData.pin,
+                    card_number: userData.card_number,
+                    hours_valid: userData.hours_valid
+                }),
+                mode: 'cors',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.ok === true || data.success === true) {
+                    console.log('✅ Usuario creado:', userData.device_user_id, 'PIN:', userData.pin);
+                    
+                    // Mostrar notificación
+                    const msg = document.createElement('div');
+                    msg.className = 'no-print fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50';
+                    msg.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <span><strong>Usuario creado:</strong> ${userData.device_user_id}<br>
+                            <small>PIN: ${userData.pin} | Válido: ${userData.hours_valid}h</small></span>
+                        </div>
+                    `;
+                    document.body.appendChild(msg);
+                    setTimeout(() => msg.remove(), 8000);
+                } else {
+                    console.warn('⚠️ Respuesta inesperada:', data);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error al enviar usuario:', error);
+                
+                // Mostrar notificación de error
+                const msg = document.createElement('div');
+                msg.className = 'no-print fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50';
+                msg.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        <span><strong>Error al crear usuario</strong><br>
+                        <small>${error.message}</small><br>
+                        <small class="text-xs">Verifica que el bridge esté corriendo en la PC</small></span>
+                    </div>
+                `;
+                document.body.appendChild(msg);
+                setTimeout(() => msg.remove(), 10000);
+            });
+        });
+        
+        <?php 
+        // Limpiar la sesión después de cargarlos en JavaScript
+        unset($_SESSION['hikvision_pending_users']);
+        ?>
+        <?php else: ?>
+        console.log('ℹ️ Modo Local Hikvision: No hay usuarios pendientes');
+        <?php endif; ?>
+    </script>
+    <?php endif; ?>
 </body>
 </html>

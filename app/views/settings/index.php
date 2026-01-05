@@ -1218,8 +1218,43 @@
                     </div>
                 </div>
                 
+                <!-- Modo Local -->
+                <div class="md:col-span-2 mt-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <label class="flex items-start cursor-pointer">
+                            <input type="checkbox" name="bridge_local_mode" 
+                                   value="1" <?php echo (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE) ? 'checked' : ''; ?>
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 mt-1"
+                                   id="bridgeLocalModeCheckbox"
+                                   onchange="toggleLocalUrlField()">
+                            <div>
+                                <span class="text-sm font-medium text-blue-900">🏠 Modo Local (PC Puente)</span>
+                                <p class="text-xs text-blue-700 mt-1">
+                                    Habilitar cuando se accede al sistema desde el navegador en la PC puente. 
+                                    Las peticiones se harán client-side (JavaScript) a localhost en lugar de server-side (PHP).
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- URL Local (se muestra solo si modo local está activado) -->
+                <div class="md:col-span-2" id="localUrlField" style="display: <?php echo (defined('HIKVISION_BRIDGE_LOCAL_MODE') && HIKVISION_BRIDGE_LOCAL_MODE) ? 'block' : 'none'; ?>;">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-laptop-house text-blue-600 mr-1"></i>URL Local del Bridge
+                    </label>
+                    <input type="text" name="bridge_local_url" 
+                           value="<?php echo defined('HIKVISION_BRIDGE_LOCAL_URL') ? HIKVISION_BRIDGE_LOCAL_URL : 'http://127.0.0.1:8080'; ?>"
+                           placeholder="http://127.0.0.1:8080"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    <p class="mt-1 text-xs text-gray-500">
+                        <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                        URL local para peticiones client-side (usualmente 127.0.0.1 o localhost).
+                    </p>
+                </div>
+                
                 <!-- Habilitado -->
-                <div class="space-y-2">
+                <div class="md:col-span-2 space-y-2">
                     <label class="flex items-center">
                         <input type="checkbox" name="bridge_enabled" 
                                value="1" <?php echo (defined('HIKVISION_ENABLED') && HIKVISION_ENABLED) ? 'checked' : ''; ?>
@@ -1235,9 +1270,14 @@
                     </h4>
                     <div class="text-xs text-blue-800 space-y-1">
                         <p><strong>Modelo:</strong> HikVision DS-K1T502DBWX-CQR</p>
-                        <p><strong>IP Local:</strong> 192.168.1.129</p>
-                        <p><strong>Bridge PC:</strong> 192.168.1.50:8080</p>
+                        <p><strong>IP Local:</strong> 192.168.16.59 (red IENTC)</p>
+                        <p><strong>Bridge PC:</strong> localhost:8080 (modo local) / 192.168.1.50:8080 (modo remoto)</p>
                         <p><strong>Endpoint:</strong> POST /create-ticket-user</p>
+                        <p class="text-xs text-blue-600 mt-2">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            <strong>Nota:</strong> En modo local no se requiere IP fija de la PC puente. 
+                            Las peticiones se hacen directamente a localhost (127.0.0.1).
+                        </p>
                     </div>
                 </div>
             </div>
@@ -1255,6 +1295,35 @@
             </button>
         </div>
     </form>
+    
+    <script>
+        // Debug para el formulario de HikVision Bridge
+        document.getElementById('hikvisionBridgeForm').addEventListener('submit', function(e) {
+            console.log('=== Enviando formulario HikVision Bridge ===');
+            const formData = new FormData(this);
+            console.log('Datos del formulario:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
+            console.log('Action URL:', this.action);
+            console.log('Method:', this.method);
+        });
+        
+        // Función para mostrar/ocultar el campo URL Local
+        function toggleLocalUrlField() {
+            const checkbox = document.querySelector('input[name="bridge_local_mode"]');
+            const urlField = document.getElementById('localUrlField');
+            if (checkbox && urlField) {
+                urlField.style.display = checkbox.checked ? 'block' : 'none';
+            }
+        }
+        
+        // Agregar listener al checkbox de modo local
+        const localModeCheckbox = document.querySelector('input[name="bridge_local_mode"]');
+        if (localModeCheckbox) {
+            localModeCheckbox.addEventListener('change', toggleLocalUrlField);
+        }
+    </script>
     
     <!-- Optimización del Sistema -->
     <form method="POST" action="<?php echo BASE_URL; ?>/settings/optimizeSystem" id="optimizeSystemForm">

@@ -274,12 +274,16 @@ class SettingsController extends BaseController {
             return;
         }
         
-        try {
-            // Validar campos
+        try {            // Log para debug
+            error_log("=== Iniciando guardado de configuración HikVision Bridge ===");
+            error_log("POST data: " . print_r($_POST, true));
+                        // Validar campos
             $bridgeUrl = trim($_POST['bridge_url'] ?? '');
             $bridgeTimeout = (int)($_POST['bridge_timeout'] ?? 10);
             $userValidityHours = (int)($_POST['user_validity_hours'] ?? 1);
             $bridgeEnabled = isset($_POST['bridge_enabled']) ? 1 : 0;
+            $bridgeLocalMode = isset($_POST['bridge_local_mode']) ? 1 : 0;
+            $bridgeLocalUrl = trim($_POST['bridge_local_url'] ?? 'http://127.0.0.1:8080');
             
             // Validaciones
             if (empty($bridgeUrl)) {
@@ -288,6 +292,10 @@ class SettingsController extends BaseController {
             
             if (!filter_var($bridgeUrl, FILTER_VALIDATE_URL)) {
                 throw new Exception('La URL del Bridge no es valida.');
+            }
+            
+            if ($bridgeLocalMode && !filter_var($bridgeLocalUrl, FILTER_VALIDATE_URL)) {
+                throw new Exception('La URL Local del Bridge no es valida.');
             }
             
             if ($bridgeTimeout < 5 || $bridgeTimeout > 60) {
@@ -300,11 +308,24 @@ class SettingsController extends BaseController {
             
             // Actualizar el archivo config.php
             $configPath = __DIR__ . '/../../config/config.php';
+            
+            error_log("Ruta config.php: " . $configPath);
+            error_log("Archivo existe: " . (file_exists($configPath) ? 'SI' : 'NO'));
+            error_log("Es escribible: " . (is_writable($configPath) ? 'SI' : 'NO'));
+            
             if (!file_exists($configPath)) {
                 throw new Exception('No se encontro el archivo config.php');
             }
             
+            if (!is_writable($configPath)) {
+                throw new Exception('El archivo config.php no tiene permisos de escritura');
+            }
+            
             $configContent = file_get_contents($configPath);
+            
+            if ($configContent === false) {
+                throw new Exception('No se pudo leer el archivo config.php');
+            }
             
             // Actualizar HIKVISION_BRIDGE_URL
             $configContent = preg_replace(
@@ -334,14 +355,52 @@ class SettingsController extends BaseController {
                 $configContent
             );
             
+            // Actualizar HIKVISION_BRIDGE_LOCAL_MODE
+            if (preg_match("/define\('HIKVISION_BRIDGE_LOCAL_MODE'/", $configContent)) {
+                $configContent = preg_replace(
+                    "/define\('HIKVISION_BRIDGE_LOCAL_MODE',\s*(true|false)\);/",
+                    "define('HIKVISION_BRIDGE_LOCAL_MODE', " . ($bridgeLocalMode ? 'true' : 'false') . ");",
+                    $configContent
+                );
+            } else {
+                $configContent = preg_replace(
+                    "/(define\('HIKVISION_ENABLED',\s*(?:true|false)\);)/",
+                    "$1\ndefine('HIKVISION_BRIDGE_LOCAL_MODE', " . ($bridgeLocalMode ? 'true' : 'false') . ");",
+                    $configContent
+                );
+            }
+            
+            // Actualizar HIKVISION_BRIDGE_LOCAL_URL
+            if (preg_match("/define\('HIKVISION_BRIDGE_LOCAL_URL'/", $configContent)) {
+                $configContent = preg_replace(
+                    "/define\('HIKVISION_BRIDGE_LOCAL_URL',\s*'[^']*'\);/",
+                    "define('HIKVISION_BRIDGE_LOCAL_URL', '" . addslashes($bridgeLocalUrl) . "');",
+                    $configContent
+                );
+            } else {
+                $configContent = preg_replace(
+                    "/(define\('HIKVISION_BRIDGE_LOCAL_MODE',\s*(?:true|false)\);)/",
+                    "$1\ndefine('HIKVISION_BRIDGE_LOCAL_URL', '" . addslashes($bridgeLocalUrl) . "');",
+                    $configContent
+                );
+            }
+            
             // Guardar el archivo
-            if (file_put_contents($configPath, $configContent) === false) {
+            error_log("Intentando escribir config.php...");
+            
+            $bytesWritten = file_put_contents($configPath, $configContent);
+            
+            if ($bytesWritten === false) {
                 throw new Exception('No se pudo escribir el archivo config.php');
             }
             
+            error_log("Bytes escritos: " . $bytesWritten);
+            error_log("Configuración guardada exitosamente");
+            
             $this->setFlash('success', 'Configuracion del Lector HikVision guardada exitosamente.');
         } catch (Exception $e) {
-            error_log("Error al guardar configuracion del bridge HikVision: " . $e->getMessage());
+            error_log("ERROR al guardar configuracion del bridge HikVision: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             $this->setFlash('error', 'Error: ' . $e->getMessage());
         }
         

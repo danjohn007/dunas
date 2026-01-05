@@ -60,10 +60,14 @@ define('SHELLY_ENABLED', true); // Habilitado con Cloud API
 // que se encuentra en la red local
 // IP Pública: 187.145.46.170 (obtenida de whatismyip.com)
 // Firewall configurado correctamente ✅
-define('HIKVISION_BRIDGE_URL', 'http://189.141.177.2:8080'); // URL del PC puente
+define('HIKVISION_BRIDGE_URL', 'http://189.141.177.2:8080'); // URL del PC puente (modo remoto)
 define('HIKVISION_BRIDGE_TIMEOUT', 10); // Timeout en segundos
 define('HIKVISION_USER_VALIDITY_HOURS', 2); // Horas de validez del PIN (default: 1 hora)
 define('HIKVISION_ENABLED', true); // Integración habilitada
+
+// Modo Local: peticiones client-side (JavaScript) desde navegador en PC puente
+define('HIKVISION_BRIDGE_LOCAL_MODE', false); // true = usar JavaScript para enviar a localhost
+define('HIKVISION_BRIDGE_LOCAL_URL', 'http://127.0.0.1:8080'); // URL local cuando se usa desde PC puente
 
 // Configuración de archivos
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
