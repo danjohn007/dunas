@@ -660,17 +660,8 @@ async function validateVoucherCode(code) {
     statusDiv.classList.remove('hidden');
     
     try {
-        // Primero intentar con el código directo
-        let qrCode = code;
-        
-        // Si el código escaneado viene con el formato VALE:CODE:LITERS, extraer solo el código
-        if (code.startsWith('VALE:')) {
-            const parts = code.split(':');
-            qrCode = code; // Usar el código QR completo
-        }
-        
         const formData = new FormData();
-        formData.append('qr_code', qrCode);
+        formData.append('qr_code', code);
         
         const response = await fetch('<?php echo BASE_URL; ?>/vouchers/validate', {
             method: 'POST',

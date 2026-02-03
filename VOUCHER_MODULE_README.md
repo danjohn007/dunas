@@ -100,7 +100,7 @@ El módulo está disponible para usuarios con roles:
 
 Los vales generan códigos QR en el formato:
 ```
-VALE:SERIE-FOLIO:CAPACIDAD_LITERSL
+VALE:SERIE-FOLIO:CAPACIDAD_LITERS
 ```
 
 Ejemplo:
