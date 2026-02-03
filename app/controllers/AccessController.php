@@ -121,6 +121,27 @@ class AccessController extends BaseController {
                 try {
                     $data = $_POST;
                     
+                    // Si el método de pago es vale, validar y marcar como usado
+                    $voucherId = null;
+                    if (isset($data['payment_method']) && $data['payment_method'] === 'voucher') {
+                        require_once APP_PATH . '/models/Voucher.php';
+                        $voucherModel = new Voucher();
+                        
+                        $voucherCode = $_POST['voucher_code'] ?? '';
+                        if (empty($voucherCode)) {
+                            throw new Exception('Código de vale requerido cuando se selecciona pago con vales');
+                        }
+                        
+                        // Validar vale
+                        $voucherValidation = $voucherModel->validateVoucher($voucherCode);
+                        if (!$voucherValidation['valid']) {
+                            throw new Exception('Vale no válido: ' . $voucherValidation['error']);
+                        }
+                        
+                        // Guardar el ID del vale para marcarlo como usado después
+                        $voucherId = $voucherValidation['voucher']['id'];
+                    }
+                    
                     // Obtener placa de la unidad seleccionada
                     $unit = $this->unitModel->getById($data['unit_id']);
                     
@@ -176,8 +197,16 @@ class AccessController extends BaseController {
                     
                     $accessId = $this->accessModel->create($data);
                     
+                    // Si se usó un vale, marcarlo como usado
+                    if ($voucherId) {
+                        $voucherModel->markAsUsed($voucherId, $accessId);
+                    }
+                    
                     // No abrir barrera automáticamente, solo generar ticket
                     $message = 'Ticket generado exitosamente';
+                    if ($voucherId) {
+                        $message .= '. Vale aplicado correctamente';
+                    }
                     if (!empty($data['license_plate_reading'])) {
                         $message .= '. Placa leída por cámara: ' . $data['license_plate_reading'];
                         if (isset($data['plate_discrepancy']) && $data['plate_discrepancy'] == 1) {

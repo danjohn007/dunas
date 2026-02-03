@@ -118,6 +118,23 @@
                 <p class="mt-1 text-xs text-gray-500">El método de pago se reflejará en el ticket y en el reporte financiero</p>
             </div>
             
+            <!-- Selección de Vale (solo visible cuando se selecciona Vales) -->
+            <div id="voucherSelection" class="mb-6 hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Código del Vale <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="voucher_code" id="voucherCode"
+                       class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 uppercase"
+                       placeholder="Ej: R-0001 o escanee el código QR"
+                       autocomplete="off">
+                <p class="mt-1 text-xs text-gray-500">
+                    <i class="fas fa-qrcode mr-1"></i>Puede escanear el código QR del vale o escribir el código manualmente
+                </p>
+                <div id="voucherStatus" class="mt-2 hidden">
+                    <!-- Se mostrará información del vale aquí -->
+                </div>
+            </div>
+            
             <!-- Información Adicional -->
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h3 class="text-sm font-semibold text-gray-900 mb-2">
@@ -600,4 +617,100 @@ setInterval(async () => {
   await autoRunMoverFTP();
   await autoRegisterNewPlates();
 }, 10000);
+</script>
+
+<!-- Script para validación de vales -->
+<script>
+// Mostrar/ocultar selección de vale según método de pago
+document.getElementById('paymentMethod').addEventListener('change', function() {
+    const voucherSelection = document.getElementById('voucherSelection');
+    const voucherCode = document.getElementById('voucherCode');
+    
+    if (this.value === 'voucher') {
+        voucherSelection.classList.remove('hidden');
+        voucherCode.required = true;
+    } else {
+        voucherSelection.classList.add('hidden');
+        voucherCode.required = false;
+        voucherCode.value = '';
+        document.getElementById('voucherStatus').classList.add('hidden');
+    }
+});
+
+// Validar vale cuando se ingresa código
+let voucherValidationTimeout;
+document.getElementById('voucherCode').addEventListener('input', function() {
+    clearTimeout(voucherValidationTimeout);
+    const code = this.value.trim().toUpperCase();
+    
+    if (code.length < 3) {
+        document.getElementById('voucherStatus').classList.add('hidden');
+        return;
+    }
+    
+    // Debounce para evitar muchas peticiones
+    voucherValidationTimeout = setTimeout(() => {
+        validateVoucherCode(code);
+    }, 500);
+});
+
+async function validateVoucherCode(code) {
+    const statusDiv = document.getElementById('voucherStatus');
+    statusDiv.innerHTML = '<p class="text-sm text-gray-600"><i class="fas fa-spinner fa-spin mr-2"></i>Validando vale...</p>';
+    statusDiv.classList.remove('hidden');
+    
+    try {
+        // Primero intentar con el código directo
+        let qrCode = code;
+        
+        // Si el código escaneado viene con el formato VALE:CODE:LITERS, extraer solo el código
+        if (code.startsWith('VALE:')) {
+            const parts = code.split(':');
+            qrCode = code; // Usar el código QR completo
+        }
+        
+        const formData = new FormData();
+        formData.append('qr_code', qrCode);
+        
+        const response = await fetch('<?php echo BASE_URL; ?>/vouchers/validate', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.voucher) {
+            statusDiv.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded p-3">
+                    <p class="text-sm font-semibold text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i>Vale válido
+                    </p>
+                    <div class="text-xs text-green-700 mt-1">
+                        <div>Código: <span class="font-mono">${data.voucher.voucher_code}</span></div>
+                        <div>Capacidad: ${parseInt(data.voucher.capacity_liters).toLocaleString()} litros</div>
+                    </div>
+                </div>
+            `;
+            // Guardar el código del vale validado
+            document.getElementById('voucherCode').value = data.voucher.voucher_code;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded p-3">
+                    <p class="text-sm font-semibold text-red-800">
+                        <i class="fas fa-times-circle mr-1"></i>${data.message || 'Vale no válido'}
+                    </p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error validando vale:', error);
+        statusDiv.innerHTML = `
+            <div class="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Error al validar vale
+                </p>
+            </div>
+        `;
+    }
+}
 </script>
