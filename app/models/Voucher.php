@@ -57,11 +57,29 @@ class Voucher {
     }
     
     /**
-     * Obtener un vale por su código QR
+     * Obtener un vale por su código QR o código de vale
+     * Maneja tanto el formato QR (VALE:CODE:LITERS) como el código directo (SERIE-FOLIO)
      */
     public function getByQRCode($qrCode) {
+        // Primero intentar buscar directamente por QR code
         $sql = "SELECT v.* FROM vouchers v WHERE v.qr_code = ?";
-        return $this->db->fetchOne($sql, [$qrCode]);
+        $voucher = $this->db->fetchOne($sql, [$qrCode]);
+        
+        if ($voucher) {
+            return $voucher;
+        }
+        
+        // Si no se encuentra, intentar extraer el código del formato VALE:CODE:LITERS
+        if (strpos($qrCode, 'VALE:') === 0) {
+            $parts = explode(':', $qrCode);
+            if (count($parts) >= 2) {
+                $voucherCode = $parts[1];
+                return $this->getByVoucherCode($voucherCode);
+            }
+        }
+        
+        // Si no tiene el prefijo VALE:, intentar buscar por código directamente
+        return $this->getByVoucherCode($qrCode);
     }
     
     /**

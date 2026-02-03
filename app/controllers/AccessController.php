@@ -475,6 +475,26 @@ class AccessController extends BaseController {
                 'payment_method' => $_POST['payment_method'] ?? 'cash'
             ];
             
+            // Si el método de pago es vale, validar y marcar como usado
+            if ($accessData['payment_method'] === 'voucher') {
+                require_once APP_PATH . '/models/Voucher.php';
+                $voucherModel = new Voucher();
+                
+                $voucherCode = $_POST['voucher_code'] ?? '';
+                if (empty($voucherCode)) {
+                    throw new Exception('Código de vale requerido cuando se selecciona pago con vales');
+                }
+                
+                // Validar vale
+                $voucherValidation = $voucherModel->validateVoucher($voucherCode);
+                if (!$voucherValidation['valid']) {
+                    throw new Exception('Vale no válido: ' . $voucherValidation['error']);
+                }
+                
+                // Guardar el ID del vale para marcarlo como usado después
+                $voucherId = $voucherValidation['voucher']['id'];
+            }
+            
             // Leer placa desde cámara Hikvision
             $cameraReading = HikvisionAPI::readLicensePlate();
             if ($cameraReading['success'] && !empty($cameraReading['plate'])) {
@@ -507,6 +527,11 @@ class AccessController extends BaseController {
             
             $accessId = $this->accessModel->create($accessData);
             
+            // Si se usó un vale, marcarlo como usado
+            if (isset($voucherId)) {
+                $voucherModel->markAsUsed($voucherId, $accessId);
+            }
+            
             // NO abrir barrera aquí - se abrirá después de imprimir el ticket
             $message = 'Entrada registrada exitosamente';
             if (!empty($accessData['license_plate_reading'])) {
@@ -514,6 +539,9 @@ class AccessController extends BaseController {
                 if (isset($accessData['plate_discrepancy']) && $accessData['plate_discrepancy'] == 1) {
                     $message .= ' (⚠️ DISCREPANCIA DETECTADA)';
                 }
+            }
+            if (isset($voucherId)) {
+                $message .= '. Vale aplicado correctamente';
             }
             
             $this->setFlash('success', $message);
