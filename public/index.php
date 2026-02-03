@@ -41,6 +41,7 @@ $controllerMap = [
     'drivers' => 'DriverController',
     'access' => 'AccessController',
     'transactions' => 'TransactionController',
+    'vouchers' => 'VoucherController',
     'reports' => 'ReportController',
     'profile' => 'ProfileController',
     'settings' => 'SettingsController',
