@@ -26,7 +26,7 @@ Esta actualización corrige los siguientes problemas en el módulo de vales:
 
 ## Pasos de Instalación
 
-### 1. Aplicar Migración de Base de Datos (CRÍTICO)
+### 1. Aplicar Migraciones de Base de Datos (CRÍTICO)
 
 Ejecutar los siguientes scripts SQL en orden:
 
@@ -34,7 +34,10 @@ Ejecutar los siguientes scripts SQL en orden:
 # Primero: Limpiar duplicados y estructurar correctamente
 mysql -u root -p nombre_base_datos < config/fix_vouchers_duplicates.sql
 
-# Segundo: Agregar campo client_id si no existe
+# Segundo: Arreglar esquema y constraint names
+mysql -u root -p nombre_base_datos < config/fix_voucher_code_constraint.sql
+
+# Tercero: Agregar campo client_id si no existe
 mysql -u root -p nombre_base_datos < config/fix_vouchers_client_field.sql
 ```
 
@@ -52,7 +55,16 @@ DELETE FROM `vouchers` WHERE `qr_code` = '' OR `qr_code` IS NULL OR LENGTH(`qr_c
 -- (ver archivo completo para detalles)
 ```
 
-#### Script 2: Agregar campo de cliente (fix_vouchers_client_field.sql)
+#### Script 2: Arreglar constraint voucher_code (fix_voucher_code_constraint.sql - NUEVO)
+```sql
+-- Este script maneja variaciones de esquema en producción
+-- Si la columna se llama 'voucher_code' la renombra a 'qr_code'
+-- Limpia constraints antiguos
+-- Asegura UNIQUE constraint correcto en qr_code
+-- Agrega UNIQUE constraint en (serie, folio)
+```
+
+#### Script 3: Agregar campo de cliente (fix_vouchers_client_field.sql)
 ```sql
 -- Add client_id column to vouchers table
 ALTER TABLE `vouchers` 
