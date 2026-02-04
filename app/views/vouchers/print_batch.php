@@ -134,7 +134,7 @@
                 <div>
                     <div class="voucher-field">
                         <span class="voucher-label">EMPRESA:</span>
-                        <span class="voucher-value">_________________</span>
+                        <span class="voucher-value"><?php echo !empty($voucher['client_name']) ? htmlspecialchars($voucher['client_name']) : '_________________'; ?></span>
                     </div>
                     <div class="voucher-field">
                         <span class="voucher-label">OPERADOR:</span>
@@ -150,7 +150,7 @@
                     </div>
                     <div class="voucher-field">
                         <span class="voucher-label">TELÉFONO:</span>
-                        <span class="voucher-value">_________________</span>
+                        <span class="voucher-value"><?php echo !empty($voucher['client_phone']) ? htmlspecialchars($voucher['client_phone']) : '_________________'; ?></span>
                     </div>
                     <div class="voucher-field">
                         <span class="voucher-label">FECHA:</span>

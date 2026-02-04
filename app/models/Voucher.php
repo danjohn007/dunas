@@ -14,9 +14,10 @@ class Voucher {
      * Obtiene todos los vales con filtros opcionales
      */
     public function getAll($filters = []) {
-        $sql = "SELECT v.*, u.full_name as created_by_name
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id 
+                LEFT JOIN clients c ON v.client_id = c.id
                 WHERE 1=1";
         $params = [];
         
@@ -59,10 +60,12 @@ class Voucher {
      */
     public function getById($id) {
         $sql = "SELECT v.*, u.full_name as created_by_name,
-                       a.ticket_code as used_ticket_code
+                       a.ticket_code as used_ticket_code,
+                       c.business_name as client_name, c.phone as client_phone, c.address as client_address
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id
                 LEFT JOIN access_logs a ON v.used_by_access_log_id = a.id
+                LEFT JOIN clients c ON v.client_id = c.id
                 WHERE v.id = ?";
         return $this->db->fetchOne($sql, [$id]);
     }
@@ -71,9 +74,10 @@ class Voucher {
      * Obtiene un vale por su código QR
      */
     public function getByQRCode($qrCode) {
-        $sql = "SELECT v.*, u.full_name as created_by_name
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id
+                LEFT JOIN clients c ON v.client_id = c.id
                 WHERE v.qr_code = ?";
         return $this->db->fetchOne($sql, [$qrCode]);
     }
@@ -126,15 +130,16 @@ class Voucher {
         // Generar código QR único
         $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio']);
         
-        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, created_by, status) 
-                VALUES (?, ?, ?, ?, ?, 'active')";
+        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, created_by, client_id, status) 
+                VALUES (?, ?, ?, ?, ?, ?, 'active')";
         
         $params = [
             strtoupper($data['serie']),
             $data['folio'],
             $qrCode,
             $data['capacity'],
-            $data['created_by']
+            $data['created_by'],
+            $data['client_id'] ?? null
         ];
         
         $this->db->execute($sql, $params);
@@ -149,7 +154,7 @@ class Voucher {
     /**
      * Genera múltiples vales de forma consecutiva
      */
-    public function generateBatch($serie, $startFolio, $quantity, $capacity, $createdBy) {
+    public function generateBatch($serie, $startFolio, $quantity, $capacity, $createdBy, $clientId = null) {
         $createdVouchers = [];
         $errors = [];
         
@@ -161,7 +166,8 @@ class Voucher {
                     'serie' => $serie,
                     'folio' => $folio,
                     'capacity' => $capacity,
-                    'created_by' => $createdBy
+                    'created_by' => $createdBy,
+                    'client_id' => $clientId
                 ]);
                 
                 $createdVouchers[] = [

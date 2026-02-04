@@ -12,6 +12,32 @@
         <form method="POST" action="<?php echo BASE_URL; ?>/vouchers/store" id="generateVouchersForm">
             
             <div class="space-y-6">
+                <!-- Cliente -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Seleccionar Cliente <span class="text-red-500">*</span>
+                    </label>
+                    <select name="client_id" 
+                            id="client_id"
+                            required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">-- Seleccione un cliente --</option>
+                        <?php foreach ($clients as $client): ?>
+                        <option value="<?php echo $client['id']; ?>"
+                                <?php echo (isset($_POST['client_id']) && $_POST['client_id'] == $client['id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($client['business_name']); ?>
+                            <?php if (!empty($client['phone'])): ?>
+                                - <?php echo htmlspecialchars($client['phone']); ?>
+                            <?php endif; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                        <i class="fas fa-info-circle"></i>
+                        Cliente al que se asignarán los vales generados
+                    </p>
+                </div>
+                
                 <!-- Serie -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">

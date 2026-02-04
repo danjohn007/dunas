@@ -49,8 +49,14 @@ class VoucherController extends BaseController {
         Auth::requireLogin();
         Auth::requireRole(['admin', 'supervisor']);
         
+        // Load clients for dropdown
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        $clients = $clientModel->getAll(['status' => 'active']);
+        
         $data = [
             'title' => 'Generar Vales',
+            'clients' => $clients,
             'showNav' => true
         ];
         
@@ -70,10 +76,10 @@ class VoucherController extends BaseController {
         }
         
         // Validar campos requeridos
-        $required = ['serie', 'start_folio', 'quantity', 'capacity'];
+        $required = ['serie', 'start_folio', 'quantity', 'capacity', 'client_id'];
         foreach ($required as $field) {
             if (empty($_POST[$field])) {
-                $this->setFlash('error', 'Todos los campos son requeridos.');
+                $this->setFlash('error', 'Todos los campos son requeridos, incluyendo la selección de cliente.');
                 $this->redirect('/vouchers/create');
                 return;
             }
@@ -83,6 +89,7 @@ class VoucherController extends BaseController {
         $startFolio = (int)$_POST['start_folio'];
         $quantity = (int)$_POST['quantity'];
         $capacity = (int)$_POST['capacity'];
+        $clientId = (int)$_POST['client_id'];
         
         // Validaciones
         if (!preg_match('/^[A-Z]{1,10}$/', $serie)) {
@@ -116,7 +123,8 @@ class VoucherController extends BaseController {
                 $startFolio,
                 $quantity,
                 $capacity,
-                Auth::user()['id']
+                Auth::user()['id'],
+                $clientId
             );
             
             if ($result['total'] > 0) {
@@ -169,6 +177,30 @@ class VoucherController extends BaseController {
         $data = [
             'title' => 'Imprimir Vales',
             'vouchers' => $vouchers,
+            'showNav' => false  // No mostrar navegación en vista de impresión
+        ];
+        
+        $this->view('vouchers/print_batch', $data);
+    }
+    
+    /**
+     * Muestra la página de impresión para un vale individual
+     */
+    public function printSingle($id) {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $voucher = $this->voucherModel->getById($id);
+        
+        if (!$voucher) {
+            $this->setFlash('error', 'Vale no encontrado.');
+            $this->redirect('/vouchers');
+            return;
+        }
+        
+        $data = [
+            'title' => 'Imprimir Vale',
+            'vouchers' => [$voucher],  // Array con un solo voucher para reutilizar la vista
             'showNav' => false  // No mostrar navegación en vista de impresión
         ];
         
