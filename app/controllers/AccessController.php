@@ -7,6 +7,7 @@ require_once APP_PATH . '/models/AccessLog.php';
 require_once APP_PATH . '/models/Driver.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Client.php';
+require_once APP_PATH . '/models/Voucher.php';
 require_once APP_PATH . '/helpers/HikvisionAPI.php';
 require_once APP_PATH . '/services/ShellyActionService.php';
 
@@ -16,12 +17,14 @@ class AccessController extends BaseController {
     private $driverModel;
     private $unitModel;
     private $clientModel;
+    private $voucherModel;
     
     public function __construct() {
         $this->accessModel = new AccessLog();
         $this->driverModel = new Driver();
         $this->unitModel = new Unit();
         $this->clientModel = new Client();
+        $this->voucherModel = new Voucher();
     }
     
     /**
@@ -121,6 +124,23 @@ class AccessController extends BaseController {
                 try {
                     $data = $_POST;
                     
+                    // Validar y marcar vale como usado si el método de pago es 'voucher'
+                    if ($data['payment_method'] === 'voucher') {
+                        if (empty($data['voucher_id'])) {
+                            $this->setFlash('error', 'Debe validar un vale antes de continuar.');
+                            $this->redirect('/access/create');
+                            return;
+                        }
+                        
+                        // Verificar que el vale siga activo
+                        $voucher = $this->voucherModel->getById($data['voucher_id']);
+                        if (!$voucher || $voucher['status'] !== 'active') {
+                            $this->setFlash('error', 'El vale seleccionado ya no está disponible.');
+                            $this->redirect('/access/create');
+                            return;
+                        }
+                    }
+                    
                     // Obtener placa de la unidad seleccionada
                     $unit = $this->unitModel->getById($data['unit_id']);
                     
@@ -175,6 +195,16 @@ class AccessController extends BaseController {
                     }
                     
                     $accessId = $this->accessModel->create($data);
+                    
+                    // Marcar vale como usado si aplica
+                    if ($data['payment_method'] === 'voucher' && !empty($data['voucher_id'])) {
+                        try {
+                            $this->voucherModel->markAsUsed($data['voucher_id'], $accessId);
+                        } catch (Exception $e) {
+                            error_log("Error marcando vale como usado: " . $e->getMessage());
+                            // No detener el proceso, solo registrar el error
+                        }
+                    }
                     
                     // No abrir barrera automáticamente, solo generar ticket
                     $message = 'Ticket generado exitosamente';
@@ -467,6 +497,23 @@ class AccessController extends BaseController {
                 $unitId = $this->unitModel->create($unitData);
             }
             
+            // Validar vale si el método de pago es 'voucher'
+            if ($_POST['payment_method'] === 'voucher') {
+                if (empty($_POST['voucher_id'])) {
+                    $this->setFlash('error', 'Debe validar un vale antes de continuar.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+                
+                // Verificar que el vale siga activo
+                $voucher = $this->voucherModel->getById($_POST['voucher_id']);
+                if (!$voucher || $voucher['status'] !== 'active') {
+                    $this->setFlash('error', 'El vale seleccionado ya no está disponible.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+            }
+            
             // Registrar entrada
             $accessData = [
                 'driver_id' => $driverId,
@@ -506,6 +553,16 @@ class AccessController extends BaseController {
             }
             
             $accessId = $this->accessModel->create($accessData);
+            
+            // Marcar vale como usado si aplica
+            if ($_POST['payment_method'] === 'voucher' && !empty($_POST['voucher_id'])) {
+                try {
+                    $this->voucherModel->markAsUsed($_POST['voucher_id'], $accessId);
+                } catch (Exception $e) {
+                    error_log("Error marcando vale como usado en quickEntry: " . $e->getMessage());
+                    // No detener el proceso, solo registrar el error
+                }
+            }
             
             // NO abrir barrera aquí - se abrirá después de imprimir el ticket
             $message = 'Entrada registrada exitosamente';

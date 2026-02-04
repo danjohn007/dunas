@@ -199,6 +199,13 @@
                     </a>
                 </li>
                 <li>
+                    <a href="<?php echo BASE_URL; ?>/vouchers" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-ticket-alt w-6 mr-3"></i>
+                        <span>Vales</span>
+                    </a>
+                </li>
+                <li>
                     <a href="<?php echo BASE_URL; ?>/access" 
                        class="sidebar-nav-item flex items-center text-white px-4 py-3">
                         <i class="fas fa-door-open w-6 mr-3"></i>

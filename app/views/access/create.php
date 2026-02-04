@@ -118,6 +118,27 @@
                 <p class="mt-1 text-xs text-gray-500">El método de pago se reflejará en el ticket y en el reporte financiero</p>
             </div>
             
+            <!-- Validación de Vale (mostrar solo si payment_method es voucher) -->
+            <div id="voucherValidationContainer" class="mb-6 hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Código QR del Vale <span class="text-red-500">*</span>
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" 
+                           name="voucher_qr_code" 
+                           id="voucherQrCode"
+                           placeholder="Escanear o ingresar código QR del vale"
+                           class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <button type="button" 
+                            id="validateVoucherBtn"
+                            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                        <i class="fas fa-check mr-2"></i>Validar
+                    </button>
+                </div>
+                <div id="voucherValidationResult" class="mt-2 hidden"></div>
+                <input type="hidden" name="voucher_id" id="voucherId" value="">
+            </div>
+            
             <!-- Información Adicional -->
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h3 class="text-sm font-semibold text-gray-900 mb-2">
@@ -600,4 +621,118 @@ setInterval(async () => {
   await autoRunMoverFTP();
   await autoRegisterNewPlates();
 }, 10000);
+</script>
+
+<script>
+// === Voucher Validation Logic ===
+(function() {
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const voucherContainer = document.getElementById('voucherValidationContainer');
+    const voucherQrCodeInput = document.getElementById('voucherQrCode');
+    const validateVoucherBtn = document.getElementById('validateVoucherBtn');
+    const voucherValidationResult = document.getElementById('voucherValidationResult');
+    const voucherIdInput = document.getElementById('voucherId');
+    const accessForm = document.getElementById('accessForm');
+    const baseUrl = "<?php echo BASE_URL; ?>";
+    
+    let voucherValidated = false;
+    
+    // Show/hide voucher validation based on payment method
+    paymentMethodSelect.addEventListener('change', function() {
+        if (this.value === 'voucher') {
+            voucherContainer.classList.remove('hidden');
+            voucherQrCodeInput.setAttribute('required', 'required');
+            voucherValidated = false;
+            voucherIdInput.value = '';
+            voucherValidationResult.classList.add('hidden');
+        } else {
+            voucherContainer.classList.add('hidden');
+            voucherQrCodeInput.removeAttribute('required');
+            voucherValidated = true;
+            voucherIdInput.value = '';
+        }
+    });
+    
+    // Validate voucher
+    async function validateVoucher() {
+        const qrCode = voucherQrCodeInput.value.trim();
+        
+        if (!qrCode) {
+            showVoucherResult('error', 'Por favor ingrese un código QR');
+            return;
+        }
+        
+        validateVoucherBtn.disabled = true;
+        validateVoucherBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Validando...';
+        
+        try {
+            const response = await fetch(`${baseUrl}/vouchers/validateQR`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `qr_code=${encodeURIComponent(qrCode)}`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                voucherValidated = true;
+                voucherIdInput.value = data.voucher.id;
+                showVoucherResult('success', 
+                    `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | Capacidad: ${parseInt(data.voucher.capacity).toLocaleString()} L`
+                );
+            } else {
+                voucherValidated = false;
+                voucherIdInput.value = '';
+                showVoucherResult('error', data.message);
+            }
+        } catch (error) {
+            voucherValidated = false;
+            voucherIdInput.value = '';
+            showVoucherResult('error', 'Error al validar vale: ' + error.message);
+        }
+        
+        validateVoucherBtn.disabled = false;
+        validateVoucherBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Validar';
+    }
+    
+    function showVoucherResult(type, message) {
+        voucherValidationResult.classList.remove('hidden');
+        
+        const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+        const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        voucherValidationResult.innerHTML = `
+            <div class="${bgColor} border rounded-lg p-3">
+                <p class="${textColor} text-sm">
+                    <i class="fas ${icon} mr-2"></i>${message}
+                </p>
+            </div>
+        `;
+    }
+    
+    validateVoucherBtn.addEventListener('click', validateVoucher);
+    
+    // Allow Enter key to validate
+    voucherQrCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            validateVoucher();
+        }
+    });
+    
+    // Validate voucher before form submission
+    const originalSubmitHandler = accessForm.onsubmit;
+    accessForm.addEventListener('submit', function(e) {
+        const paymentMethod = paymentMethodSelect.value;
+        
+        if (paymentMethod === 'voucher' && !voucherValidated) {
+            e.preventDefault();
+            alert('Por favor valide el vale antes de continuar');
+            return false;
+        }
+    }, true);
+})();
 </script>

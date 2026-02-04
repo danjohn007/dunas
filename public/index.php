@@ -46,6 +46,7 @@ $controllerMap = [
     'settings' => 'SettingsController',
     'visitors' => 'VisitorController',
     'devices' => 'DevicesController',
+    'vouchers' => 'VoucherController',
     'access-denied' => 'HomeController',
 ];
 

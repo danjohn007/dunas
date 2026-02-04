@@ -138,6 +138,27 @@
                 </select>
                 <p class="mt-1 text-xs text-gray-500">El método de pago se reflejará en el ticket y en el reporte financiero</p>
             </div>
+            
+            <!-- Validación de Vale -->
+            <div id="voucherValidationContainer" class="mb-4 hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Código QR del Vale <span class="text-red-500">*</span>
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" 
+                           name="voucher_qr_code" 
+                           id="voucherQrCode"
+                           placeholder="Escanear o ingresar código QR"
+                           class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <button type="button" 
+                            id="validateVoucherBtn"
+                            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                        <i class="fas fa-check mr-2"></i>Validar
+                    </button>
+                </div>
+                <div id="voucherValidationResult" class="mt-2 hidden"></div>
+                <input type="hidden" name="voucher_id" id="voucherId" value="">
+            </div>
         </div>
         
         <!-- Paso 2: Datos de la Unidad (si no existe) -->
@@ -1064,3 +1085,108 @@ window.CLEANUP_CONFIG = {
 <?php else: ?>
 <!-- Limpieza automática desactivada en configuración -->
 <?php endif; ?>
+<script>
+// === Voucher Validation Logic ===
+(function() {
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const voucherContainer = document.getElementById('voucherValidationContainer');
+    const voucherQrCodeInput = document.getElementById('voucherQrCode');
+    const validateVoucherBtn = document.getElementById('validateVoucherBtn');
+    const voucherValidationResult = document.getElementById('voucherValidationResult');
+    const voucherIdInput = document.getElementById('voucherId');
+    const quickForm = document.getElementById('quickAccessForm');
+    const baseUrl = "<?php echo BASE_URL; ?>";
+    
+    let voucherValidated = false;
+    
+    paymentMethodSelect.addEventListener('change', function() {
+        if (this.value === 'voucher') {
+            voucherContainer.classList.remove('hidden');
+            voucherQrCodeInput.setAttribute('required', 'required');
+            voucherValidated = false;
+            voucherIdInput.value = '';
+            voucherValidationResult.classList.add('hidden');
+        } else {
+            voucherContainer.classList.add('hidden');
+            voucherQrCodeInput.removeAttribute('required');
+            voucherValidated = true;
+            voucherIdInput.value = '';
+        }
+    });
+    
+    async function validateVoucher() {
+        const qrCode = voucherQrCodeInput.value.trim();
+        
+        if (!qrCode) {
+            showVoucherResult('error', 'Por favor ingrese un código QR');
+            return;
+        }
+        
+        validateVoucherBtn.disabled = true;
+        validateVoucherBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Validando...';
+        
+        try {
+            const response = await fetch(`${baseUrl}/vouchers/validateQR`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `qr_code=${encodeURIComponent(qrCode)}`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                voucherValidated = true;
+                voucherIdInput.value = data.voucher.id;
+                showVoucherResult('success', 
+                    `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | ${parseInt(data.voucher.capacity).toLocaleString()} L`
+                );
+            } else {
+                voucherValidated = false;
+                voucherIdInput.value = '';
+                showVoucherResult('error', data.message);
+            }
+        } catch (error) {
+            voucherValidated = false;
+            voucherIdInput.value = '';
+            showVoucherResult('error', 'Error: ' + error.message);
+        }
+        
+        validateVoucherBtn.disabled = false;
+        validateVoucherBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Validar';
+    }
+    
+    function showVoucherResult(type, message) {
+        voucherValidationResult.classList.remove('hidden');
+        const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+        const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        voucherValidationResult.innerHTML = `
+            <div class="${bgColor} border rounded-lg p-2">
+                <p class="${textColor} text-sm">
+                    <i class="fas ${icon} mr-1"></i>${message}
+                </p>
+            </div>
+        `;
+    }
+    
+    validateVoucherBtn.addEventListener('click', validateVoucher);
+    
+    voucherQrCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            validateVoucher();
+        }
+    });
+    
+    quickForm.addEventListener('submit', function(e) {
+        if (paymentMethodSelect.value === 'voucher' && !voucherValidated) {
+            e.preventDefault();
+            alert('Por favor valide el vale antes de continuar');
+            return false;
+        }
+    }, true);
+})();
+</script>
