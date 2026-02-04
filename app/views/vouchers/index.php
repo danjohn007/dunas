@@ -188,7 +188,7 @@
                             <?php echo date('d/m/Y H:i', strtotime($voucher['created_at'])); ?>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="<?php echo BASE_URL; ?>/vouchers/view/<?php echo $voucher['id']; ?>" 
+                            <a href="<?php echo BASE_URL; ?>/vouchers/detail/<?php echo $voucher['id']; ?>" 
                                class="text-blue-600 hover:text-blue-900 mr-3">
                                 <i class="fas fa-eye"></i>
                             </a>

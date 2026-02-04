@@ -178,7 +178,7 @@ class VoucherController extends BaseController {
     /**
      * Ver detalles de un vale
      */
-    public function view($id) {
+    public function detail($id) {
         Auth::requireLogin();
         
         $voucher = $this->voucherModel->getById($id);
