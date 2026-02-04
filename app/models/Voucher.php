@@ -137,7 +137,8 @@ class Voucher {
             $data['created_by']
         ];
         
-        $voucherId = $this->db->insert($sql, $params);
+        $this->db->execute($sql, $params);
+        $voucherId = $this->db->lastInsertId();
         
         return [
             'id' => $voucherId,
