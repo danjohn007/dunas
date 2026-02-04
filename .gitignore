@@ -11,6 +11,16 @@ public/uploads/*
 # Imagenes (plate detection images)
 public/Imagenes/*
 !public/Imagenes/.gitkeep
+imagenes/*
+!imagenes/.gitkeep
+!imagenes/README.md
+
+# Large binary files and installers
+drivers/*.zip
+drivers/*.exe
+drivers/**/*.exe
+drivers/**/*.zip
+drivers/**/agent.log
 
 # Sistema operativo
 .DS_Store
