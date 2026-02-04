@@ -23,6 +23,23 @@ class BaseController {
         require_once APP_PATH . '/views/layouts/main.php';
     }
     
+    protected function render($viewPath, $data = [], $useLayout = true) {
+        // Alias for view method with optional layout control
+        if ($useLayout) {
+            $this->view($viewPath, $data);
+        } else {
+            // Render without layout
+            require_once APP_PATH . '/models/Settings.php';
+            $settingsModel = new Settings();
+            $settings = $settingsModel->getAll();
+            
+            $data['systemSettings'] = $settings;
+            extract($data);
+            
+            require_once APP_PATH . '/views/' . $viewPath . '.php';
+        }
+    }
+    
     protected function json($data, $status = 200) {
         http_response_code($status);
         header('Content-Type: application/json');
