@@ -13,8 +13,8 @@ ini_set('display_errors', 1);
 
 // Configuración de base de datos
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'systemco_dunas');
-define('DB_USER', 'systemco_dunas');
+define('DB_NAME', 'residenc_dunas');
+define('DB_USER', 'residenc_dunas');
 define('DB_PASS', 'Danjohn007!');
 define('DB_CHARSET', 'utf8mb4');
 
@@ -84,5 +84,6 @@ require_once ROOT_PATH . '/app/helpers/Session.php';
 require_once ROOT_PATH . '/app/helpers/Validator.php';
 require_once ROOT_PATH . '/app/helpers/FileUpload.php';
 require_once ROOT_PATH . '/app/helpers/ShellyAPI.php';
+
 
 
