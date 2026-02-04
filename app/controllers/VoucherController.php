@@ -139,7 +139,7 @@ class VoucherController extends BaseController {
                 // Guardar IDs de vales creados en sesión para impresión
                 Session::set('last_voucher_batch', array_column($result['created'], 'id'));
                 
-                $this->redirect('/vouchers/print-batch');
+                $this->redirect('/vouchers/printBatch');
             } else {
                 $this->setFlash('error', 'No se pudo generar ningún vale. Verifique que no existan duplicados.');
                 $this->redirect('/vouchers/create');
