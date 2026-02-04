@@ -141,7 +141,13 @@ class VoucherController extends BaseController {
                 
                 $this->redirect('/vouchers/printBatch');
             } else {
-                $this->setFlash('error', 'No se pudo generar ningún vale. Verifique que no existan duplicados.');
+                // Mostrar el primer error si existe para mejor diagnóstico
+                $errorMessage = 'No se pudo generar ningún vale.';
+                if (count($result['errors']) > 0) {
+                    $firstError = $result['errors'][0];
+                    $errorMessage .= ' Error en serie ' . $firstError['serie'] . ' folio ' . $firstError['folio'] . ': ' . $firstError['error'];
+                }
+                $this->setFlash('error', $errorMessage);
                 $this->redirect('/vouchers/create');
             }
         } catch (Exception $e) {

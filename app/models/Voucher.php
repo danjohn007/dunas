@@ -104,15 +104,30 @@ class Voucher {
      * Genera un código QR único
      */
     private function generateUniqueQRCode($serie, $folio) {
+        // Validar que serie y folio no estén vacíos
+        if (empty($serie) || $folio < 1) {
+            throw new Exception("Serie y folio son requeridos para generar el código QR");
+        }
+        
         // Formato: SERIE-FOLIO-TIMESTAMP
         $timestamp = time();
         $qrCode = strtoupper($serie) . '-' . str_pad($folio, 6, '0', STR_PAD_LEFT) . '-' . $timestamp;
+        
+        // Verificar que el código no esté vacío
+        if (empty($qrCode) || $qrCode === '--' || strlen($qrCode) < 10) {
+            throw new Exception("Error al generar código QR válido");
+        }
         
         // Verificar que no exista (muy poco probable, pero por seguridad)
         $attempts = 0;
         while ($this->qrCodeExists($qrCode) && $attempts < 10) {
             $qrCode = strtoupper($serie) . '-' . str_pad($folio, 6, '0', STR_PAD_LEFT) . '-' . ($timestamp + $attempts);
             $attempts++;
+        }
+        
+        // Verificación final
+        if ($this->qrCodeExists($qrCode)) {
+            throw new Exception("No se pudo generar un código QR único después de varios intentos");
         }
         
         return $qrCode;
