@@ -121,6 +121,27 @@ class AccessController extends BaseController {
                 try {
                     $data = $_POST;
                     
+                    // Validar y marcar vale como usado si el método de pago es 'voucher'
+                    if ($data['payment_method'] === 'voucher') {
+                        if (empty($data['voucher_id'])) {
+                            $this->setFlash('error', 'Debe validar un vale antes de continuar.');
+                            $this->redirect('/access/create');
+                            return;
+                        }
+                        
+                        // Incluir el modelo de Voucher
+                        require_once APP_PATH . '/models/Voucher.php';
+                        $voucherModel = new Voucher();
+                        
+                        // Verificar que el vale siga activo
+                        $voucher = $voucherModel->getById($data['voucher_id']);
+                        if (!$voucher || $voucher['status'] !== 'active') {
+                            $this->setFlash('error', 'El vale seleccionado ya no está disponible.');
+                            $this->redirect('/access/create');
+                            return;
+                        }
+                    }
+                    
                     // Obtener placa de la unidad seleccionada
                     $unit = $this->unitModel->getById($data['unit_id']);
                     
@@ -175,6 +196,18 @@ class AccessController extends BaseController {
                     }
                     
                     $accessId = $this->accessModel->create($data);
+                    
+                    // Marcar vale como usado si aplica
+                    if ($data['payment_method'] === 'voucher' && !empty($data['voucher_id'])) {
+                        try {
+                            require_once APP_PATH . '/models/Voucher.php';
+                            $voucherModel = new Voucher();
+                            $voucherModel->markAsUsed($data['voucher_id'], $accessId);
+                        } catch (Exception $e) {
+                            error_log("Error marcando vale como usado: " . $e->getMessage());
+                            // No detener el proceso, solo registrar el error
+                        }
+                    }
                     
                     // No abrir barrera automáticamente, solo generar ticket
                     $message = 'Ticket generado exitosamente';
