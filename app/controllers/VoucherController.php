@@ -172,7 +172,7 @@ class VoucherController extends BaseController {
     /**
      * Ver detalles de un vale
      */
-    public function view($id) {
+    public function detail($id) {
         // Verificar permisos
         if (!Auth::hasRole(['admin', 'supervisor', 'operator'])) {
             header('Location: ' . BASE_URL . '/access-denied');
