@@ -8,6 +8,7 @@ require_once APP_PATH . '/models/Transaction.php';
 require_once APP_PATH . '/models/Client.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Driver.php';
+require_once APP_PATH . '/models/Voucher.php';
 
 class ReportController extends BaseController {
     
@@ -16,6 +17,7 @@ class ReportController extends BaseController {
     private $clientModel;
     private $unitModel;
     private $driverModel;
+    private $voucherModel;
     
     public function __construct() {
         $this->accessModel = new AccessLog();
@@ -23,6 +25,7 @@ class ReportController extends BaseController {
         $this->clientModel = new Client();
         $this->unitModel = new Unit();
         $this->driverModel = new Driver();
+        $this->voucherModel = new Voucher();
     }
     
     public function index() {
@@ -91,6 +94,9 @@ class ReportController extends BaseController {
         
         $transactions = $this->transactionModel->getAll($filters);
         
+        // Obtener estadísticas de vales
+        $voucherStats = $this->voucherModel->getFinancialStats($dateFrom, $dateTo);
+        
         // Calcular estadísticas
         $stats = [
             'total_transactions' => count($transactions),
@@ -108,6 +114,18 @@ class ReportController extends BaseController {
             $stats['total_liters'] += $trans['liters_supplied'];
             $stats['by_method'][$trans['payment_method']] += $trans['total_amount'];
         }
+        
+        // Agregar datos de vales al reporte
+        $stats['vouchers'] = [
+            'total_paid' => (float)$voucherStats['total_paid'],
+            'total_pending' => (float)$voucherStats['total_pending'],
+            'total_amount' => (float)$voucherStats['total_amount'],
+            'paid_count' => (int)$voucherStats['paid_count'],
+            'pending_count' => (int)$voucherStats['pending_count']
+        ];
+        
+        // Sumar vales pagados al total de ingresos
+        $stats['total_revenue'] += $stats['vouchers']['total_paid'];
         
         // Obtener ingresos por día
         $revenueByDay = $this->transactionModel->getRevenueByPeriod($dateFrom, $dateTo);

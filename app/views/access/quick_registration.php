@@ -94,7 +94,7 @@
             <div class="flex gap-3">
                 <div class="flex-1 relative">
                     <input type="text" id="manualPlateInput" 
-                           placeholder="Escriba la placa manualmente (ej: ABC1059)"
+                           placeholder="Escriba la placa (ej: ABC1059) o código de vale (ej: B-500)"
                            class="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 uppercase"
                            maxlength="10"
                            autocomplete="off">
@@ -640,21 +640,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     manualRegistrationBtn.addEventListener('click', async function() {
         // Usar placa manual o placa detectada
-        let plate = manualPlateInput.value.trim();
+        let input = manualPlateInput.value.trim();
         
-        if (!plate) {
-            plate = window.lastDetectedPlate;
+        if (!input) {
+            input = window.lastDetectedPlate;
         }
         
-        if (!plate) {
-            alert('Por favor escriba una placa o espere a que la cámara detecte una');
+        if (!input) {
+            alert('Por favor escriba una placa o código de vale, o espere a que la cámara detecte una');
             manualPlateInput.focus();
             return;
         }
         
-        // Validar formato básico de placa
-        if (plate.length < 3) {
-            alert('La placa debe tener al menos 3 caracteres');
+        // Validar formato básico
+        if (input.length < 4) {
+            alert('El código debe tener al menos 4 caracteres');
             manualPlateInput.focus();
             return;
         }
@@ -664,134 +664,215 @@ document.addEventListener('DOMContentLoaded', function() {
         manualRegistrationBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Buscando...';
         
         try {
-            // Primero buscar si la placa existe en el sistema
-            const response = await fetch(`<?php echo BASE_URL; ?>/access/searchUnit?plate=${encodeURIComponent(plate)}`);
-            const data = await response.json();
+            // Determinar si es un código de vale (formato: SERIE-FOLIO como B-500 o ABC-123)
+            const isVoucherCode = /^[A-Z]+-\d+$/i.test(input);
             
-            if (data.success && data.exists) {
-                // La placa EXISTE - usar flujo normal (igual que el botón azul)
-                document.getElementById('plateNumber').value = plate;
+            if (isVoucherCode) {
+                // Es un código de vale - validar el vale
+                const voucherResponse = await fetch(`<?php echo BASE_URL; ?>/vouchers/validateQR`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `qr_code=${encodeURIComponent(input.toUpperCase())}`
+                });
+                const voucherData = await voucherResponse.json();
                 
-                let infoHtml = `
-                    <div class="flex items-center text-green-800">
-                        <i class="fas fa-check-circle text-2xl mr-3"></i>
-                        <div>
-                            <p class="font-semibold">Unidad encontrada</p>
-                            <p class="text-sm">Placa: ${data.unit.plate_number} - Capacidad: ${parseInt(data.unit.capacity_liters).toLocaleString()} L</p>
-                `;
-                
-                if (data.lastEntry) {
-                    infoHtml += `
-                            <p class="text-sm mt-1">Cliente: ${data.lastEntry.client_name || 'N/A'}</p>
-                            <p class="text-sm">Último chofer: ${data.lastEntry.driver_name || 'N/A'}</p>
-                    `;
-                }
-                
-                infoHtml += `
+                if (voucherData.success && voucherData.voucher) {
+                    // Vale válido - procesar como entrada con vale
+                    const voucher = voucherData.voucher;
+                    
+                    searchResult.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg';
+                    searchResult.innerHTML = `
+                        <div class="flex items-center text-blue-800">
+                            <i class="fas fa-ticket-alt text-2xl mr-3"></i>
+                            <div>
+                                <p class="font-semibold">Vale Válido</p>
+                                <p class="text-sm">Serie: ${voucher.serie} - Folio: ${voucher.folio}</p>
+                                <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-                
-                searchResult.className = 'mt-4 p-4 bg-green-50 border border-green-200 rounded-lg';
-                searchResult.innerHTML = infoHtml;
-                
-                document.getElementById('unitId').value = data.unit.id;
-                document.getElementById('capacityLiters').value = data.unit.capacity_liters;
-                step2Unit.classList.add('hidden');
-                
-                // Precargar cliente del último registro
-                if (data.lastEntry && data.lastEntry.client_id) {
-                    document.getElementById('clientId').value = data.lastEntry.client_id;
-                    newClientCheck.checked = false;
-                    newClientFields.classList.add('hidden');
-                }
-                
-                // Mostrar selector de choferes
-                if (data.drivers && data.drivers.length > 0) {
-                    const driverSelect = document.getElementById('driverIdExisting');
-                    driverSelect.innerHTML = '<option value="">Seleccione un chofer</option>';
+                    `;
                     
-                    data.drivers.forEach(driver => {
-                        const option = document.createElement('option');
-                        option.value = driver.id;
-                        option.textContent = driver.full_name;
-                        
-                        // Preseleccionar el último chofer usado
-                        if (data.lastEntry && parseInt(driver.id) === parseInt(data.lastEntry.driver_id)) {
-                            option.selected = true;
-                            document.getElementById('driverId').value = driver.id;
-                        }
-                        
-                        driverSelect.appendChild(option);
-                    });
+                    // Configurar formulario para registro con vale
+                    document.getElementById('plateNumber').value = 'VALE-' + voucher.serie + voucher.folio;
+                    document.getElementById('capacityLiters').value = voucher.capacity;
+                    document.getElementById('unitId').value = '';
                     
-                    // Manejar cambio de chofer
-                    driverSelect.addEventListener('change', function() {
-                        document.getElementById('driverId').value = this.value;
-                    });
+                    // Guardar ID del vale en un campo oculto para procesarlo después
+                    let voucherIdInput = document.getElementById('voucherId');
+                    if (!voucherIdInput) {
+                        voucherIdInput = document.createElement('input');
+                        voucherIdInput.type = 'hidden';
+                        voucherIdInput.id = 'voucherId';
+                        voucherIdInput.name = 'voucher_id';
+                        document.getElementById('registrationForm').appendChild(voucherIdInput);
+                    }
+                    voucherIdInput.value = voucher.id;
                     
-                    step2Driver.classList.remove('hidden');
-                    step3.classList.add('hidden');
-                    step4.classList.add('hidden');
-                } else {
+                    // Mostrar campos para completar
+                    step2Unit.classList.add('hidden');
                     step2Driver.classList.add('hidden');
                     step3.classList.remove('hidden');
                     step4.classList.remove('hidden');
+                    
+                    // Forzar registro nuevo
                     newClientCheck.checked = true;
                     newClientFields.classList.remove('hidden');
                     newDriverCheck.checked = true;
                     newDriverFields.classList.remove('hidden');
+                    
+                    // Preseleccionar método de pago como vale
+                    document.getElementById('paymentMethod').value = 'voucher';
+                    paymentMethodSection.classList.remove('hidden');
+                    
+                    // Limpiar el input manual
+                    manualPlateInput.value = '';
+                    
+                    searchResult.classList.remove('hidden');
+                    registrationForm.classList.remove('hidden');
+                    actionButtons.classList.remove('hidden');
+                    
+                    // Scroll al formulario
+                    registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    // Vale no válido o ya usado
+                    alert(voucherData.message || 'Vale no válido o ya utilizado');
+                    manualPlateInput.focus();
+                }
+            } else {
+                // Es una placa normal - continuar con el flujo existente
+                const plate = input;
+                
+                // Primero buscar si la placa existe en el sistema
+                const response = await fetch(`<?php echo BASE_URL; ?>/access/searchUnit?plate=${encodeURIComponent(plate)}`);
+                const data = await response.json();
+                
+                if (data.success && data.exists) {
+                    // La placa EXISTE - usar flujo normal (igual que el botón azul)
+                    document.getElementById('plateNumber').value = plate;
+                    
+                    let infoHtml = `
+                        <div class="flex items-center text-green-800">
+                            <i class="fas fa-check-circle text-2xl mr-3"></i>
+                            <div>
+                                <p class="font-semibold">Unidad encontrada</p>
+                                <p class="text-sm">Placa: ${data.unit.plate_number} - Capacidad: ${parseInt(data.unit.capacity_liters).toLocaleString()} L</p>
+                    `;
+                    
+                    if (data.lastEntry) {
+                        infoHtml += `
+                                <p class="text-sm mt-1">Cliente: ${data.lastEntry.client_name || 'N/A'}</p>
+                                <p class="text-sm">Último chofer: ${data.lastEntry.driver_name || 'N/A'}</p>
+                        `;
+                    }
+                    
+                    infoHtml += `
+                            </div>
+                        </div>
+                    `;
+                    
+                    searchResult.className = 'mt-4 p-4 bg-green-50 border border-green-200 rounded-lg';
+                    searchResult.innerHTML = infoHtml;
+                    
+                    document.getElementById('unitId').value = data.unit.id;
+                    document.getElementById('capacityLiters').value = data.unit.capacity_liters;
+                    step2Unit.classList.add('hidden');
+                    
+                    // Precargar cliente del último registro
+                    if (data.lastEntry && data.lastEntry.client_id) {
+                        document.getElementById('clientId').value = data.lastEntry.client_id;
+                        newClientCheck.checked = false;
+                        newClientFields.classList.add('hidden');
+                    }
+                    
+                    // Mostrar selector de choferes
+                    if (data.drivers && data.drivers.length > 0) {
+                        const driverSelect = document.getElementById('driverIdExisting');
+                        driverSelect.innerHTML = '<option value="">Seleccione un chofer</option>';
+                        
+                        data.drivers.forEach(driver => {
+                            const option = document.createElement('option');
+                            option.value = driver.id;
+                            option.textContent = driver.full_name;
+                            
+                            // Preseleccionar el último chofer usado
+                            if (data.lastEntry && parseInt(driver.id) === parseInt(data.lastEntry.driver_id)) {
+                                option.selected = true;
+                                document.getElementById('driverId').value = driver.id;
+                            }
+                            
+                            driverSelect.appendChild(option);
+                        });
+                        
+                        // Manejar cambio de chofer
+                        driverSelect.addEventListener('change', function() {
+                            document.getElementById('driverId').value = this.value;
+                        });
+                        
+                        step2Driver.classList.remove('hidden');
+                        step3.classList.add('hidden');
+                        step4.classList.add('hidden');
+                    } else {
+                        step2Driver.classList.add('hidden');
+                        step3.classList.remove('hidden');
+                        step4.classList.remove('hidden');
+                        newClientCheck.checked = true;
+                        newClientFields.classList.remove('hidden');
+                        newDriverCheck.checked = true;
+                        newDriverFields.classList.remove('hidden');
+                    }
+                    
+                    // Show payment method section
+                    paymentMethodSection.classList.remove('hidden');
+                    
+                    // Limpiar el input manual
+                    manualPlateInput.value = '';
+                } else {
+                    // La placa NO existe - registro manual para nueva unidad
+                    document.getElementById('plateNumber').value = plate;
+                    
+                    searchResult.className = 'mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg';
+                    searchResult.innerHTML = `
+                        <div class="flex items-center text-orange-800">
+                            <i class="fas fa-edit text-2xl mr-3"></i>
+                            <div>
+                                <p class="font-semibold">Registro Manual</p>
+                                <p class="text-sm">Placa: <strong>${plate}</strong> - Complete los datos para registrar la unidad</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('unitId').value = '';
+                    step2Unit.classList.remove('hidden');
+                    step2Driver.classList.add('hidden');
+                    step3.classList.remove('hidden');
+                    step4.classList.remove('hidden');
+                    document.getElementById('capacityLiters').setAttribute('required', 'required');
+                    
+                    // Mostrar campos de registro nuevo
+                    newClientCheck.checked = true;
+                    newClientFields.classList.remove('hidden');
+                    newDriverCheck.checked = true;
+                    newDriverFields.classList.remove('hidden');
+                    
+                    // Show payment method section
+                    paymentMethodSection.classList.remove('hidden');
+                    
+                    // Limpiar el input manual
+                    manualPlateInput.value = '';
                 }
                 
-                // Show payment method section
-                paymentMethodSection.classList.remove('hidden');
+                searchResult.classList.remove('hidden');
+                registrationForm.classList.remove('hidden');
+                actionButtons.classList.remove('hidden');
                 
-                // Limpiar el input manual
-                manualPlateInput.value = '';
-            } else {
-                // La placa NO existe - registro manual para nueva unidad
-                document.getElementById('plateNumber').value = plate;
-                
-                searchResult.className = 'mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg';
-                searchResult.innerHTML = `
-                    <div class="flex items-center text-orange-800">
-                        <i class="fas fa-edit text-2xl mr-3"></i>
-                        <div>
-                            <p class="font-semibold">Registro Manual</p>
-                            <p class="text-sm">Placa: <strong>${plate}</strong> - Complete los datos para registrar la unidad</p>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('unitId').value = '';
-                step2Unit.classList.remove('hidden');
-                step2Driver.classList.add('hidden');
-                step3.classList.remove('hidden');
-                step4.classList.remove('hidden');
-                document.getElementById('capacityLiters').setAttribute('required', 'required');
-                
-                // Mostrar campos de registro nuevo
-                newClientCheck.checked = true;
-                newClientFields.classList.remove('hidden');
-                newDriverCheck.checked = true;
-                newDriverFields.classList.remove('hidden');
-                
-                // Show payment method section
-                paymentMethodSection.classList.remove('hidden');
-                
-                // Limpiar el input manual
-                manualPlateInput.value = '';
+                // Scroll al formulario
+                registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             
-            searchResult.classList.remove('hidden');
-            registrationForm.classList.remove('hidden');
-            actionButtons.classList.remove('hidden');
-            
-            // Scroll al formulario
-            registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
         } catch (error) {
-            alert('Error al buscar la unidad: ' + error.message);
+            alert('Error al procesar: ' + error.message);
         } finally {
             manualRegistrationBtn.disabled = false;
             manualRegistrationBtn.innerHTML = '<i class="fas fa-edit mr-2"></i>Registrar';

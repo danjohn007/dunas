@@ -64,8 +64,8 @@
         </div>
     </div>
     
-    <!-- Ingresos por Método de Pago -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Ingresos por Método de Pago y Estadísticas de Vales -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">
                 <i class="fas fa-money-bill-wave text-green-600 mr-2"></i>Ingresos por Método de Pago
@@ -76,7 +76,7 @@
                     <span class="font-semibold text-gray-900">$<?php echo number_format($stats['by_method']['cash'], 2); ?></span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-700"><i class="fas fa-ticket-alt text-blue-600 mr-2"></i>Vales</span>
+                    <span class="text-gray-700"><i class="fas fa-ticket-alt text-blue-600 mr-2"></i>Vales (Transacciones)</span>
                     <span class="font-semibold text-gray-900">$<?php echo number_format($stats['by_method']['voucher'], 2); ?></span>
                 </div>
                 <div class="flex justify-between items-center">
@@ -86,12 +86,41 @@
             </div>
         </div>
         
+        <!-- Estadísticas de Vales Generados -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-receipt text-blue-600 mr-2"></i>Vales Generados
+            </h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700"><i class="fas fa-check-circle text-green-600 mr-2"></i>Pagados</span>
+                    <div class="text-right">
+                        <div class="font-semibold text-gray-900">$<?php echo number_format($stats['vouchers']['total_paid'], 2); ?></div>
+                        <div class="text-xs text-gray-500"><?php echo $stats['vouchers']['paid_count']; ?> vales</div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700"><i class="fas fa-clock text-orange-600 mr-2"></i>Pendientes (Crédito)</span>
+                    <div class="text-right">
+                        <div class="font-semibold text-orange-600">$<?php echo number_format($stats['vouchers']['total_pending'], 2); ?></div>
+                        <div class="text-xs text-gray-500"><?php echo $stats['vouchers']['pending_count']; ?> vales</div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center border-t pt-2">
+                    <span class="text-gray-700 font-semibold">Total</span>
+                    <div class="text-right">
+                        <div class="font-bold text-gray-900">$<?php echo number_format($stats['vouchers']['total_amount'], 2); ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Gráfica de Ingresos por Día -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-chart-bar text-blue-600 mr-2"></i>Ingresos en el Período Seleccionado
+                <i class="fas fa-chart-bar text-blue-600 mr-2"></i>Ingresos Período
             </h3>
-            <div style="height: 300px; position: relative;">
+            <div style="height: 250px; position: relative;">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>

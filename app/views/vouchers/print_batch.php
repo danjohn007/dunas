@@ -13,11 +13,11 @@
             .page-break { page-break-after: always; }
             body { margin: 0; }
             .voucher-card {
-                width: 5.5in; /* 1/2 of letter width */
-                height: 4.25in; /* 1/2 of letter height */
+                width: 3.85in; /* 70% of 5.5in */
+                height: 2.975in; /* 70% of 4.25in */
                 page-break-inside: avoid;
                 margin: 0;
-                padding: 0.25in;
+                padding: 0.175in; /* 70% of 0.25in */
             }
         }
         
@@ -27,12 +27,12 @@
         }
         
         .voucher-card {
-            width: 5.5in;
-            height: 4.25in;
+            width: 3.85in; /* 70% of 5.5in */
+            height: 2.975in; /* 70% of 4.25in */
             border: 2px solid #2c5f3b;
-            border-radius: 8px;
-            padding: 0.5in;
-            margin: 0.25in;
+            border-radius: 5.6px; /* 70% of 8px */
+            padding: 0.35in; /* 70% of 0.5in */
+            margin: 0.175in;
             display: inline-block;
             vertical-align: top;
             background: white;
@@ -41,60 +41,60 @@
         
         .voucher-title {
             color: #2c5f3b;
-            font-size: 24px;
+            font-size: 17px; /* 70% of 24px */
             font-weight: bold;
             text-align: center;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
+            margin-bottom: 8px; /* 70% of 12px */
+            letter-spacing: 0.7px;
         }
         
         .voucher-field {
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 5px; /* 70% of 8px */
+            font-size: 9px; /* 70% of 13px */
         }
         
         .voucher-label {
             color: #2c5f3b;
             font-weight: 600;
             display: inline-block;
-            min-width: 120px;
+            min-width: 84px; /* 70% of 120px */
         }
         
         .voucher-value {
-            border-bottom: 1px solid #cbd5e0;
+            border-bottom: 1px solid #cbd5e0; /* 70% of 1.4px rounded to 1px */
             display: inline-block;
-            min-width: 200px;
-            padding-bottom: 2px;
+            min-width: 140px; /* 70% of 200px */
+            padding-bottom: 1px; /* 70% of 1.4px rounded */
         }
         
         .voucher-footer {
             color: #2c5f3b;
-            font-size: 18px;
+            font-size: 13px; /* 70% of 18px */
             font-weight: bold;
             text-align: center;
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 2px solid #2c5f3b;
+            margin-top: 8px; /* 70% of 12px */
+            padding-top: 6px; /* 70% of 8px */
+            border-top: 2px solid #2c5f3b; /* 70% of 2.8px rounded */
         }
         
         .folio-badge {
             background: #e74c3c;
             color: white;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 16px;
+            padding: 3px 8px; /* 70% of 4px 12px */
+            border-radius: 3px; /* 70% of 4px */
+            font-size: 11px; /* 70% of 16px */
             font-weight: bold;
             display: inline-block;
         }
         
         .qr-container {
             text-align: center;
-            margin: 12px 0;
+            margin: 8px 0; /* 70% of 12px */
         }
         
         .qr-code canvas {
-            max-width: 140px !important;
-            max-height: 140px !important;
+            max-width: 98px !important; /* 70% of 140px */
+            max-height: 98px !important; /* 70% of 140px */
         }
     </style>
 </head>
@@ -198,8 +198,8 @@
         try {
             new QRCode(document.getElementById('qrcode-<?php echo $voucher['id']; ?>'), {
                 text: '<?php echo htmlspecialchars($voucher['qr_code']); ?>',
-                width: 140,
-                height: 140,
+                width: 98,
+                height: 98,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
