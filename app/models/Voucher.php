@@ -364,4 +364,14 @@ class Voucher {
         
         return $this->db->fetchOne($sql, $params);
     }
+    
+    /**
+     * Obtiene los datos de un cliente por su ID
+     */
+    public function getClientById($clientId) {
+        $sql = "SELECT id, business_name, rfc_curp, address, phone, client_type 
+                FROM clients 
+                WHERE id = ?";
+        return $this->db->fetchOne($sql, [$clientId]);
+    }
 }

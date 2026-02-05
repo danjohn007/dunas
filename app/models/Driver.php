@@ -139,4 +139,32 @@ class Driver {
         $result = $this->db->fetchOne($sql, $params);
         return $result['count'] > 0;
     }
+    
+    /**
+     * Obtiene o crea un chofer genérico para un cliente
+     * Usado cuando se registra con vale pero sin datos del chofer
+     */
+    public function getOrCreateGenericDriver($clientId) {
+        // Buscar si ya existe un chofer genérico para este cliente
+        $sql = "SELECT id FROM drivers 
+                WHERE client_id = ? AND full_name = 'Chofer General' 
+                LIMIT 1";
+        $driver = $this->db->fetchOne($sql, [$clientId]);
+        
+        if ($driver) {
+            return $driver['id'];
+        }
+        
+        // Crear un chofer genérico
+        $data = [
+            'client_id' => $clientId,
+            'full_name' => 'Chofer General',
+            'license_number' => null,
+            'license_expiry' => null,
+            'phone' => 'Sin teléfono',
+            'status' => 'active'
+        ];
+        
+        return $this->create($data);
+    }
 }

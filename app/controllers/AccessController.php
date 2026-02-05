@@ -461,19 +461,28 @@ class AccessController extends BaseController {
             }
             
             // Buscar o crear chofer
+            // Si hay un voucher_id, los datos del chofer son opcionales
+            $hasVoucher = !empty($_POST['voucher_id']);
+            
             if (!empty($_POST['driver_id'])) {
                 $driverId = $_POST['driver_id'];
-            } else {
-                // Crear nuevo chofer
+            } elseif (!$hasVoucher || (!empty($_POST['driver_name']) && !empty($_POST['driver_phone']))) {
+                // Crear nuevo chofer solo si:
+                // - No hay voucher (flujo normal, chofer requerido), O
+                // - Hay voucher pero se proporcionaron datos del chofer
                 $driverData = [
                     'client_id' => $clientId,
-                    'full_name' => $_POST['driver_name'],
+                    'full_name' => $_POST['driver_name'] ?? 'Chofer General',
                     'license_number' => !empty($_POST['driver_license']) ? $_POST['driver_license'] : null,
                     'license_expiry' => !empty($_POST['driver_license_expiry']) ? $_POST['driver_license_expiry'] : null,
-                    'phone' => $_POST['driver_phone'],
+                    'phone' => $_POST['driver_phone'] ?? 'Sin teléfono',
                     'status' => 'active'
                 ];
                 $driverId = $this->driverModel->create($driverData);
+            } else {
+                // Si hay voucher y no se proporcionaron datos del chofer, usar un chofer genérico
+                // Buscar o crear un chofer "Genérico" para este cliente
+                $driverId = $this->driverModel->getOrCreateGenericDriver($clientId);
             }
             
             // Buscar o crear unidad
