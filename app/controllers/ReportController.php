@@ -97,6 +97,9 @@ class ReportController extends BaseController {
         // Obtener estadísticas de vales
         $voucherStats = $this->voucherModel->getFinancialStats($dateFrom, $dateTo);
         
+        // Obtener resumen de vales por empresa
+        $vouchersByCompany = $this->voucherModel->getVouchersByCompany($dateFrom, $dateTo);
+        
         // Calcular estadísticas
         $stats = [
             'total_transactions' => count($transactions),
@@ -135,12 +138,68 @@ class ReportController extends BaseController {
             'transactions' => $transactions,
             'stats' => $stats,
             'revenueByDay' => $revenueByDay,
+            'vouchersByCompany' => $vouchersByCompany,
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
             'showNav' => true
         ];
         
         $this->view('reports/financial', $data);
+    }
+    
+    /**
+     * Reporte detallado de vales por empresa
+     */
+    public function vouchersByCompany() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        $clientId = $_GET['client_id'] ?? null;
+        
+        // Obtener detalle de vales
+        $vouchers = $this->voucherModel->getVoucherDetailsByCompany($clientId, $dateFrom, $dateTo);
+        
+        // Obtener nombre del cliente si se filtró
+        $clientName = null;
+        if ($clientId) {
+            $client = $this->voucherModel->getClientById($clientId);
+            $clientName = $client ? $client['business_name'] : 'Cliente no encontrado';
+        }
+        
+        $data = [
+            'title' => 'Detalle de Vales por Empresa',
+            'vouchers' => $vouchers,
+            'clientName' => $clientName,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'showNav' => true
+        ];
+        
+        $this->view('reports/vouchers_by_company', $data);
+    }
+    
+    /**
+     * Reporte de resumen de vales generados
+     */
+    public function vouchersSummary() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        
+        // Obtener resumen por empresa
+        $vouchersByCompany = $this->voucherModel->getVouchersByCompany($dateFrom, $dateTo);
+        
+        $data = [
+            'title' => 'Resumen de Vales Generados',
+            'vouchersByCompany' => $vouchersByCompany,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'showNav' => true
+        ];
+        
+        $this->view('reports/vouchers_summary', $data);
     }
     
     public function operational() {

@@ -374,4 +374,86 @@ class Voucher {
                 WHERE id = ?";
         return $this->db->fetchOne($sql, [$clientId]);
     }
+    
+    /**
+     * Obtiene resumen de vales agrupados por empresa/cliente
+     */
+    public function getVouchersByCompany($dateFrom = null, $dateTo = null) {
+        $sql = "SELECT 
+                    c.id as client_id,
+                    c.business_name as client_name,
+                    COUNT(v.id) as total_vouchers,
+                    SUM(v.capacity) as total_capacity,
+                    SUM(CASE WHEN v.status = 'active' THEN 1 ELSE 0 END) as active_count,
+                    SUM(CASE WHEN v.status = 'used' OR v.status = 'registered' THEN 1 ELSE 0 END) as used_count,
+                    SUM(CASE WHEN v.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count,
+                    SUM(CASE WHEN v.payment_status = 'paid' THEN v.cost ELSE 0 END) as total_paid,
+                    SUM(CASE WHEN v.payment_status = 'pending' THEN v.cost ELSE 0 END) as total_pending,
+                    MIN(v.folio) as folio_inicial,
+                    MAX(v.folio) as folio_final,
+                    v.serie
+                FROM vouchers v
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE v.cost IS NOT NULL";
+        
+        $params = [];
+        
+        if ($dateFrom) {
+            $sql .= " AND v.created_at >= ?";
+            $params[] = $dateFrom . ' 00:00:00';
+        }
+        
+        if ($dateTo) {
+            $sql .= " AND v.created_at <= ?";
+            $params[] = $dateTo . ' 23:59:59';
+        }
+        
+        $sql .= " GROUP BY c.id, c.business_name, v.serie
+                  ORDER BY c.business_name ASC, v.serie ASC";
+        
+        return $this->db->fetchAll($sql, $params);
+    }
+    
+    /**
+     * Obtiene el detalle de vales por empresa
+     */
+    public function getVoucherDetailsByCompany($clientId = null, $dateFrom = null, $dateTo = null) {
+        $sql = "SELECT 
+                    v.id,
+                    v.serie,
+                    v.folio,
+                    v.qr_code,
+                    v.capacity,
+                    v.cost,
+                    v.payment_status,
+                    v.status,
+                    v.created_at,
+                    v.used_at,
+                    c.business_name as client_name,
+                    c.id as client_id
+                FROM vouchers v
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE 1=1";
+        
+        $params = [];
+        
+        if ($clientId) {
+            $sql .= " AND v.client_id = ?";
+            $params[] = $clientId;
+        }
+        
+        if ($dateFrom) {
+            $sql .= " AND v.created_at >= ?";
+            $params[] = $dateFrom . ' 00:00:00';
+        }
+        
+        if ($dateTo) {
+            $sql .= " AND v.created_at <= ?";
+            $params[] = $dateTo . ' 23:59:59';
+        }
+        
+        $sql .= " ORDER BY v.created_at DESC, v.serie ASC, v.folio ASC";
+        
+        return $this->db->fetchAll($sql, $params);
+    }
 }
