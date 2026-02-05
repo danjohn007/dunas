@@ -27,10 +27,10 @@
         }
         
         .voucher-card {
-            width: 3.85in;
-            height: 2.975in;
+            width: 3.85in; /* 70% of 5.5in */
+            height: 2.975in; /* 70% of 4.25in */
             border: 2px solid #2c5f3b;
-            border-radius: 6px;
+            border-radius: 5.6px; /* 70% of 8px */
             padding: 0.35in; /* 70% of 0.5in */
             margin: 0.175in;
             display: inline-block;
@@ -61,10 +61,10 @@
         }
         
         .voucher-value {
-            border-bottom: 1px solid #cbd5e0;
+            border-bottom: 1px solid #cbd5e0; /* 70% of 1.4px rounded to 1px */
             display: inline-block;
             min-width: 140px; /* 70% of 200px */
-            padding-bottom: 1px;
+            padding-bottom: 1px; /* 70% of 1.4px rounded */
         }
         
         .voucher-footer {
@@ -74,14 +74,14 @@
             text-align: center;
             margin-top: 8px; /* 70% of 12px */
             padding-top: 6px; /* 70% of 8px */
-            border-top: 2px solid #2c5f3b;
+            border-top: 2px solid #2c5f3b; /* 70% of 2.8px rounded */
         }
         
         .folio-badge {
             background: #e74c3c;
             color: white;
             padding: 3px 8px; /* 70% of 4px 12px */
-            border-radius: 3px;
+            border-radius: 3px; /* 70% of 4px */
             font-size: 11px; /* 70% of 16px */
             font-weight: bold;
             display: inline-block;

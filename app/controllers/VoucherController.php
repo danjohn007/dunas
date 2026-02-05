@@ -78,7 +78,7 @@ class VoucherController extends BaseController {
         // Validar campos requeridos
         $required = ['serie', 'start_folio', 'quantity', 'capacity', 'client_id', 'cost', 'payment_status'];
         foreach ($required as $field) {
-            if (empty($_POST[$field]) && $_POST[$field] !== '0') {
+            if (!isset($_POST[$field]) || (trim($_POST[$field]) === '' && $field !== 'cost')) {
                 $this->setFlash('error', 'Todos los campos son requeridos, incluyendo la selección de cliente, costo y estado de pago.');
                 $this->redirect('/vouchers/create');
                 return;

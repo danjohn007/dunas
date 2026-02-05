@@ -653,8 +653,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Validar formato básico
-        if (input.length < 3) {
-            alert('El código debe tener al menos 3 caracteres');
+        if (input.length < 4) {
+            alert('El código debe tener al menos 4 caracteres');
             manualPlateInput.focus();
             return;
         }

@@ -147,7 +147,7 @@ class Voucher {
         $qrCode = strtoupper($serie) . '-' . $folio;
         
         // Verificar que el código no esté vacío
-        if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 3) {
+        if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
             throw new Exception("Error al generar código QR válido");
         }
         
@@ -186,7 +186,7 @@ class Voucher {
         $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio']);
         
         // Última validación antes de insertar
-        if (empty($qrCode) || strlen($qrCode) < 3) {
+        if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
             throw new Exception("Error crítico: código QR generado inválido");
         }
         
