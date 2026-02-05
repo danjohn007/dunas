@@ -14,9 +14,10 @@ class Voucher {
      * Obtiene todos los vales con filtros opcionales
      */
     public function getAll($filters = []) {
-        $sql = "SELECT v.*, u.full_name as created_by_name
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id 
+                LEFT JOIN clients c ON v.client_id = c.id
                 WHERE 1=1";
         $params = [];
         
@@ -59,10 +60,12 @@ class Voucher {
      */
     public function getById($id) {
         $sql = "SELECT v.*, u.full_name as created_by_name,
-                       a.ticket_code as used_ticket_code
+                       a.ticket_code as used_ticket_code,
+                       c.business_name as client_name, c.phone as client_phone, c.address as client_address
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id
                 LEFT JOIN access_logs a ON v.used_by_access_log_id = a.id
+                LEFT JOIN clients c ON v.client_id = c.id
                 WHERE v.id = ?";
         return $this->db->fetchOne($sql, [$id]);
     }
@@ -71,9 +74,10 @@ class Voucher {
      * Obtiene un vale por su código QR
      */
     public function getByQRCode($qrCode) {
-        $sql = "SELECT v.*, u.full_name as created_by_name
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id
+                LEFT JOIN clients c ON v.client_id = c.id
                 WHERE v.qr_code = ?";
         return $this->db->fetchOne($sql, [$qrCode]);
     }
@@ -100,15 +104,30 @@ class Voucher {
      * Genera un código QR único
      */
     private function generateUniqueQRCode($serie, $folio) {
+        // Validar que serie y folio no estén vacíos
+        if (empty($serie) || $folio < 1) {
+            throw new Exception("Serie y folio son requeridos para generar el código QR");
+        }
+        
         // Formato: SERIE-FOLIO-TIMESTAMP
         $timestamp = time();
         $qrCode = strtoupper($serie) . '-' . str_pad($folio, 6, '0', STR_PAD_LEFT) . '-' . $timestamp;
+        
+        // Verificar que el código no esté vacío
+        if (empty($qrCode) || $qrCode === '--' || strlen($qrCode) < 10) {
+            throw new Exception("Error al generar código QR válido");
+        }
         
         // Verificar que no exista (muy poco probable, pero por seguridad)
         $attempts = 0;
         while ($this->qrCodeExists($qrCode) && $attempts < 10) {
             $qrCode = strtoupper($serie) . '-' . str_pad($folio, 6, '0', STR_PAD_LEFT) . '-' . ($timestamp + $attempts);
             $attempts++;
+        }
+        
+        // Verificación final
+        if ($this->qrCodeExists($qrCode)) {
+            throw new Exception("No se pudo generar un código QR único después de varios intentos");
         }
         
         return $qrCode;
@@ -118,6 +137,20 @@ class Voucher {
      * Crea un nuevo vale
      */
     public function create($data) {
+        // Validar campos requeridos
+        if (empty($data['serie'])) {
+            throw new Exception("La serie es requerida para crear un vale");
+        }
+        if (empty($data['folio']) || $data['folio'] < 1) {
+            throw new Exception("El folio debe ser un número mayor a 0");
+        }
+        if (empty($data['capacity']) || $data['capacity'] < 1) {
+            throw new Exception("La capacidad debe ser mayor a 0 litros");
+        }
+        if (empty($data['created_by'])) {
+            throw new Exception("El usuario creador es requerido");
+        }
+        
         // Validar que serie+folio no existan
         if ($this->seriesFolioExists($data['serie'], $data['folio'])) {
             throw new Exception("Ya existe un vale con la serie {$data['serie']} y folio {$data['folio']}");
@@ -126,15 +159,21 @@ class Voucher {
         // Generar código QR único
         $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio']);
         
-        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, created_by, status) 
-                VALUES (?, ?, ?, ?, ?, 'active')";
+        // Última validación antes de insertar
+        if (empty($qrCode) || strlen($qrCode) < 10) {
+            throw new Exception("Error crítico: código QR generado inválido");
+        }
+        
+        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, created_by, client_id, status) 
+                VALUES (?, ?, ?, ?, ?, ?, 'active')";
         
         $params = [
-            strtoupper($data['serie']),
-            $data['folio'],
+            strtoupper(trim($data['serie'])),
+            (int)$data['folio'],
             $qrCode,
-            $data['capacity'],
-            $data['created_by']
+            (int)$data['capacity'],
+            $data['created_by'],
+            $data['client_id'] ?? null
         ];
         
         $this->db->execute($sql, $params);
@@ -149,7 +188,7 @@ class Voucher {
     /**
      * Genera múltiples vales de forma consecutiva
      */
-    public function generateBatch($serie, $startFolio, $quantity, $capacity, $createdBy) {
+    public function generateBatch($serie, $startFolio, $quantity, $capacity, $createdBy, $clientId = null) {
         $createdVouchers = [];
         $errors = [];
         
@@ -161,7 +200,8 @@ class Voucher {
                     'serie' => $serie,
                     'folio' => $folio,
                     'capacity' => $capacity,
-                    'created_by' => $createdBy
+                    'created_by' => $createdBy,
+                    'client_id' => $clientId
                 ]);
                 
                 $createdVouchers[] = [

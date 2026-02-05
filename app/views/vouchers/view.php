@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function printVoucher() {
     // Redirect to print view for single voucher
-    window.open('<?php echo BASE_URL; ?>/vouchers/print-single/<?php echo $voucher['id']; ?>', '_blank');
+    window.open('<?php echo BASE_URL; ?>/vouchers/printSingle/<?php echo $voucher['id']; ?>', '_blank');
 }
 
 function confirmCancel() {
