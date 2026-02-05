@@ -83,6 +83,39 @@ class Voucher {
     }
     
     /**
+     * Obtiene un vale por su serie y folio
+     */
+    public function getBySerieFolio($serie, $folio) {
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
+                FROM vouchers v 
+                LEFT JOIN users u ON v.created_by = u.id
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE v.serie = ? AND v.folio = ?";
+        return $this->db->fetchOne($sql, [strtoupper($serie), (int)$folio]);
+    }
+    
+    /**
+     * Obtiene un vale por código (puede ser QR completo o formato SERIE-FOLIO)
+     */
+    public function getByCode($code) {
+        // Primero intentar búsqueda directa por QR code
+        $voucher = $this->getByQRCode($code);
+        if ($voucher) {
+            return $voucher;
+        }
+        
+        // Si no se encuentra, intentar parsear como SERIE-FOLIO
+        $parts = explode('-', $code);
+        if (count($parts) >= 2) {
+            $serie = $parts[0];
+            $folio = $parts[1];
+            return $this->getBySerieFolio($serie, $folio);
+        }
+        
+        return null;
+    }
+    
+    /**
      * Verifica si un código QR ya existe
      */
     public function qrCodeExists($qrCode) {
@@ -101,7 +134,7 @@ class Voucher {
     }
     
     /**
-     * Genera un código QR único
+     * Genera un código QR único (formato corto: SERIE-FOLIO)
      */
     private function generateUniqueQRCode($serie, $folio) {
         // Validar que serie y folio no estén vacíos
@@ -109,25 +142,18 @@ class Voucher {
             throw new Exception("Serie y folio son requeridos para generar el código QR");
         }
         
-        // Formato: SERIE-FOLIO-TIMESTAMP
-        $timestamp = time();
-        $qrCode = strtoupper($serie) . '-' . str_pad($folio, 6, '0', STR_PAD_LEFT) . '-' . $timestamp;
+        // Formato corto: SERIE-FOLIO (sin timestamp)
+        // El folio no lleva padding porque queremos mantenerlo corto
+        $qrCode = strtoupper($serie) . '-' . $folio;
         
         // Verificar que el código no esté vacío
-        if (empty($qrCode) || $qrCode === '--' || strlen($qrCode) < 10) {
+        if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 3) {
             throw new Exception("Error al generar código QR válido");
         }
         
-        // Verificar que no exista (muy poco probable, pero por seguridad)
-        $attempts = 0;
-        while ($this->qrCodeExists($qrCode) && $attempts < 10) {
-            $qrCode = strtoupper($serie) . '-' . str_pad($folio, 6, '0', STR_PAD_LEFT) . '-' . ($timestamp + $attempts);
-            $attempts++;
-        }
-        
-        // Verificación final
+        // Verificar que no exista (debería no existir ya que serie+folio es único)
         if ($this->qrCodeExists($qrCode)) {
-            throw new Exception("No se pudo generar un código QR único después de varios intentos");
+            throw new Exception("Ya existe un vale con el código QR {$qrCode}");
         }
         
         return $qrCode;
@@ -160,18 +186,20 @@ class Voucher {
         $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio']);
         
         // Última validación antes de insertar
-        if (empty($qrCode) || strlen($qrCode) < 10) {
+        if (empty($qrCode) || strlen($qrCode) < 3) {
             throw new Exception("Error crítico: código QR generado inválido");
         }
         
-        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, created_by, client_id, status) 
-                VALUES (?, ?, ?, ?, ?, ?, 'active')";
+        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')";
         
         $params = [
             strtoupper(trim($data['serie'])),
             (int)$data['folio'],
             $qrCode,
             (int)$data['capacity'],
+            isset($data['cost']) ? (float)$data['cost'] : null,
+            $data['payment_status'] ?? 'pending',
             $data['created_by'],
             $data['client_id'] ?? null
         ];
@@ -188,7 +216,7 @@ class Voucher {
     /**
      * Genera múltiples vales de forma consecutiva
      */
-    public function generateBatch($serie, $startFolio, $quantity, $capacity, $createdBy, $clientId = null) {
+    public function generateBatch($serie, $startFolio, $quantity, $capacity, $createdBy, $clientId = null, $cost = null, $paymentStatus = 'pending') {
         $createdVouchers = [];
         $errors = [];
         
@@ -201,7 +229,9 @@ class Voucher {
                     'folio' => $folio,
                     'capacity' => $capacity,
                     'created_by' => $createdBy,
-                    'client_id' => $clientId
+                    'client_id' => $clientId,
+                    'cost' => $cost,
+                    'payment_status' => $paymentStatus
                 ]);
                 
                 $createdVouchers[] = [
@@ -247,6 +277,25 @@ class Voucher {
     }
     
     /**
+     * Marca un vale como registrado (cuando se usa para acceso)
+     */
+    public function markAsRegistered($id, $accessLogId) {
+        $sql = "UPDATE vouchers 
+                SET status = 'registered', 
+                    used_at = NOW(), 
+                    used_by_access_log_id = ?
+                WHERE id = ? AND status = 'active'";
+        
+        $affectedRows = $this->db->execute($sql, [$accessLogId, $id]);
+        
+        if ($affectedRows === 0) {
+            throw new Exception("No se pudo registrar el vale. El vale puede estar ya usado, registrado o cancelado.");
+        }
+        
+        return true;
+    }
+    
+    /**
      * Cancela un vale
      */
     public function cancel($id) {
@@ -271,6 +320,7 @@ class Voucher {
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                     SUM(CASE WHEN status = 'used' THEN 1 ELSE 0 END) as used,
+                    SUM(CASE WHEN status = 'registered' THEN 1 ELSE 0 END) as registered,
                     SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
                     SUM(CASE WHEN status = 'active' THEN capacity ELSE 0 END) as total_active_capacity
                 FROM vouchers";
@@ -284,5 +334,34 @@ class Voucher {
     public function getUniqueSeries() {
         $sql = "SELECT DISTINCT serie FROM vouchers ORDER BY serie ASC";
         return $this->db->fetchAll($sql);
+    }
+    
+    /**
+     * Obtiene estadísticas financieras de vales
+     */
+    public function getFinancialStats($dateFrom = null, $dateTo = null) {
+        $sql = "SELECT 
+                    SUM(CASE WHEN payment_status = 'paid' THEN cost ELSE 0 END) as total_paid,
+                    SUM(CASE WHEN payment_status = 'pending' THEN cost ELSE 0 END) as total_pending,
+                    SUM(cost) as total_amount,
+                    COUNT(*) as total_vouchers,
+                    SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid_count,
+                    SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending_count
+                FROM vouchers 
+                WHERE cost IS NOT NULL";
+        
+        $params = [];
+        
+        if ($dateFrom) {
+            $sql .= " AND created_at >= ?";
+            $params[] = $dateFrom . ' 00:00:00';
+        }
+        
+        if ($dateTo) {
+            $sql .= " AND created_at <= ?";
+            $params[] = $dateTo . ' 23:59:59';
+        }
+        
+        return $this->db->fetchOne($sql, $params);
     }
 }

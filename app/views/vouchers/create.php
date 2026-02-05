@@ -118,6 +118,49 @@
                     </p>
                 </div>
 
+                <!-- Costo -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Costo por Vale <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           name="cost" 
+                           id="cost"
+                           required
+                           min="0"
+                           step="0.01"
+                           placeholder="Ejemplo: 150.00, 250.50"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                           value="<?php echo isset($_POST['cost']) ? htmlspecialchars($_POST['cost']) : ''; ?>">
+                    <p class="mt-1 text-sm text-gray-500">
+                        <i class="fas fa-info-circle"></i>
+                        Costo en pesos de cada vale
+                    </p>
+                </div>
+
+                <!-- Estado de Pago -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Estado de Pago <span class="text-red-500">*</span>
+                    </label>
+                    <select name="payment_status" 
+                            id="payment_status"
+                            required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">-- Seleccione el estado --</option>
+                        <option value="paid" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'paid') ? 'selected' : ''; ?>>
+                            Pagado
+                        </option>
+                        <option value="pending" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'pending') ? 'selected' : ''; ?>>
+                            Pendiente
+                        </option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                        <i class="fas fa-info-circle"></i>
+                        Indica si los vales ya están pagados o pendientes de cobro
+                    </p>
+                </div>
+
                 <!-- Preview -->
                 <div class="bg-blue-50 border-l-4 border-blue-500 p-4">
                     <div class="flex">
@@ -134,7 +177,8 @@
                                 </p>
                                 <p class="mt-2">
                                     Total: <strong><span id="previewQuantity">0</span> vales</strong> | 
-                                    Capacidad total: <strong><span id="previewTotalCapacity">0</span> litros</strong>
+                                    Capacidad total: <strong><span id="previewTotalCapacity">0</span> litros</strong> |
+                                    Monto total: <strong>$<span id="previewTotalCost">0.00</span></strong>
                                 </p>
                             </div>
                         </div>
@@ -164,9 +208,11 @@ function updatePreview() {
     const startFolio = parseInt(document.getElementById('start_folio').value) || 0;
     const quantity = parseInt(document.getElementById('quantity').value) || 0;
     const capacity = parseInt(document.getElementById('capacity').value) || 0;
+    const cost = parseFloat(document.getElementById('cost').value) || 0;
     
     const endFolio = startFolio + quantity - 1;
     const totalCapacity = quantity * capacity;
+    const totalCost = quantity * cost;
     
     document.getElementById('previewSerie').textContent = serie;
     document.getElementById('previewSerieEnd').textContent = serie;
@@ -175,6 +221,7 @@ function updatePreview() {
     document.getElementById('previewCapacity').textContent = capacity.toLocaleString();
     document.getElementById('previewQuantity').textContent = quantity;
     document.getElementById('previewTotalCapacity').textContent = totalCapacity.toLocaleString();
+    document.getElementById('previewTotalCost').textContent = totalCost.toFixed(2);
 }
 
 // Add event listeners
@@ -182,6 +229,7 @@ document.getElementById('serie').addEventListener('input', updatePreview);
 document.getElementById('start_folio').addEventListener('input', updatePreview);
 document.getElementById('quantity').addEventListener('input', updatePreview);
 document.getElementById('capacity').addEventListener('input', updatePreview);
+document.getElementById('cost').addEventListener('input', updatePreview);
 
 // Auto-uppercase serie input
 document.getElementById('serie').addEventListener('input', function(e) {

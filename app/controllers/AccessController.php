@@ -554,12 +554,12 @@ class AccessController extends BaseController {
             
             $accessId = $this->accessModel->create($accessData);
             
-            // Marcar vale como usado si aplica
+            // Marcar vale como registrado si aplica
             if ($_POST['payment_method'] === 'voucher' && !empty($_POST['voucher_id'])) {
                 try {
-                    $this->voucherModel->markAsUsed($_POST['voucher_id'], $accessId);
+                    $this->voucherModel->markAsRegistered($_POST['voucher_id'], $accessId);
                 } catch (Exception $e) {
-                    error_log("Error marcando vale como usado en quickEntry: " . $e->getMessage());
+                    error_log("Error marcando vale como registrado en quickEntry: " . $e->getMessage());
                     // No detener el proceso, solo registrar el error
                 }
             }

@@ -76,10 +76,10 @@ class VoucherController extends BaseController {
         }
         
         // Validar campos requeridos
-        $required = ['serie', 'start_folio', 'quantity', 'capacity', 'client_id'];
+        $required = ['serie', 'start_folio', 'quantity', 'capacity', 'client_id', 'cost', 'payment_status'];
         foreach ($required as $field) {
-            if (empty($_POST[$field])) {
-                $this->setFlash('error', 'Todos los campos son requeridos, incluyendo la selección de cliente.');
+            if (empty($_POST[$field]) && $_POST[$field] !== '0') {
+                $this->setFlash('error', 'Todos los campos son requeridos, incluyendo la selección de cliente, costo y estado de pago.');
                 $this->redirect('/vouchers/create');
                 return;
             }
@@ -90,6 +90,8 @@ class VoucherController extends BaseController {
         $quantity = (int)$_POST['quantity'];
         $capacity = (int)$_POST['capacity'];
         $clientId = (int)$_POST['client_id'];
+        $cost = (float)$_POST['cost'];
+        $paymentStatus = $_POST['payment_status'];
         
         // Validaciones
         if (!preg_match('/^[A-Z]{1,10}$/', $serie)) {
@@ -116,6 +118,18 @@ class VoucherController extends BaseController {
             return;
         }
         
+        if ($cost < 0) {
+            $this->setFlash('error', 'El costo debe ser mayor o igual a 0.');
+            $this->redirect('/vouchers/create');
+            return;
+        }
+        
+        if (!in_array($paymentStatus, ['paid', 'pending'])) {
+            $this->setFlash('error', 'El estado de pago debe ser "paid" o "pending".');
+            $this->redirect('/vouchers/create');
+            return;
+        }
+        
         // Generar vales
         try {
             $result = $this->voucherModel->generateBatch(
@@ -124,7 +138,9 @@ class VoucherController extends BaseController {
                 $quantity,
                 $capacity,
                 Auth::user()['id'],
-                $clientId
+                $clientId,
+                $cost,
+                $paymentStatus
             );
             
             if ($result['total'] > 0) {
