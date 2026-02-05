@@ -4,6 +4,10 @@
  */
 class Driver {
     
+    // Constants for default values
+    const DEFAULT_DRIVER_NAME = 'Chofer General';
+    const DEFAULT_DRIVER_PHONE = 'Sin teléfono';
+    
     private $db;
     
     public function __construct() {
@@ -147,9 +151,9 @@ class Driver {
     public function getOrCreateGenericDriver($clientId) {
         // Buscar si ya existe un chofer genérico para este cliente
         $sql = "SELECT id FROM drivers 
-                WHERE client_id = ? AND full_name = 'Chofer General' 
+                WHERE client_id = ? AND full_name = ? 
                 LIMIT 1";
-        $driver = $this->db->fetchOne($sql, [$clientId]);
+        $driver = $this->db->fetchOne($sql, [$clientId, self::DEFAULT_DRIVER_NAME]);
         
         if ($driver) {
             return $driver['id'];
@@ -158,10 +162,10 @@ class Driver {
         // Crear un chofer genérico
         $data = [
             'client_id' => $clientId,
-            'full_name' => 'Chofer General',
+            'full_name' => self::DEFAULT_DRIVER_NAME,
             'license_number' => null,
             'license_expiry' => null,
-            'phone' => 'Sin teléfono',
+            'phone' => self::DEFAULT_DRIVER_PHONE,
             'status' => 'active'
         ];
         

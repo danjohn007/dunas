@@ -472,10 +472,10 @@ class AccessController extends BaseController {
                 // - Hay voucher pero se proporcionaron datos del chofer
                 $driverData = [
                     'client_id' => $clientId,
-                    'full_name' => $_POST['driver_name'] ?? 'Chofer General',
+                    'full_name' => $_POST['driver_name'] ?? Driver::DEFAULT_DRIVER_NAME,
                     'license_number' => !empty($_POST['driver_license']) ? $_POST['driver_license'] : null,
                     'license_expiry' => !empty($_POST['driver_license_expiry']) ? $_POST['driver_license_expiry'] : null,
-                    'phone' => $_POST['driver_phone'] ?? 'Sin teléfono',
+                    'phone' => $_POST['driver_phone'] ?? Driver::DEFAULT_DRIVER_PHONE,
                     'status' => 'active'
                 ];
                 $driverId = $this->driverModel->create($driverData);

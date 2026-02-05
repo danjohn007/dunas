@@ -124,48 +124,48 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <?php foreach ($vouchersByCompany as $registro): ?>
+                    <?php foreach ($vouchersByCompany as $companyVoucher): ?>
                     <tr class="hover:bg-indigo-50 transition-colors duration-150">
                         <td class="px-4 py-3 text-sm font-medium text-gray-900">
                             <i class="fas fa-building text-indigo-500 mr-2"></i>
-                            <?php echo htmlspecialchars($registro['client_name'] ?? 'Sin asignar'); ?>
+                            <?php echo htmlspecialchars($companyVoucher['client_name'] ?? 'Sin asignar'); ?>
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold">
-                                <?php echo htmlspecialchars($registro['serie']); ?>
+                                <?php echo htmlspecialchars($companyVoucher['serie']); ?>
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center text-sm text-gray-600 font-mono">
-                            <?php echo str_pad($registro['folio_inicial'], 4, '0', STR_PAD_LEFT); ?> 
+                            <?php echo str_pad($companyVoucher['folio_inicial'], 4, '0', STR_PAD_LEFT); ?> 
                             <i class="fas fa-arrow-right text-gray-400 mx-1"></i>
-                            <?php echo str_pad($registro['folio_final'], 4, '0', STR_PAD_LEFT); ?>
+                            <?php echo str_pad($companyVoucher['folio_final'], 4, '0', STR_PAD_LEFT); ?>
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 text-indigo-800 rounded-full font-bold text-lg">
-                                <?php echo $registro['total_vouchers']; ?>
+                                <?php echo $companyVoucher['total_vouchers']; ?>
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center text-sm font-semibold text-blue-700">
-                            <?php echo number_format($registro['total_capacity']); ?> L
+                            <?php echo number_format($companyVoucher['total_capacity']); ?> L
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
-                                <i class="fas fa-check-circle mr-1"></i><?php echo $registro['active_count']; ?>
+                                <i class="fas fa-check-circle mr-1"></i><?php echo $companyVoucher['active_count']; ?>
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
-                                <i class="fas fa-check mr-1"></i><?php echo $registro['used_count']; ?>
+                                <i class="fas fa-check mr-1"></i><?php echo $companyVoucher['used_count']; ?>
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-bold text-green-700">
-                            $<?php echo number_format($registro['total_paid'], 2); ?>
+                            $<?php echo number_format($companyVoucher['total_paid'], 2); ?>
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-bold text-orange-600">
-                            $<?php echo number_format($registro['total_pending'], 2); ?>
+                            $<?php echo number_format($companyVoucher['total_pending'], 2); ?>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <a href="<?php echo BASE_URL; ?>/reports/vouchersByCompany?client_id=<?php echo $registro['client_id']; ?>&date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+                            <a href="<?php echo BASE_URL; ?>/reports/vouchersByCompany?client_id=<?php echo $companyVoucher['client_id']; ?>&date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
                                class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-medium transition">
                                 <i class="fas fa-eye mr-1"></i>Ver Detalle
                             </a>

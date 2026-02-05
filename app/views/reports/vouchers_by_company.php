@@ -93,36 +93,36 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                        <?php foreach ($vouchers as $voucherInfo): ?>
+                        <?php foreach ($vouchers as $voucher): ?>
                         <tr class="hover:bg-blue-50 transition-colors duration-200">
                             <td class="px-4 py-3">
                                 <div class="flex items-center">
                                     <i class="fas fa-qrcode text-blue-600 mr-2"></i>
                                     <span class="font-mono font-bold text-blue-700">
-                                        <?php echo htmlspecialchars($voucherInfo['qr_code']); ?>
+                                        <?php echo htmlspecialchars($voucher['qr_code']); ?>
                                     </span>
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    Serie: <?php echo htmlspecialchars($voucherInfo['serie']); ?> | 
-                                    Folio: <?php echo str_pad($voucherInfo['folio'], 4, '0', STR_PAD_LEFT); ?>
+                                    Serie: <?php echo htmlspecialchars($voucher['serie']); ?> | 
+                                    Folio: <?php echo str_pad($voucher['folio'], 4, '0', STR_PAD_LEFT); ?>
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-sm">
                                 <div class="font-medium text-gray-900">
-                                    <?php echo htmlspecialchars($voucherInfo['client_name'] ?? 'Sin asignar'); ?>
+                                    <?php echo htmlspecialchars($voucher['client_name'] ?? 'Sin asignar'); ?>
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                                    <?php echo number_format($voucherInfo['capacity']); ?> L
+                                    <?php echo number_format($voucher['capacity']); ?> L
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-center font-bold text-gray-900">
-                                $<?php echo number_format($voucherInfo['cost'], 2); ?>
+                                $<?php echo number_format($voucher['cost'], 2); ?>
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <?php
-                                $estadoPago = $voucherInfo['payment_status'];
+                                $estadoPago = $voucher['payment_status'];
                                 $clasePago = $estadoPago == 'paid' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
                                 $iconoPago = $estadoPago == 'paid' ? 'fa-check-circle' : 'fa-clock';
                                 $textoPago = $estadoPago == 'paid' ? 'Pagado' : 'Pendiente';
@@ -134,7 +134,7 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <?php
-                                $estadoVale = $voucherInfo['status'];
+                                $estadoVale = $voucher['status'];
                                 if ($estadoVale == 'active') {
                                     $claseEstado = 'bg-green-100 text-green-800 border-green-300';
                                     $iconoEstado = 'fa-check-circle';
@@ -155,13 +155,13 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-center text-sm text-gray-600">
-                                <?php echo date('d/m/Y', strtotime($voucherInfo['created_at'])); ?>
-                                <div class="text-xs text-gray-400"><?php echo date('H:i', strtotime($voucherInfo['created_at'])); ?></div>
+                                <?php echo date('d/m/Y', strtotime($voucher['created_at'])); ?>
+                                <div class="text-xs text-gray-400"><?php echo date('H:i', strtotime($voucher['created_at'])); ?></div>
                             </td>
                             <td class="px-4 py-3 text-center text-sm text-gray-600">
-                                <?php if ($voucherInfo['used_at']): ?>
-                                    <?php echo date('d/m/Y', strtotime($voucherInfo['used_at'])); ?>
-                                    <div class="text-xs text-gray-400"><?php echo date('H:i', strtotime($voucherInfo['used_at'])); ?></div>
+                                <?php if ($voucher['used_at']): ?>
+                                    <?php echo date('d/m/Y', strtotime($voucher['used_at'])); ?>
+                                    <div class="text-xs text-gray-400"><?php echo date('H:i', strtotime($voucher['used_at'])); ?></div>
                                 <?php else: ?>
                                     <span class="text-gray-400">-</span>
                                 <?php endif; ?>
