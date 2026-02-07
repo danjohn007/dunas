@@ -322,8 +322,8 @@ class VoucherController extends BaseController {
                 return;
             }
             
-            // Vale válido
-            echo json_encode([
+            // Vale válido - incluir datos del cliente si existen
+            $response = [
                 'success' => true,
                 'message' => 'Vale válido',
                 'voucher' => [
@@ -334,7 +334,24 @@ class VoucherController extends BaseController {
                     'qr_code' => $voucher['qr_code'],
                     'status' => $voucher['status']
                 ]
-            ]);
+            ];
+            
+            // Si el vale tiene un cliente asociado, incluir sus datos
+            if (!empty($voucher['client_id'])) {
+                $client = $this->voucherModel->getClientById($voucher['client_id']);
+                if ($client) {
+                    $response['client'] = [
+                        'id' => $client['id'],
+                        'business_name' => $client['business_name'],
+                        'rfc_curp' => $client['rfc_curp'],
+                        'address' => $client['address'],
+                        'phone' => $client['phone'],
+                        'client_type' => $client['client_type']
+                    ];
+                }
+            }
+            
+            echo json_encode($response);
         } catch (Exception $e) {
             echo json_encode([
                 'success' => false,

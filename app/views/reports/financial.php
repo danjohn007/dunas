@@ -126,6 +126,114 @@
         </div>
     </div>
     
+    <!-- Resumen de Vales por Empresa - Nueva Sección -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <div class="px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white flex justify-between items-center">
+            <h3 class="text-lg font-semibold">
+                <i class="fas fa-building mr-2"></i>Resumen de Vales por Empresa
+            </h3>
+            <div class="flex space-x-2">
+                <a href="<?php echo BASE_URL; ?>/reports/vouchersSummary?date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+                   class="bg-white text-indigo-600 hover:bg-gray-100 px-3 py-1 rounded text-sm font-medium transition">
+                    <i class="fas fa-chart-pie mr-1"></i>Ver Resumen Completo
+                </a>
+                <a href="<?php echo BASE_URL; ?>/reports/vouchersByCompany?date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+                   class="bg-white text-indigo-600 hover:bg-gray-100 px-3 py-1 rounded text-sm font-medium transition">
+                    <i class="fas fa-list-alt mr-1"></i>Ver Detalle de Vales
+                </a>
+            </div>
+        </div>
+        
+        <?php if (!empty($vouchersByCompany)): ?>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-100 border-b-2 border-gray-300">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Empresa</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Serie</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Folios</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Total Vales</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Capacidad Total</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Montos</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php foreach ($vouchersByCompany as $companyVoucher): ?>
+                    <tr class="hover:bg-blue-50 transition-colors">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                            <?php echo htmlspecialchars($companyVoucher['client_name'] ?? 'Sin asignar'); ?>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-bold">
+                                <?php echo htmlspecialchars($companyVoucher['serie']); ?>
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm text-gray-600">
+                            <?php echo $companyVoucher['folio_inicial']; ?> - <?php echo $companyVoucher['folio_final']; ?>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-800 rounded-full font-bold">
+                                <?php echo $companyVoucher['total_vouchers']; ?>
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm font-semibold text-blue-700">
+                            <?php echo number_format($companyVoucher['total_capacity']); ?> L
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-col space-y-1 text-xs">
+                                <?php if ($companyVoucher['active_count'] > 0): ?>
+                                <div class="flex items-center justify-center">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">
+                                        <i class="fas fa-check-circle mr-1"></i><?php echo $companyVoucher['active_count']; ?> Activos
+                                    </span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($companyVoucher['used_count'] > 0): ?>
+                                <div class="flex items-center justify-center">
+                                    <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
+                                        <i class="fas fa-check mr-1"></i><?php echo $companyVoucher['used_count']; ?> Usados
+                                    </span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($companyVoucher['cancelled_count'] > 0): ?>
+                                <div class="flex items-center justify-center">
+                                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded font-medium">
+                                        <i class="fas fa-ban mr-1"></i><?php echo $companyVoucher['cancelled_count']; ?> Cancelados
+                                    </span>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="space-y-1">
+                                <div class="text-sm">
+                                    <span class="text-gray-600">Pagado:</span>
+                                    <span class="font-bold text-green-700">$<?php echo number_format($companyVoucher['total_paid'], 2); ?></span>
+                                </div>
+                                <?php if ($companyVoucher['total_pending'] > 0): ?>
+                                <div class="text-sm">
+                                    <span class="text-gray-600">Pendiente:</span>
+                                    <span class="font-bold text-orange-600">$<?php echo number_format($companyVoucher['total_pending'], 2); ?></span>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php else: ?>
+        <div class="px-6 py-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-3">
+                <i class="fas fa-inbox text-3xl text-gray-400"></i>
+            </div>
+            <p class="text-gray-600">No hay vales generados en este período</p>
+        </div>
+        <?php endif; ?>
+    </div>
+    
     <!-- Tabla de Transacciones -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">

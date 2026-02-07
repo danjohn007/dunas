@@ -13,11 +13,11 @@
             .page-break { page-break-after: always; }
             body { margin: 0; }
             .voucher-card {
-                width: 3.85in; /* 70% of 5.5in */
-                height: 2.975in; /* 70% of 4.25in */
+                width: 3.75in; /* Fits 2 per row with margins */
+                height: 3.25in; /* Fits 3 per column with margins */
                 page-break-inside: avoid;
-                margin: 0;
-                padding: 0.175in; /* 70% of 0.25in */
+                margin: 0.1in;
+                padding: 0.15in;
             }
         }
         
@@ -27,12 +27,12 @@
         }
         
         .voucher-card {
-            width: 3.85in; /* 70% of 5.5in */
-            height: 2.975in; /* 70% of 4.25in */
+            width: 3.75in; /* Fits 2 per row with margins */
+            height: 3.25in; /* Fits 3 per column with margins */
             border: 2px solid #2c5f3b;
-            border-radius: 5.6px; /* 70% of 8px */
-            padding: 0.35in; /* 70% of 0.5in */
-            margin: 0.175in;
+            border-radius: 5px;
+            padding: 0.25in;
+            margin: 0.1in;
             display: inline-block;
             vertical-align: top;
             background: white;
@@ -41,60 +41,60 @@
         
         .voucher-title {
             color: #2c5f3b;
-            font-size: 17px; /* 70% of 24px */
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 8px; /* 70% of 12px */
-            letter-spacing: 0.7px;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
         
         .voucher-field {
-            margin-bottom: 5px; /* 70% of 8px */
-            font-size: 9px; /* 70% of 13px */
+            margin-bottom: 4px;
+            font-size: 9px;
         }
         
         .voucher-label {
             color: #2c5f3b;
             font-weight: 600;
             display: inline-block;
-            min-width: 84px; /* 70% of 120px */
+            min-width: 75px;
         }
         
         .voucher-value {
-            border-bottom: 1px solid #cbd5e0; /* 70% of 1.4px rounded to 1px */
+            border-bottom: 1px solid #cbd5e0;
             display: inline-block;
-            min-width: 140px; /* 70% of 200px */
-            padding-bottom: 1px; /* 70% of 1.4px rounded */
+            min-width: 120px;
+            padding-bottom: 1px;
         }
         
         .voucher-footer {
             color: #2c5f3b;
-            font-size: 13px; /* 70% of 18px */
+            font-size: 12px;
             font-weight: bold;
             text-align: center;
-            margin-top: 8px; /* 70% of 12px */
-            padding-top: 6px; /* 70% of 8px */
-            border-top: 2px solid #2c5f3b; /* 70% of 2.8px rounded */
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 2px solid #2c5f3b;
         }
         
         .folio-badge {
             background: #e74c3c;
             color: white;
-            padding: 3px 8px; /* 70% of 4px 12px */
-            border-radius: 3px; /* 70% of 4px */
-            font-size: 11px; /* 70% of 16px */
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
             font-weight: bold;
             display: inline-block;
         }
         
         .qr-container {
             text-align: center;
-            margin: 8px 0; /* 70% of 12px */
+            margin: 6px 0;
         }
         
         .qr-code canvas {
-            max-width: 98px !important; /* 70% of 140px */
-            max-height: 98px !important; /* 70% of 140px */
+            max-width: 85px !important;
+            max-height: 85px !important;
         }
     </style>
 </head>
@@ -117,7 +117,7 @@
         <p class="text-gray-600">Total de vales: <?php echo count($vouchers); ?></p>
         <p class="text-sm text-gray-500 mt-2">
             <i class="fas fa-info-circle"></i>
-            Los vales se imprimirán en formato 1/2 carta (5.5" x 4.25"). Se imprimen 2 vales por página.
+            Los vales se imprimirán en formato carta (8.5" x 11"). Se imprimen 6 vales por página (2 columnas x 3 filas).
         </p>
     </div>
 
@@ -183,8 +183,8 @@
             </div>
         </div>
         <?php 
-        // Add page break after every 2 vouchers
-        if (($index + 1) % 2 === 0 && $index < count($vouchers) - 1): 
+        // Add page break after every 6 vouchers (2 columns x 3 rows)
+        if (($index + 1) % 6 === 0 && $index < count($vouchers) - 1): 
         ?>
         <div class="page-break"></div>
         <?php endif; ?>

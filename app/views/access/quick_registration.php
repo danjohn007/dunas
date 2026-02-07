@@ -681,18 +681,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (voucherData.success && voucherData.voucher) {
                     // Vale válido - procesar como entrada con vale
                     const voucher = voucherData.voucher;
+                    const client = voucherData.client; // Datos del cliente si existen
                     
-                    searchResult.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg';
-                    searchResult.innerHTML = `
+                    let infoHtml = `
                         <div class="flex items-center text-blue-800">
                             <i class="fas fa-ticket-alt text-2xl mr-3"></i>
                             <div>
                                 <p class="font-semibold">Vale Válido</p>
                                 <p class="text-sm">Serie: ${voucher.serie} - Folio: ${voucher.folio}</p>
-                                <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>
+                                <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>`;
+                    
+                    if (client) {
+                        infoHtml += `
+                                <p class="text-sm mt-2 text-green-700"><i class="fas fa-check-circle"></i> Cliente: ${client.business_name}</p>`;
+                    }
+                    
+                    infoHtml += `
                             </div>
                         </div>
                     `;
+                    
+                    searchResult.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg';
+                    searchResult.innerHTML = infoHtml;
                     
                     // Configurar formulario para registro con vale
                     document.getElementById('plateNumber').value = 'VALE-' + voucher.serie + voucher.folio;
@@ -716,11 +726,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     step3.classList.remove('hidden');
                     step4.classList.remove('hidden');
                     
-                    // Forzar registro nuevo
-                    newClientCheck.checked = true;
-                    newClientFields.classList.remove('hidden');
+                    // Si hay datos del cliente, precargarlos
+                    if (client) {
+                        // Precargar cliente existente
+                        document.getElementById('clientId').value = client.id;
+                        document.getElementById('clientName').value = client.business_name || '';
+                        document.getElementById('clientPhone').value = client.phone || '';
+                        document.getElementById('clientRfc').value = client.rfc_curp || '';
+                        document.getElementById('clientAddress').value = client.address || '';
+                        document.getElementById('clientType').value = client.client_type || 'commercial';
+                        
+                        // Mostrar campos pre-rellenados pero no forzar nuevo registro
+                        newClientCheck.checked = true;
+                        newClientFields.classList.remove('hidden');
+                    } else {
+                        // No hay cliente, forzar registro nuevo
+                        newClientCheck.checked = true;
+                        newClientFields.classList.remove('hidden');
+                    }
+                    
+                    // Campos del chofer ahora son opcionales cuando hay un vale válido
                     newDriverCheck.checked = true;
                     newDriverFields.classList.remove('hidden');
+                    
+                    // Hacer campos del chofer opcionales (remover asteriscos requeridos visualmente)
+                    const driverNameLabel = document.querySelector('label[for="driverName"]');
+                    const driverPhoneLabel = document.querySelector('label[for="driverPhone"]');
+                    if (driverNameLabel) {
+                        driverNameLabel.innerHTML = 'Nombre Completo';
+                    }
+                    if (driverPhoneLabel) {
+                        driverPhoneLabel.innerHTML = 'Teléfono/WhatsApp';
+                    }
                     
                     // Preseleccionar método de pago como vale
                     document.getElementById('paymentMethod').value = 'voucher';
