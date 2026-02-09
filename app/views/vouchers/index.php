@@ -85,6 +85,7 @@
                 <select name="status" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Todos los estados</option>
                     <option value="active" <?php echo ($filters['status'] === 'active') ? 'selected' : ''; ?>>Activo</option>
+                    <option value="registered" <?php echo ($filters['status'] === 'registered') ? 'selected' : ''; ?>>Registrado</option>
                     <option value="used" <?php echo ($filters['status'] === 'used') ? 'selected' : ''; ?>>Usado</option>
                     <option value="cancelled" <?php echo ($filters['status'] === 'cancelled') ? 'selected' : ''; ?>>Cancelado</option>
                 </select>
@@ -166,11 +167,13 @@
                             <?php
                             $statusColors = [
                                 'active' => 'bg-green-100 text-green-800',
+                                'registered' => 'bg-blue-100 text-blue-800',
                                 'used' => 'bg-gray-100 text-gray-800',
                                 'cancelled' => 'bg-red-100 text-red-800'
                             ];
                             $statusLabels = [
                                 'active' => 'Activo',
+                                'registered' => 'Registrado',
                                 'used' => 'Usado',
                                 'cancelled' => 'Cancelado'
                             ];
@@ -205,6 +208,66 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        <?php if ($totalPages > 1): ?>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Mostrando página <span class="font-medium"><?php echo $currentPage; ?></span> 
+                    de <span class="font-medium"><?php echo $totalPages; ?></span>
+                    (<?php echo number_format($totalVouchers); ?> vales en total)
+                </div>
+                <div class="flex space-x-2">
+                    <?php if ($currentPage > 1): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $currentPage - 1])); ?>" 
+                       class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left mr-1"></i> Anterior
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    // Show page numbers
+                    $startPage = max(1, $currentPage - 2);
+                    $endPage = min($totalPages, $currentPage + 2);
+                    
+                    if ($startPage > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            1
+                        </a>
+                        <?php if ($startPage > 2): ?>
+                            <span class="px-3 py-2 text-gray-500">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" 
+                           class="px-3 py-2 border rounded-lg text-sm font-medium <?php echo $i === $currentPage ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'; ?>">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                            <span class="px-3 py-2 text-gray-500">...</span>
+                        <?php endif; ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <?php echo $totalPages; ?>
+                        </a>
+                    <?php endif; ?>
+                    
+                    <?php if ($currentPage < $totalPages): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $currentPage + 1])); ?>" 
+                       class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 

@@ -313,6 +313,44 @@ class Voucher {
     }
     
     /**
+     * Obtiene el conteo total de vales según filtros
+     */
+    public function getTotalCount($filters = []) {
+        $sql = "SELECT COUNT(*) as total 
+                FROM vouchers v 
+                LEFT JOIN users u ON v.created_by = u.id 
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE 1=1";
+        $params = [];
+        
+        if (!empty($filters['serie'])) {
+            $sql .= " AND v.serie = ?";
+            $params[] = $filters['serie'];
+        }
+        
+        if (!empty($filters['status'])) {
+            $sql .= " AND v.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (v.serie LIKE ? OR v.folio LIKE ? OR v.qr_code LIKE ?)";
+            $search = '%' . $filters['search'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+        
+        if (!empty($filters['client_id'])) {
+            $sql .= " AND v.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['total'] ?? 0;
+    }
+    
+    /**
      * Obtiene estadísticas de vales
      */
     public function getStats() {
@@ -417,7 +455,7 @@ class Voucher {
     /**
      * Obtiene el detalle de vales por empresa
      */
-    public function getVoucherDetailsByCompany($clientId = null, $dateFrom = null, $dateTo = null) {
+    public function getVoucherDetailsByCompany($clientId = null, $dateFrom = null, $dateTo = null, $filters = []) {
         $sql = "SELECT 
                     v.id,
                     v.serie,
@@ -452,8 +490,87 @@ class Voucher {
             $params[] = $dateTo . ' 23:59:59';
         }
         
+        // Add additional filters
+        if (!empty($filters['search'])) {
+            $sql .= " AND (v.qr_code LIKE ? OR v.serie LIKE ? OR v.folio LIKE ?)";
+            $search = '%' . $filters['search'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+        
+        if (!empty($filters['serie'])) {
+            $sql .= " AND v.serie = ?";
+            $params[] = $filters['serie'];
+        }
+        
+        if (!empty($filters['status'])) {
+            $sql .= " AND v.status = ?";
+            $params[] = $filters['status'];
+        }
+        
         $sql .= " ORDER BY v.created_at DESC, v.serie ASC, v.folio ASC";
         
+        // Add pagination if specified
+        if (isset($filters['limit'])) {
+            $sql .= " LIMIT ?";
+            $params[] = (int)$filters['limit'];
+            
+            if (isset($filters['offset'])) {
+                $sql .= " OFFSET ?";
+                $params[] = (int)$filters['offset'];
+            }
+        }
+        
         return $this->db->fetchAll($sql, $params);
+    }
+    
+    /**
+     * Obtiene el conteo total de vales por empresa
+     */
+    public function getTotalCountByCompany($clientId = null, $dateFrom = null, $dateTo = null, $filters = []) {
+        $sql = "SELECT COUNT(*) as total
+                FROM vouchers v
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE 1=1";
+        
+        $params = [];
+        
+        if ($clientId) {
+            $sql .= " AND v.client_id = ?";
+            $params[] = $clientId;
+        }
+        
+        if ($dateFrom) {
+            $sql .= " AND v.created_at >= ?";
+            $params[] = $dateFrom . ' 00:00:00';
+        }
+        
+        if ($dateTo) {
+            $sql .= " AND v.created_at <= ?";
+            $params[] = $dateTo . ' 23:59:59';
+        }
+        
+        // Add additional filters
+        if (!empty($filters['search'])) {
+            $sql .= " AND (v.qr_code LIKE ? OR v.serie LIKE ? OR v.folio LIKE ?)";
+            $search = '%' . $filters['search'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+        
+        if (!empty($filters['serie'])) {
+            $sql .= " AND v.serie = ?";
+            $params[] = $filters['serie'];
+        }
+        
+        if (!empty($filters['status'])) {
+            $sql .= " AND v.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['total'] ?? 0;
     }
 }

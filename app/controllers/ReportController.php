@@ -153,12 +153,33 @@ class ReportController extends BaseController {
     public function vouchersByCompany() {
         Auth::requireRole(['admin', 'supervisor']);
         
+        // Pagination
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 50;
+        $offset = ($page - 1) * $perPage;
+        
         $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
         $dateTo = $_GET['date_to'] ?? date('Y-m-d');
         $clientId = $_GET['client_id'] ?? null;
+        $search = $_GET['search'] ?? '';
+        $serie = $_GET['serie'] ?? '';
+        $status = $_GET['status'] ?? '';
+        
+        $filters = [
+            'client_id' => $clientId,
+            'search' => $search,
+            'serie' => $serie,
+            'status' => $status,
+            'limit' => $perPage,
+            'offset' => $offset
+        ];
         
         // Obtener detalle de vales
-        $vouchers = $this->voucherModel->getVoucherDetailsByCompany($clientId, $dateFrom, $dateTo);
+        $vouchers = $this->voucherModel->getVoucherDetailsByCompany($clientId, $dateFrom, $dateTo, $filters);
+        
+        // Get total count for pagination
+        $totalVouchers = $this->voucherModel->getTotalCountByCompany($clientId, $dateFrom, $dateTo, $filters);
+        $totalPages = ceil($totalVouchers / $perPage);
         
         // Obtener nombre del cliente si se filtró
         $clientName = null;
@@ -167,12 +188,26 @@ class ReportController extends BaseController {
             $clientName = $client ? $client['business_name'] : 'Cliente no encontrado';
         }
         
+        // Get available series and clients for filters
+        $series = $this->voucherModel->getUniqueSeries();
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        $clients = $clientModel->getAll(['status' => 'active']);
+        
         $data = [
             'title' => 'Detalle de Vales por Empresa',
             'vouchers' => $vouchers,
             'clientName' => $clientName,
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
+            'search' => $search,
+            'serie' => $serie,
+            'status' => $status,
+            'series' => $series,
+            'clients' => $clients,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalVouchers' => $totalVouchers,
             'showNav' => true
         ];
         
