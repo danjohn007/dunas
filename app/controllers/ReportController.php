@@ -9,6 +9,7 @@ require_once APP_PATH . '/models/Client.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Driver.php';
 require_once APP_PATH . '/models/Voucher.php';
+require_once APP_PATH . '/models/VoucherPayment.php';
 
 class ReportController extends BaseController {
     
@@ -18,6 +19,7 @@ class ReportController extends BaseController {
     private $unitModel;
     private $driverModel;
     private $voucherModel;
+    private $voucherPaymentModel;
     
     public function __construct() {
         $this->accessModel = new AccessLog();
@@ -26,6 +28,7 @@ class ReportController extends BaseController {
         $this->unitModel = new Unit();
         $this->driverModel = new Driver();
         $this->voucherModel = new Voucher();
+        $this->voucherPaymentModel = new VoucherPayment();
     }
     
     public function index() {
@@ -225,6 +228,22 @@ class ReportController extends BaseController {
         
         // Obtener resumen por empresa
         $vouchersByCompany = $this->voucherModel->getVouchersByCompany($dateFrom, $dateTo);
+        
+        // Obtener pagos realizados por cada empresa
+        foreach ($vouchersByCompany as &$company) {
+            if ($company['client_id']) {
+                $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
+                    $company['client_id'], 
+                    $dateFrom, 
+                    $dateTo
+                );
+                // Calculate actual pending (total pending - registered payments)
+                $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
+            } else {
+                $company['total_paid_registered'] = 0;
+                $company['actual_pending'] = $company['total_pending'];
+            }
+        }
         
         $data = [
             'title' => 'Resumen de Vales Generados',
@@ -737,5 +756,84 @@ class ReportController extends BaseController {
         ];
         
         $this->view('reports/visitors', $data);
+    }
+    
+    /**
+     * Registra un pago de vales de una empresa
+     */
+    public function registerPayment() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->setFlash('error', 'Método no permitido.');
+            $this->redirect('/reports/vouchersSummary');
+            return;
+        }
+        
+        // Validar datos
+        $required = ['client_id', 'amount', 'payment_date', 'payment_method'];
+        foreach ($required as $field) {
+            if (!isset($_POST[$field]) || trim($_POST[$field]) === '') {
+                $this->setFlash('error', 'Todos los campos obligatorios son requeridos.');
+                $this->redirect('/reports/vouchersSummary');
+                return;
+            }
+        }
+        
+        $amount = (float)$_POST['amount'];
+        if ($amount <= 0) {
+            $this->setFlash('error', 'El monto debe ser mayor a 0.');
+            $this->redirect('/reports/vouchersSummary');
+            return;
+        }
+        
+        try {
+            $paymentData = [
+                'client_id' => (int)$_POST['client_id'],
+                'amount' => $amount,
+                'payment_date' => $_POST['payment_date'],
+                'payment_method' => $_POST['payment_method'],
+                'reference' => $_POST['reference'] ?? null,
+                'notes' => $_POST['notes'] ?? null,
+                'created_by' => Auth::user()['id']
+            ];
+            
+            $this->voucherPaymentModel->create($paymentData);
+            $this->setFlash('success', 'Pago registrado exitosamente.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al registrar el pago: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/reports/vouchersSummary');
+    }
+    
+    /**
+     * Obtiene los pagos de una empresa (AJAX)
+     */
+    public function getClientPayments($clientId) {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        header('Content-Type: application/json');
+        
+        try {
+            $dateFrom = $_GET['date_from'] ?? null;
+            $dateTo = $_GET['date_to'] ?? null;
+            
+            $payments = $this->voucherPaymentModel->getByClient($clientId, $dateFrom, $dateTo);
+            $totalPaid = $this->voucherPaymentModel->getTotalPaidByClient($clientId, $dateFrom, $dateTo);
+            
+            echo json_encode([
+                'success' => true,
+                'payments' => $payments,
+                'totalPaid' => $totalPaid
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error al obtener pagos: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
     }
 }

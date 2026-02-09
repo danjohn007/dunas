@@ -158,17 +158,39 @@
                                 <i class="fas fa-check mr-1"></i><?php echo $companyVoucher['used_count']; ?>
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right text-sm font-bold text-green-700">
-                            $<?php echo number_format($companyVoucher['total_paid'], 2); ?>
+                        <td class="px-4 py-3 text-right">
+                            <div class="text-sm font-bold text-green-700">
+                                $<?php echo number_format($companyVoucher['total_paid'], 2); ?>
+                            </div>
+                            <?php if (!empty($companyVoucher['total_paid_registered'])): ?>
+                            <div class="text-xs text-green-600 mt-1">
+                                + $<?php echo number_format($companyVoucher['total_paid_registered'], 2); ?> registrado
+                            </div>
+                            <?php endif; ?>
                         </td>
-                        <td class="px-4 py-3 text-right text-sm font-bold text-orange-600">
-                            $<?php echo number_format($companyVoucher['total_pending'], 2); ?>
+                        <td class="px-4 py-3 text-right">
+                            <div class="text-sm font-bold text-orange-600">
+                                $<?php echo number_format($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending'], 2); ?>
+                            </div>
+                            <?php if (!empty($companyVoucher['total_paid_registered'])): ?>
+                            <div class="text-xs text-gray-500 line-through mt-1">
+                                $<?php echo number_format($companyVoucher['total_pending'], 2); ?>
+                            </div>
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <a href="<?php echo BASE_URL; ?>/reports/vouchersByCompany?client_id=<?php echo $companyVoucher['client_id']; ?>&date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
-                               class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-medium transition">
-                                <i class="fas fa-eye mr-1"></i>Ver Detalle
-                            </a>
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="<?php echo BASE_URL; ?>/reports/vouchersByCompany?client_id=<?php echo $companyVoucher['client_id']; ?>&date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+                                   class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-medium transition">
+                                    <i class="fas fa-eye mr-1"></i>Ver Detalle
+                                </a>
+                                <?php if ($companyVoucher['client_id'] && ($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending']) > 0): ?>
+                                <button onclick="openPaymentModal(<?php echo htmlspecialchars(json_encode($companyVoucher)); ?>)" 
+                                        class="inline-block bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium transition">
+                                    <i class="fas fa-dollar-sign mr-1"></i>Registrar Pago
+                                </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -185,3 +207,150 @@
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-dollar-sign text-green-600 mr-2"></i>Registrar Pago
+                </h3>
+                <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <form method="POST" action="<?php echo BASE_URL; ?>/reports/registerPayment" id="paymentForm">
+            <div class="px-6 py-4">
+                <input type="hidden" name="client_id" id="payment_client_id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Empresa
+                    </label>
+                    <div id="payment_client_name" class="text-base font-semibold text-gray-900"></div>
+                </div>
+                
+                <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Monto Pendiente:</span>
+                        <span id="payment_pending_amount" class="text-lg font-bold text-orange-600"></span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                        Monto a Pagar <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-gray-500">$</span>
+                        <input type="number" name="amount" id="amount" step="0.01" min="0.01" required
+                               class="w-full pl-8 rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                               placeholder="0.00">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Puede registrar pagos parciales</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="payment_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha de Pago <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="payment_date" id="payment_date" required
+                           value="<?php echo date('Y-m-d'); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+                        Método de Pago <span class="text-red-500">*</span>
+                    </label>
+                    <select name="payment_method" id="payment_method" required
+                            class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                        <option value="cash">Efectivo</option>
+                        <option value="transfer">Transferencia</option>
+                        <option value="check">Cheque</option>
+                        <option value="other">Otro</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="reference" class="block text-sm font-medium text-gray-700 mb-2">
+                        Referencia
+                    </label>
+                    <input type="text" name="reference" id="reference"
+                           class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                           placeholder="Número de transferencia, cheque, etc.">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                        Notas
+                    </label>
+                    <textarea name="notes" id="notes" rows="3"
+                              class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                              placeholder="Notas adicionales sobre el pago"></textarea>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                <button type="button" onclick="closePaymentModal()" 
+                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium rounded-lg transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>Registrar Pago
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openPaymentModal(company) {
+    document.getElementById('payment_client_id').value = company.client_id;
+    document.getElementById('payment_client_name').textContent = company.client_name || 'Sin asignar';
+    
+    const pendingAmount = company.actual_pending || company.total_pending || 0;
+    document.getElementById('payment_pending_amount').textContent = '$' + pendingAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    
+    // Set max amount for validation
+    document.getElementById('amount').max = pendingAmount;
+    
+    document.getElementById('paymentModal').classList.remove('hidden');
+    document.getElementById('paymentModal').classList.add('flex');
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.add('hidden');
+    document.getElementById('paymentModal').classList.remove('flex');
+    document.getElementById('paymentForm').reset();
+}
+
+// Close modal when clicking outside
+document.getElementById('paymentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePaymentModal();
+    }
+});
+
+// Validate amount on submit
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    const amount = parseFloat(document.getElementById('amount').value);
+    const maxAmount = parseFloat(document.getElementById('amount').max);
+    
+    if (amount > maxAmount) {
+        e.preventDefault();
+        alert('El monto a pagar no puede ser mayor al monto pendiente ($' + maxAmount.toFixed(2) + ')');
+        return false;
+    }
+    
+    if (amount <= 0) {
+        e.preventDefault();
+        alert('El monto debe ser mayor a 0');
+        return false;
+    }
+});
+</script>
