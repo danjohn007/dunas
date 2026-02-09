@@ -79,7 +79,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Tamaño Log</p>
-                    <p class="text-2xl font-bold text-blue-600"><?php echo number_format(($stats['total'] * 0.5), 1); ?> KB</p>
+                    <p class="text-2xl font-bold text-blue-600"><?php echo number_format($stats['total']); ?> registros</p>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-full">
                     <i class="fas fa-file-alt text-blue-600 text-xl"></i>
