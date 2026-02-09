@@ -40,13 +40,47 @@ class UserController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'username' => 'required|min:4|unique:users,username',
-                'password' => 'required|min:6',
+                'password' => 'required|min:8',
                 'full_name' => 'required',
                 'email' => 'required|email|unique:users,email',
                 'role' => 'required'
             ];
             
             if ($validator->validate($_POST, $rules)) {
+                // Additional password strength validation
+                $password = $_POST['password'];
+                $passwordErrors = [];
+                
+                if (strlen($password) < 8) {
+                    $passwordErrors[] = 'debe tener al menos 8 caracteres';
+                }
+                if (!preg_match('/[A-Z]/', $password)) {
+                    $passwordErrors[] = 'debe incluir al menos una letra mayúscula';
+                }
+                if (!preg_match('/[a-z]/', $password)) {
+                    $passwordErrors[] = 'debe incluir al menos una letra minúscula';
+                }
+                if (!preg_match('/[0-9]/', $password)) {
+                    $passwordErrors[] = 'debe incluir al menos un número';
+                }
+                if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+                    $passwordErrors[] = 'debe incluir al menos un carácter especial (!@#$%^&*()_+-=[]{}|;:,.<>?)';
+                }
+                
+                if (!empty($passwordErrors)) {
+                    $errorMsg = 'La contraseña no es segura: ' . implode(', ', $passwordErrors) . '.';
+                    $this->setFlash('error', $errorMsg);
+                    
+                    $data = [
+                        'title' => 'Nuevo Usuario',
+                        'showNav' => true,
+                        'formData' => $_POST
+                    ];
+                    
+                    $this->view('users/create', $data);
+                    return;
+                }
+                
                 try {
                     $this->userModel->create($_POST);
                     $this->setFlash('success', 'Usuario creado exitosamente.');

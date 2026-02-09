@@ -76,6 +76,31 @@ class Client {
     }
     
     public function delete($id) {
+        // Check if client has associated access logs
+        $sql = "SELECT COUNT(*) as count FROM access_logs WHERE client_id = ?";
+        $result = $this->db->fetchOne($sql, [$id]);
+        
+        if ($result['count'] > 0) {
+            throw new Exception("No se puede eliminar el cliente porque tiene {$result['count']} registro(s) de acceso asociados. Primero debe desvincular o eliminar estos registros.");
+        }
+        
+        // Check if client has associated vouchers
+        $sql = "SELECT COUNT(*) as count FROM vouchers WHERE client_id = ?";
+        $result = $this->db->fetchOne($sql, [$id]);
+        
+        if ($result['count'] > 0) {
+            throw new Exception("No se puede eliminar el cliente porque tiene {$result['count']} vale(s) asociado(s). Primero debe desvincular o eliminar estos vales.");
+        }
+        
+        // Check if client has associated transactions
+        $sql = "SELECT COUNT(*) as count FROM transactions WHERE client_id = ?";
+        $result = $this->db->fetchOne($sql, [$id]);
+        
+        if ($result['count'] > 0) {
+            throw new Exception("No se puede eliminar el cliente porque tiene {$result['count']} transacción(es) asociada(s).");
+        }
+        
+        // If no dependencies, proceed with deletion
         $sql = "DELETE FROM clients WHERE id = ?";
         return $this->db->execute($sql, [$id]);
     }
