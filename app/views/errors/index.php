@@ -95,10 +95,10 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
                 <select name="level" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Todos</option>
-                    <option value="critical" <?php echo ($filters['level'] === 'critical') ? 'selected' : ''; ?>>Fatal (0)</option>
-                    <option value="error" <?php echo ($filters['level'] === 'error') ? 'selected' : ''; ?>>Warning (0)</option>
-                    <option value="warning" <?php echo ($filters['level'] === 'warning') ? 'selected' : ''; ?>>Notice (0)</option>
-                    <option value="info" <?php echo ($filters['level'] === 'info') ? 'selected' : ''; ?>>Deprecated (0)</option>
+                    <option value="critical" <?php echo ($filters['level'] === 'critical') ? 'selected' : ''; ?>>Critical/Fatal</option>
+                    <option value="error" <?php echo ($filters['level'] === 'error') ? 'selected' : ''; ?>>Error</option>
+                    <option value="warning" <?php echo ($filters['level'] === 'warning') ? 'selected' : ''; ?>>Warning</option>
+                    <option value="info" <?php echo ($filters['level'] === 'info') ? 'selected' : ''; ?>>Info/Notice</option>
                 </select>
             </div>
             
