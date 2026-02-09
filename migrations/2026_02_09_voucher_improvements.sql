@@ -77,12 +77,40 @@ FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE RESTRICT;
 
 -- 4. Verificar y agregar índices adicionales si no existen
 -- Índice compuesto para consultas de vales por empresa y fecha
-ALTER TABLE `vouchers` 
-ADD INDEX IF NOT EXISTS `idx_client_created` (`client_id`, `created_at`);
+SET @index_exists = (
+  SELECT COUNT(*) 
+  FROM INFORMATION_SCHEMA.STATISTICS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'vouchers' 
+    AND INDEX_NAME = 'idx_client_created'
+);
+
+SET @sql = IF(@index_exists = 0,
+  'ALTER TABLE `vouchers` ADD INDEX `idx_client_created` (`client_id`, `created_at`)',
+  'SELECT "Index idx_client_created already exists" AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Índice para búsquedas por serie
-ALTER TABLE `vouchers` 
-ADD INDEX IF NOT EXISTS `idx_serie` (`serie`);
+SET @index_exists = (
+  SELECT COUNT(*) 
+  FROM INFORMATION_SCHEMA.STATISTICS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'vouchers' 
+    AND INDEX_NAME = 'idx_serie'
+);
+
+SET @sql = IF(@index_exists = 0,
+  'ALTER TABLE `vouchers` ADD INDEX `idx_serie` (`serie`)',
+  'SELECT "Index idx_serie already exists" AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 5. Actualizar comentarios de tablas para documentación
 ALTER TABLE `vouchers` COMMENT='Tabla de vales generados para control de suministro de agua con soporte de pagos';
