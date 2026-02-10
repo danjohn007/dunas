@@ -157,9 +157,9 @@
                 <div>
                     <p class="text-sm text-gray-700">
                         Mostrando
-                        <span class="font-medium"><?php echo (($currentPage - 1) * 10) + 1; ?></span>
+                        <span class="font-medium"><?php echo (($currentPage - 1) * $perPage) + 1; ?></span>
                         a
-                        <span class="font-medium"><?php echo min($currentPage * 10, $totalRecords); ?></span>
+                        <span class="font-medium"><?php echo min($currentPage * $perPage, $totalRecords); ?></span>
                         de
                         <span class="font-medium"><?php echo $totalRecords; ?></span>
                         resultados

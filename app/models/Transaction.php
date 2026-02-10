@@ -10,6 +10,37 @@ class Transaction {
         $this->db = Database::getInstance();
     }
     
+    private function buildFilterConditions($filters, &$params) {
+        $conditions = [];
+        
+        if (!empty($filters['payment_status'])) {
+            $conditions[] = "t.payment_status = ?";
+            $params[] = $filters['payment_status'];
+        }
+        
+        if (!empty($filters['payment_method'])) {
+            $conditions[] = "t.payment_method = ?";
+            $params[] = $filters['payment_method'];
+        }
+        
+        if (!empty($filters['client_id'])) {
+            $conditions[] = "t.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
+        if (!empty($filters['date_from'])) {
+            $conditions[] = "DATE(t.transaction_date) >= ?";
+            $params[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $conditions[] = "DATE(t.transaction_date) <= ?";
+            $params[] = $filters['date_to'];
+        }
+        
+        return $conditions;
+    }
+    
     public function getAll($filters = []) {
         $sql = "SELECT t.*, c.business_name as client_name, al.ticket_code
                 FROM transactions t
@@ -18,29 +49,9 @@ class Transaction {
                 WHERE 1=1";
         $params = [];
         
-        if (!empty($filters['payment_status'])) {
-            $sql .= " AND t.payment_status = ?";
-            $params[] = $filters['payment_status'];
-        }
-        
-        if (!empty($filters['payment_method'])) {
-            $sql .= " AND t.payment_method = ?";
-            $params[] = $filters['payment_method'];
-        }
-        
-        if (!empty($filters['client_id'])) {
-            $sql .= " AND t.client_id = ?";
-            $params[] = $filters['client_id'];
-        }
-        
-        if (!empty($filters['date_from'])) {
-            $sql .= " AND DATE(t.transaction_date) >= ?";
-            $params[] = $filters['date_from'];
-        }
-        
-        if (!empty($filters['date_to'])) {
-            $sql .= " AND DATE(t.transaction_date) <= ?";
-            $params[] = $filters['date_to'];
+        $conditions = $this->buildFilterConditions($filters, $params);
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
         }
         
         $sql .= " ORDER BY t.transaction_date DESC";
@@ -63,29 +74,9 @@ class Transaction {
                 WHERE 1=1";
         $params = [];
         
-        if (!empty($filters['payment_status'])) {
-            $sql .= " AND t.payment_status = ?";
-            $params[] = $filters['payment_status'];
-        }
-        
-        if (!empty($filters['payment_method'])) {
-            $sql .= " AND t.payment_method = ?";
-            $params[] = $filters['payment_method'];
-        }
-        
-        if (!empty($filters['client_id'])) {
-            $sql .= " AND t.client_id = ?";
-            $params[] = $filters['client_id'];
-        }
-        
-        if (!empty($filters['date_from'])) {
-            $sql .= " AND DATE(t.transaction_date) >= ?";
-            $params[] = $filters['date_from'];
-        }
-        
-        if (!empty($filters['date_to'])) {
-            $sql .= " AND DATE(t.transaction_date) <= ?";
-            $params[] = $filters['date_to'];
+        $conditions = $this->buildFilterConditions($filters, $params);
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
         }
         
         $result = $this->db->fetchOne($sql, $params);
@@ -100,29 +91,9 @@ class Transaction {
                 WHERE 1=1";
         $params = [];
         
-        if (!empty($filters['payment_status'])) {
-            $sql .= " AND t.payment_status = ?";
-            $params[] = $filters['payment_status'];
-        }
-        
-        if (!empty($filters['payment_method'])) {
-            $sql .= " AND t.payment_method = ?";
-            $params[] = $filters['payment_method'];
-        }
-        
-        if (!empty($filters['client_id'])) {
-            $sql .= " AND t.client_id = ?";
-            $params[] = $filters['client_id'];
-        }
-        
-        if (!empty($filters['date_from'])) {
-            $sql .= " AND DATE(t.transaction_date) >= ?";
-            $params[] = $filters['date_from'];
-        }
-        
-        if (!empty($filters['date_to'])) {
-            $sql .= " AND DATE(t.transaction_date) <= ?";
-            $params[] = $filters['date_to'];
+        $conditions = $this->buildFilterConditions($filters, $params);
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
         }
         
         $result = $this->db->fetchOne($sql, $params);

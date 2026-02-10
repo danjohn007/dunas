@@ -23,8 +23,8 @@ class TransactionController extends BaseController {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
         // Pagination
-        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
         $perPage = 10;
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
         $offset = ($page - 1) * $perPage;
         
         $filters = [
@@ -60,6 +60,7 @@ class TransactionController extends BaseController {
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalRecords' => $totalRecords,
+            'perPage' => $perPage,
             'showNav' => true
         ];
         
