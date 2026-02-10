@@ -20,15 +20,26 @@ class VoucherController extends BaseController {
         Auth::requireLogin();
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
+        // Pagination
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 50;
+        $offset = ($page - 1) * $perPage;
+        
         $filters = [
             'serie' => $_GET['serie'] ?? '',
             'status' => $_GET['status'] ?? '',
-            'search' => $_GET['search'] ?? ''
+            'search' => $_GET['search'] ?? '',
+            'limit' => $perPage,
+            'offset' => $offset
         ];
         
         $vouchers = $this->voucherModel->getAll($filters);
         $stats = $this->voucherModel->getStats();
         $series = $this->voucherModel->getUniqueSeries();
+        
+        // Get total count for pagination
+        $totalVouchers = $this->voucherModel->getTotalCount($filters);
+        $totalPages = ceil($totalVouchers / $perPage);
         
         $data = [
             'title' => 'Gestión de Vales',
@@ -36,6 +47,10 @@ class VoucherController extends BaseController {
             'stats' => $stats,
             'series' => $series,
             'filters' => $filters,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage,
+            'totalVouchers' => $totalVouchers,
             'showNav' => true
         ];
         

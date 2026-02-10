@@ -23,16 +23,50 @@
     
     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
         <form method="GET" action="<?php echo BASE_URL; ?>/reports/vouchersByCompany">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
                     <input type="date" name="date_from" value="<?php echo $dateFrom; ?>"
-                           class="w-full rounded-lg border-gray-300">
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
                     <input type="date" name="date_to" value="<?php echo $dateTo; ?>"
-                           class="w-full rounded-lg border-gray-300">
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Serie</label>
+                    <select name="serie" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Todas las series</option>
+                        <?php foreach ($series as $s): ?>
+                        <option value="<?php echo htmlspecialchars($s['serie']); ?>" 
+                                <?php echo ($serie === $s['serie']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($s['serie']); ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                    <select name="client_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Todas las empresas</option>
+                        <?php foreach ($clients as $client): ?>
+                        <option value="<?php echo $client['id']; ?>" 
+                                <?php echo (isset($_GET['client_id']) && $_GET['client_id'] == $client['id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($client['business_name']); ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado Vale</label>
+                    <select name="status" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Todos</option>
+                        <option value="active" <?php echo ($status === 'active') ? 'selected' : ''; ?>>Activo</option>
+                        <option value="registered" <?php echo ($status === 'registered') ? 'selected' : ''; ?>>Registrado</option>
+                        <option value="used" <?php echo ($status === 'used') ? 'selected' : ''; ?>>Utilizado</option>
+                        <option value="cancelled" <?php echo ($status === 'cancelled') ? 'selected' : ''; ?>>Cancelado</option>
+                    </select>
                 </div>
                 <div class="flex items-end">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg w-full">
@@ -40,9 +74,14 @@
                     </button>
                 </div>
             </div>
-            <?php if ($clientName): ?>
-                <input type="hidden" name="client_id" value="<?php echo $_GET['client_id'] ?? ''; ?>">
-            <?php endif; ?>
+            <div class="grid grid-cols-1">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por Código Vale</label>
+                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>"
+                           placeholder="Buscar por código QR, serie o folio..."
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
         </form>
     </div>
     
@@ -171,6 +210,66 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Mostrando página <span class="font-medium"><?php echo $currentPage; ?></span> 
+                        de <span class="font-medium"><?php echo $totalPages; ?></span>
+                        (<?php echo number_format($totalVouchers); ?> vales en total)
+                    </div>
+                    <div class="flex space-x-2">
+                        <?php if ($currentPage > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $currentPage - 1])); ?>" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <i class="fas fa-chevron-left mr-1"></i> Anterior
+                        </a>
+                        <?php endif; ?>
+                        
+                        <?php
+                        // Show page numbers
+                        $startPage = max(1, $currentPage - 2);
+                        $endPage = min($totalPages, $currentPage + 2);
+                        
+                        if ($startPage > 1): ?>
+                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                1
+                            </a>
+                            <?php if ($startPage > 2): ?>
+                                <span class="px-3 py-2 text-gray-500">...</span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" 
+                               class="px-3 py-2 border rounded-lg text-sm font-medium <?php echo $i === $currentPage ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'; ?>">
+                                <?php echo $i; ?>
+                            </a>
+                        <?php endfor; ?>
+                        
+                        <?php if ($endPage < $totalPages): ?>
+                            <?php if ($endPage < $totalPages - 1): ?>
+                                <span class="px-3 py-2 text-gray-500">...</span>
+                            <?php endif; ?>
+                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <?php echo $totalPages; ?>
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($currentPage < $totalPages): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $currentPage + 1])); ?>" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     <?php else: ?>
         <div class="bg-white rounded-lg shadow-md p-12 text-center">

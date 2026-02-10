@@ -265,6 +265,13 @@
                     </a>
                 </li>
                 <li>
+                    <a href="<?php echo BASE_URL; ?>/errors" 
+                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                        <i class="fas fa-bug w-6 mr-3"></i>
+                        <span>Errores del Sistema</span>
+                    </a>
+                </li>
+                <li>
                     <a href="<?php echo BASE_URL; ?>/settings" 
                        class="sidebar-nav-item flex items-center text-white px-4 py-3">
                         <i class="fas fa-cog w-6 mr-3"></i>

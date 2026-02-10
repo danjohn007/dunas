@@ -27,6 +27,36 @@
                     <input type="password" id="password" name="password" required
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ingrese contraseña">
+                    <div id="password-strength" class="mt-2 hidden">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="password-strength-bar" class="h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <span id="password-strength-text" class="text-sm font-medium"></span>
+                        </div>
+                        <ul id="password-requirements" class="text-xs space-y-1 mt-2">
+                            <li id="req-length" class="flex items-center text-gray-500">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                <span>Mínimo 8 caracteres</span>
+                            </li>
+                            <li id="req-uppercase" class="flex items-center text-gray-500">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                <span>Una letra mayúscula</span>
+                            </li>
+                            <li id="req-lowercase" class="flex items-center text-gray-500">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                <span>Una letra minúscula</span>
+                            </li>
+                            <li id="req-number" class="flex items-center text-gray-500">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                <span>Un número</span>
+                            </li>
+                            <li id="req-special" class="flex items-center text-gray-500">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                <span>Un carácter especial (!@#$%^&*)</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <!-- Nombre Completo -->
@@ -92,3 +122,92 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password');
+    const strengthContainer = document.getElementById('password-strength');
+    const strengthBar = document.getElementById('password-strength-bar');
+    const strengthText = document.getElementById('password-strength-text');
+    
+    const requirements = {
+        length: document.getElementById('req-length'),
+        uppercase: document.getElementById('req-uppercase'),
+        lowercase: document.getElementById('req-lowercase'),
+        number: document.getElementById('req-number'),
+        special: document.getElementById('req-special')
+    };
+    
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        
+        if (password.length === 0) {
+            strengthContainer.classList.add('hidden');
+            return;
+        }
+        
+        strengthContainer.classList.remove('hidden');
+        
+        // Check requirements
+        const checks = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /[0-9]/.test(password),
+            special: /[^A-Za-z0-9]/.test(password)
+        };
+        
+        // Update requirement indicators
+        Object.keys(checks).forEach(key => {
+            const el = requirements[key];
+            const icon = el.querySelector('i');
+            const span = el.querySelector('span');
+            
+            if (checks[key]) {
+                el.classList.remove('text-gray-500');
+                el.classList.add('text-green-600');
+                icon.classList.remove('fa-circle');
+                icon.classList.add('fa-check-circle');
+            } else {
+                el.classList.remove('text-green-600');
+                el.classList.add('text-gray-500');
+                icon.classList.remove('fa-check-circle');
+                icon.classList.add('fa-circle');
+            }
+        });
+        
+        // Calculate strength
+        const passedChecks = Object.values(checks).filter(v => v).length;
+        let strength = 0;
+        let strengthLabel = '';
+        let strengthColor = '';
+        
+        if (passedChecks === 5) {
+            strength = 100;
+            strengthLabel = 'Muy segura';
+            strengthColor = 'bg-green-500';
+        } else if (passedChecks === 4) {
+            strength = 80;
+            strengthLabel = 'Segura';
+            strengthColor = 'bg-green-400';
+        } else if (passedChecks === 3) {
+            strength = 60;
+            strengthLabel = 'Media';
+            strengthColor = 'bg-yellow-500';
+        } else if (passedChecks === 2) {
+            strength = 40;
+            strengthLabel = 'Débil';
+            strengthColor = 'bg-orange-500';
+        } else {
+            strength = 20;
+            strengthLabel = 'Muy débil';
+            strengthColor = 'bg-red-500';
+        }
+        
+        strengthBar.style.width = strength + '%';
+        strengthBar.className = 'h-full transition-all duration-300 ' + strengthColor;
+        strengthText.textContent = strengthLabel;
+        strengthText.className = 'text-sm font-medium ' + (passedChecks >= 4 ? 'text-green-600' : passedChecks >= 3 ? 'text-yellow-600' : 'text-red-600');
+    });
+});
+</script>
