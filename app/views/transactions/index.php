@@ -1,4 +1,19 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <?php
+    // Helper function to build query string for pagination
+    function buildPaginationQuery($filters, $page) {
+        $queryParams = array_filter([
+            'page' => $page,
+            'payment_status' => $filters['payment_status'] ?? '',
+            'payment_method' => $filters['payment_method'] ?? '',
+            'client_id' => $filters['client_id'] ?? '',
+            'date_from' => $filters['date_from'] ?? '',
+            'date_to' => $filters['date_to'] ?? ''
+        ]);
+        unset($queryParams['limit'], $queryParams['offset']);
+        return http_build_query($queryParams);
+    }
+    ?>
     <div class="mb-6 flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Gestión de Transacciones</h1>
@@ -126,13 +141,13 @@
         <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div class="flex-1 flex justify-between sm:hidden">
                 <?php if ($currentPage > 1): ?>
-                    <a href="?page=<?php echo $currentPage - 1; ?><?php echo http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : ''; ?>" 
+                    <a href="?<?php echo buildPaginationQuery($filters, $currentPage - 1); ?>" 
                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Anterior
                     </a>
                 <?php endif; ?>
                 <?php if ($currentPage < $totalPages): ?>
-                    <a href="?page=<?php echo $currentPage + 1; ?><?php echo http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : ''; ?>" 
+                    <a href="?<?php echo buildPaginationQuery($filters, $currentPage + 1); ?>" 
                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Siguiente
                     </a>
@@ -153,7 +168,7 @@
                 <div>
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                         <?php if ($currentPage > 1): ?>
-                            <a href="?page=<?php echo $currentPage - 1; ?><?php echo http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : ''; ?>" 
+                            <a href="?<?php echo buildPaginationQuery($filters, $currentPage - 1); ?>" 
                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                 <span class="sr-only">Anterior</span>
                                 <i class="fas fa-chevron-left"></i>
@@ -166,14 +181,14 @@
                         
                         for ($i = $startPage; $i <= $endPage; $i++):
                         ?>
-                            <a href="?page=<?php echo $i; ?><?php echo http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : ''; ?>" 
+                            <a href="?<?php echo buildPaginationQuery($filters, $i); ?>" 
                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium <?php echo ($i == $currentPage) ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-gray-50'; ?>">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>
                         
                         <?php if ($currentPage < $totalPages): ?>
-                            <a href="?page=<?php echo $currentPage + 1; ?><?php echo http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : ''; ?>" 
+                            <a href="?<?php echo buildPaginationQuery($filters, $currentPage + 1); ?>" 
                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                 <span class="sr-only">Siguiente</span>
                                 <i class="fas fa-chevron-right"></i>
