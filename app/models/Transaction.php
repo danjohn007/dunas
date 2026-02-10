@@ -28,6 +28,11 @@ class Transaction {
             $params[] = $filters['payment_method'];
         }
         
+        if (!empty($filters['client_id'])) {
+            $sql .= " AND t.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
         if (!empty($filters['date_from'])) {
             $sql .= " AND DATE(t.transaction_date) >= ?";
             $params[] = $filters['date_from'];
@@ -40,7 +45,88 @@ class Transaction {
         
         $sql .= " ORDER BY t.transaction_date DESC";
         
+        // Add pagination if specified
+        if (isset($filters['limit']) && isset($filters['offset'])) {
+            $sql .= " LIMIT ? OFFSET ?";
+            $params[] = (int)$filters['limit'];
+            $params[] = (int)$filters['offset'];
+        }
+        
         return $this->db->fetchAll($sql, $params);
+    }
+    
+    public function getTotalAmount($filters = []) {
+        $sql = "SELECT COALESCE(SUM(t.total_amount), 0) as total
+                FROM transactions t
+                JOIN clients c ON t.client_id = c.id
+                JOIN access_logs al ON t.access_log_id = al.id
+                WHERE 1=1";
+        $params = [];
+        
+        if (!empty($filters['payment_status'])) {
+            $sql .= " AND t.payment_status = ?";
+            $params[] = $filters['payment_status'];
+        }
+        
+        if (!empty($filters['payment_method'])) {
+            $sql .= " AND t.payment_method = ?";
+            $params[] = $filters['payment_method'];
+        }
+        
+        if (!empty($filters['client_id'])) {
+            $sql .= " AND t.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND DATE(t.transaction_date) >= ?";
+            $params[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND DATE(t.transaction_date) <= ?";
+            $params[] = $filters['date_to'];
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['total'] ?? 0;
+    }
+    
+    public function getCount($filters = []) {
+        $sql = "SELECT COUNT(*) as count
+                FROM transactions t
+                JOIN clients c ON t.client_id = c.id
+                JOIN access_logs al ON t.access_log_id = al.id
+                WHERE 1=1";
+        $params = [];
+        
+        if (!empty($filters['payment_status'])) {
+            $sql .= " AND t.payment_status = ?";
+            $params[] = $filters['payment_status'];
+        }
+        
+        if (!empty($filters['payment_method'])) {
+            $sql .= " AND t.payment_method = ?";
+            $params[] = $filters['payment_method'];
+        }
+        
+        if (!empty($filters['client_id'])) {
+            $sql .= " AND t.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND DATE(t.transaction_date) >= ?";
+            $params[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND DATE(t.transaction_date) <= ?";
+            $params[] = $filters['date_to'];
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['count'] ?? 0;
     }
     
     public function getById($id) {
