@@ -840,4 +840,227 @@ class ReportController extends BaseController {
         
         exit;
     }
+    
+    /**
+     * Exporta el resumen de vales por empresa a CSV (compatible con Excel) o PDF
+     */
+    public function exportVouchersSummary() {
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
+        $format = $_GET['format'] ?? 'csv'; // csv o pdf
+        
+        // Obtener resumen por empresa
+        $vouchersByCompany = $this->voucherModel->getVouchersByCompany($dateFrom, $dateTo);
+        
+        // Obtener pagos realizados por cada empresa
+        foreach ($vouchersByCompany as &$company) {
+            if ($company['client_id']) {
+                $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
+                    $company['client_id'], 
+                    $dateFrom, 
+                    $dateTo
+                );
+                $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
+            } else {
+                $company['total_paid_registered'] = 0;
+                $company['actual_pending'] = $company['total_pending'];
+            }
+        }
+        
+        if ($format === 'csv') {
+            $this->exportToCSV($vouchersByCompany, $dateFrom, $dateTo);
+        } else {
+            $this->exportToPDF($vouchersByCompany, $dateFrom, $dateTo);
+        }
+    }
+    
+    /**
+     * Exporta datos a CSV (compatible con Excel)
+     */
+    private function exportToCSV($data, $dateFrom, $dateTo) {
+        // Configurar headers para descarga
+        $filename = "detalle_vales_empresa_{$dateFrom}_a_{$dateTo}.csv";
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
+        // Crear output stream
+        $output = fopen('php://output', 'w');
+        
+        // Agregar BOM para Excel (UTF-8)
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+        
+        // Encabezados del CSV
+        $headers = [
+            'Empresa/Cliente',
+            'Serie',
+            'Rango Folios',
+            'Cantidad',
+            'Capacidad (L)',
+            'Activos',
+            'Utilizados',
+            'Pagado ($)',
+            'Pago Registrado ($)',
+            'Pendiente ($)'
+        ];
+        fputcsv($output, $headers);
+        
+        // Datos
+        foreach ($data as $row) {
+            $csvRow = [
+                $row['client_name'] ?? 'Sin asignar',
+                $row['serie'],
+                str_pad($row['folio_inicial'], 4, '0', STR_PAD_LEFT) . ' - ' . str_pad($row['folio_final'], 4, '0', STR_PAD_LEFT),
+                $row['total_vouchers'],
+                number_format($row['total_capacity'], 0, '.', ''),
+                $row['active_count'],
+                $row['used_count'],
+                number_format($row['total_paid'], 2, '.', ''),
+                number_format($row['total_paid_registered'], 2, '.', ''),
+                number_format($row['actual_pending'], 2, '.', '')
+            ];
+            fputcsv($output, $csvRow);
+        }
+        
+        // Calcular totales
+        $totals = [
+            'Total General',
+            '',
+            '',
+            array_sum(array_column($data, 'total_vouchers')),
+            number_format(array_sum(array_column($data, 'total_capacity')), 0, '.', ''),
+            array_sum(array_column($data, 'active_count')),
+            array_sum(array_column($data, 'used_count')),
+            number_format(array_sum(array_column($data, 'total_paid')), 2, '.', ''),
+            number_format(array_sum(array_column($data, 'total_paid_registered')), 2, '.', ''),
+            number_format(array_sum(array_column($data, 'actual_pending')), 2, '.', '')
+        ];
+        fputcsv($output, $totals);
+        
+        fclose($output);
+        exit();
+    }
+    
+    /**
+     * Exporta datos a PDF (HTML simple para imprimir)
+     */
+    private function exportToPDF($data, $dateFrom, $dateTo) {
+        // Para PDF, generamos HTML y usamos el navegador para imprimir a PDF
+        $filename = "detalle_vales_empresa_{$dateFrom}_a_{$dateTo}.pdf";
+        
+        // Calcular totales
+        $totales = [
+            'cantidad' => array_sum(array_column($data, 'total_vouchers')),
+            'capacidad' => array_sum(array_column($data, 'total_capacity')),
+            'activos' => array_sum(array_column($data, 'active_count')),
+            'usados' => array_sum(array_column($data, 'used_count')),
+            'pagado' => array_sum(array_column($data, 'total_paid')),
+            'registrado' => array_sum(array_column($data, 'total_paid_registered')),
+            'pendiente' => array_sum(array_column($data, 'actual_pending'))
+        ];
+        
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title><?php echo $filename; ?></title>
+            <style>
+                @page { size: A4 landscape; margin: 1cm; }
+                body { font-family: Arial, sans-serif; font-size: 10px; }
+                h1 { text-align: center; color: #4F46E5; margin-bottom: 5px; }
+                .subtitle { text-align: center; color: #666; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #4F46E5; color: white; font-weight: bold; }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                .total-row { background-color: #E0E7FF !important; font-weight: bold; }
+                .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 9px; }
+                .badge-purple { background-color: #DDD6FE; color: #6B21A8; }
+                .badge-green { background-color: #D1FAE5; color: #065F46; }
+                .badge-gray { background-color: #F3F4F6; color: #374151; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom: 20px; text-align: center;">
+                <button onclick="window.print()" style="background-color: #4F46E5; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                    Imprimir / Guardar como PDF
+                </button>
+                <button onclick="window.close()" style="background-color: #6B7280; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                    Cerrar
+                </button>
+            </div>
+            
+            <h1>Detalle de Vales por Empresa</h1>
+            <div class="subtitle">Período: <?php echo date('d/m/Y', strtotime($dateFrom)); ?> - <?php echo date('d/m/Y', strtotime($dateTo)); ?></div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Empresa/Cliente</th>
+                        <th class="text-center">Serie</th>
+                        <th class="text-center">Rango Folios</th>
+                        <th class="text-center">Cant.</th>
+                        <th class="text-center">Capacidad</th>
+                        <th class="text-center">Activos</th>
+                        <th class="text-center">Usados</th>
+                        <th class="text-right">Pagado</th>
+                        <th class="text-right">Pago Reg.</th>
+                        <th class="text-right">Pendiente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($data as $row): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['client_name'] ?? 'Sin asignar'); ?></td>
+                        <td class="text-center">
+                            <span class="badge badge-purple"><?php echo htmlspecialchars($row['serie']); ?></span>
+                        </td>
+                        <td class="text-center" style="font-family: monospace;">
+                            <?php echo str_pad($row['folio_inicial'], 4, '0', STR_PAD_LEFT); ?> → 
+                            <?php echo str_pad($row['folio_final'], 4, '0', STR_PAD_LEFT); ?>
+                        </td>
+                        <td class="text-center"><?php echo $row['total_vouchers']; ?></td>
+                        <td class="text-center"><?php echo number_format($row['total_capacity']); ?> L</td>
+                        <td class="text-center">
+                            <span class="badge badge-green"><?php echo $row['active_count']; ?></span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-gray"><?php echo $row['used_count']; ?></span>
+                        </td>
+                        <td class="text-right">$<?php echo number_format($row['total_paid'], 2); ?></td>
+                        <td class="text-right">$<?php echo number_format($row['total_paid_registered'], 2); ?></td>
+                        <td class="text-right">$<?php echo number_format($row['actual_pending'], 2); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <tr class="total-row">
+                        <td colspan="3"><strong>TOTAL GENERAL</strong></td>
+                        <td class="text-center"><strong><?php echo $totales['cantidad']; ?></strong></td>
+                        <td class="text-center"><strong><?php echo number_format($totales['capacidad']); ?> L</strong></td>
+                        <td class="text-center"><strong><?php echo $totales['activos']; ?></strong></td>
+                        <td class="text-center"><strong><?php echo $totales['usados']; ?></strong></td>
+                        <td class="text-right"><strong>$<?php echo number_format($totales['pagado'], 2); ?></strong></td>
+                        <td class="text-right"><strong>$<?php echo number_format($totales['registrado'], 2); ?></strong></td>
+                        <td class="text-right"><strong>$<?php echo number_format($totales['pendiente'], 2); ?></strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 30px; font-size: 9px; color: #666;">
+                <p><strong>Generado:</strong> <?php echo date('d/m/Y H:i:s'); ?></p>
+                <p><strong>Usuario:</strong> <?php echo htmlspecialchars(Auth::user()['full_name']); ?></p>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit();
+    }
 }

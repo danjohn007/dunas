@@ -100,10 +100,23 @@
     
     <!-- Detailed Table by Company -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+        <div class="px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white flex justify-between items-center">
             <h3 class="text-lg font-semibold">
                 <i class="fas fa-table mr-2"></i>Detalle por Empresa
             </h3>
+            <div class="flex space-x-2">
+                <a href="<?php echo BASE_URL; ?>/reports/exportVouchersSummary?format=csv&date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+                   class="bg-white hover:bg-gray-100 text-indigo-600 font-semibold py-2 px-4 rounded-lg inline-flex items-center text-sm"
+                   title="Exportar a Excel (CSV)">
+                    <i class="fas fa-file-excel mr-2"></i>Excel
+                </a>
+                <a href="<?php echo BASE_URL; ?>/reports/exportVouchersSummary?format=pdf&date_from=<?php echo $dateFrom; ?>&date_to=<?php echo $dateTo; ?>" 
+                   class="bg-white hover:bg-gray-100 text-indigo-600 font-semibold py-2 px-4 rounded-lg inline-flex items-center text-sm"
+                   target="_blank"
+                   title="Exportar a PDF">
+                    <i class="fas fa-file-pdf mr-2"></i>PDF
+                </a>
+            </div>
         </div>
         
         <?php if (!empty($vouchersByCompany)): ?>
