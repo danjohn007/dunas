@@ -120,8 +120,15 @@
         </div>
         
         <?php if (!empty($vouchersByCompany)): ?>
+        <!-- Search Box for Company Name -->
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+            <input type="text" 
+                   id="companySearchInput" 
+                   placeholder="Buscar por nombre de empresa..." 
+                   class="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="min-w-full divide-y divide-gray-200" id="vouchersCompanyTable">
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Empresa / Cliente</th>
@@ -364,6 +371,28 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         e.preventDefault();
         alert('El monto debe ser mayor a 0');
         return false;
+    }
+});
+
+// Company search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('companySearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const table = document.getElementById('vouchersCompanyTable');
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(function(row) {
+                    const companyName = row.querySelector('td:first-child').textContent.toLowerCase();
+                    if (companyName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        });
     }
 });
 </script>

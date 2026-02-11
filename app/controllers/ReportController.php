@@ -103,6 +103,22 @@ class ReportController extends BaseController {
         // Obtener resumen de vales por empresa
         $vouchersByCompany = $this->voucherModel->getVouchersByCompany($dateFrom, $dateTo);
         
+        // Agregar pagos registrados para cada empresa
+        foreach ($vouchersByCompany as &$company) {
+            if ($company['client_id']) {
+                $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
+                    $company['client_id'], 
+                    $dateFrom, 
+                    $dateTo
+                );
+                // Calculate actual pending (total pending - registered payments)
+                $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
+            } else {
+                $company['total_paid_registered'] = 0;
+                $company['actual_pending'] = $company['total_pending'];
+            }
+        }
+        
         // Calcular estadísticas
         $stats = [
             'total_transactions' => count($transactions),

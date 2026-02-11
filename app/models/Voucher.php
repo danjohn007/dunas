@@ -447,7 +447,7 @@ class Voucher {
         }
         
         $sql .= " GROUP BY c.id, c.business_name, v.serie
-                  ORDER BY c.business_name ASC, v.serie ASC";
+                  ORDER BY MIN(v.created_at) DESC, v.serie ASC";
         
         return $this->db->fetchAll($sql, $params);
     }
