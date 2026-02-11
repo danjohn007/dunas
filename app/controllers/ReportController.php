@@ -112,7 +112,19 @@ class ReportController extends BaseController {
                     $dateTo
                 );
                 // Calcular el monto pendiente real (pendiente - pagos registrados)
+                // Si hay sobrepago, se registra como 0 pero se podría alertar al administrador
                 $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
+                
+                // Log de advertencia si hay sobrepago (para debugging)
+                if ($company['total_paid_registered'] > $company['total_pending']) {
+                    error_log(sprintf(
+                        "ADVERTENCIA: Sobrepago detectado para cliente ID %d (%s). Pagado: $%.2f, Pendiente: $%.2f",
+                        $company['client_id'],
+                        $company['client_name'] ?? 'Sin nombre',
+                        $company['total_paid_registered'],
+                        $company['total_pending']
+                    ));
+                }
             } else {
                 $company['total_paid_registered'] = 0;
                 $company['actual_pending'] = $company['total_pending'];

@@ -212,7 +212,10 @@
                                     <span class="font-bold text-green-700">$<?php echo number_format($companyVoucher['total_paid_registered'] ?? $companyVoucher['total_paid'], 2); ?></span>
                                 </div>
                                 <?php 
-                                $pendingAmount = $companyVoucher['actual_pending'] ?? $companyVoucher['total_pending'];
+                                // Usar actual_pending si existe, de lo contrario total_pending
+                                $pendingAmount = array_key_exists('actual_pending', $companyVoucher) 
+                                    ? $companyVoucher['actual_pending'] 
+                                    : $companyVoucher['total_pending'];
                                 if ($pendingAmount > 0): 
                                 ?>
                                 <div class="text-sm">
