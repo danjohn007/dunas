@@ -263,7 +263,8 @@ WHERE exit_datetime IS NOT NULL
 -- SHOW TRIGGERS WHERE `Table` = 'voucher_payments';
 
 -- Verificar que la vista existe
--- SHOW FULL TABLES WHERE TABLE_TYPE = 'VIEW' AND Tables_in_dunas_access_control = 'v_transactions_with_payment_status';
+-- SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES 
+-- WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'v_transactions_with_payment_status';
 
 -- =====================================================================
 -- NOTAS IMPORTANTES

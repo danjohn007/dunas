@@ -890,7 +890,9 @@ class ReportController extends BaseController {
         // Crear output stream
         $output = fopen('php://output', 'w');
         
-        // Agregar BOM para Excel (UTF-8)
+        // Agregar BOM (Byte Order Mark) para Excel UTF-8
+        // Excel requiere BOM para detectar correctamente la codificación UTF-8
+        // y mostrar caracteres especiales (ñ, á, é, etc.) correctamente
         fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
         
         // Encabezados del CSV
