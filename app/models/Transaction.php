@@ -10,45 +10,116 @@ class Transaction {
         $this->db = Database::getInstance();
     }
     
-    public function getAll($filters = []) {
-        $sql = "SELECT t.*, c.business_name as client_name, al.ticket_code
-                FROM transactions t
-                JOIN clients c ON t.client_id = c.id
-                JOIN access_logs al ON t.access_log_id = al.id
-                WHERE 1=1";
-        $params = [];
+    private function buildFilterConditions($filters, &$params) {
+        $conditions = [];
         
         if (!empty($filters['payment_status'])) {
-            $sql .= " AND t.payment_status = ?";
+            $conditions[] = "t.payment_status = ?";
             $params[] = $filters['payment_status'];
         }
         
         if (!empty($filters['payment_method'])) {
-            $sql .= " AND t.payment_method = ?";
+            $conditions[] = "t.payment_method = ?";
             $params[] = $filters['payment_method'];
         }
         
+        if (!empty($filters['client_id'])) {
+            $conditions[] = "t.client_id = ?";
+            $params[] = $filters['client_id'];
+        }
+        
         if (!empty($filters['date_from'])) {
-            $sql .= " AND DATE(t.transaction_date) >= ?";
+            $conditions[] = "DATE(t.transaction_date) >= ?";
             $params[] = $filters['date_from'];
         }
         
         if (!empty($filters['date_to'])) {
-            $sql .= " AND DATE(t.transaction_date) <= ?";
+            $conditions[] = "DATE(t.transaction_date) <= ?";
             $params[] = $filters['date_to'];
+        }
+        
+        if (!empty($filters['search'])) {
+            $conditions[] = "(al.ticket_code LIKE ? OR v.qr_code LIKE ? OR CONCAT(COALESCE(v.serie, ''), '-', COALESCE(v.folio, '')) LIKE ?)";
+            $search = '%' . $filters['search'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+        
+        return $conditions;
+    }
+    
+    public function getAll($filters = []) {
+        $sql = "SELECT t.*, c.business_name as client_name, al.ticket_code,
+                v.qr_code as voucher_code, v.serie as voucher_serie, v.folio as voucher_folio
+                FROM transactions t
+                JOIN clients c ON t.client_id = c.id
+                JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
+                WHERE 1=1";
+        $params = [];
+        
+        $conditions = $this->buildFilterConditions($filters, $params);
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
         }
         
         $sql .= " ORDER BY t.transaction_date DESC";
         
+        // Add pagination if specified
+        if (isset($filters['limit']) && isset($filters['offset'])) {
+            $sql .= " LIMIT ? OFFSET ?";
+            $params[] = (int)$filters['limit'];
+            $params[] = (int)$filters['offset'];
+        }
+        
         return $this->db->fetchAll($sql, $params);
+    }
+    
+    public function getTotalAmount($filters = []) {
+        $sql = "SELECT COALESCE(SUM(t.total_amount), 0) as total
+                FROM transactions t
+                JOIN clients c ON t.client_id = c.id
+                JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
+                WHERE 1=1";
+        $params = [];
+        
+        $conditions = $this->buildFilterConditions($filters, $params);
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['total'] ?? 0;
+    }
+    
+    public function getCount($filters = []) {
+        $sql = "SELECT COUNT(*) as count
+                FROM transactions t
+                JOIN clients c ON t.client_id = c.id
+                JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
+                WHERE 1=1";
+        $params = [];
+        
+        $conditions = $this->buildFilterConditions($filters, $params);
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['count'] ?? 0;
     }
     
     public function getById($id) {
         $sql = "SELECT t.*, c.business_name as client_name, c.phone as client_phone,
-                al.ticket_code, al.entry_datetime, al.exit_datetime
+                al.ticket_code, al.entry_datetime, al.exit_datetime,
+                v.qr_code as voucher_code, v.serie as voucher_serie, v.folio as voucher_folio
                 FROM transactions t
                 JOIN clients c ON t.client_id = c.id
                 JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
                 WHERE t.id = ?";
         
         return $this->db->fetchOne($sql, [$id]);

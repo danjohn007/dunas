@@ -22,19 +22,46 @@ class TransactionController extends BaseController {
     public function index() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
         
+        // Pagination
+        $perPage = 10;
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $offset = ($page - 1) * $perPage;
+        
         $filters = [
             'payment_status' => $_GET['payment_status'] ?? '',
             'payment_method' => $_GET['payment_method'] ?? '',
+            'client_id' => $_GET['client_id'] ?? '',
             'date_from' => $_GET['date_from'] ?? '',
-            'date_to' => $_GET['date_to'] ?? ''
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => $_GET['search'] ?? ''
         ];
         
+        // Get total count for pagination
+        $totalRecords = $this->transactionModel->getCount($filters);
+        $totalPages = ceil($totalRecords / $perPage);
+        
+        // Add pagination to filters
+        $filters['limit'] = $perPage;
+        $filters['offset'] = $offset;
+        
         $transactions = $this->transactionModel->getAll($filters);
+        
+        // Get total amount for current filter
+        $totalAmount = $this->transactionModel->getTotalAmount($filters);
+        
+        // Get all clients for filter dropdown
+        $clients = $this->clientModel->getAll(['status' => 'active']);
         
         $data = [
             'title' => 'Gestión de Transacciones',
             'transactions' => $transactions,
             'filters' => $filters,
+            'clients' => $clients,
+            'totalAmount' => $totalAmount,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalRecords' => $totalRecords,
+            'perPage' => $perPage,
             'showNav' => true
         ];
         
