@@ -39,7 +39,7 @@ class Transaction {
         }
         
         if (!empty($filters['search'])) {
-            $conditions[] = "(al.ticket_code LIKE ? OR v.qr_code LIKE ? OR CONCAT(v.serie, '-', v.folio) LIKE ?)";
+            $conditions[] = "(al.ticket_code LIKE ? OR v.qr_code LIKE ? OR CONCAT(COALESCE(v.serie, ''), '-', COALESCE(v.folio, '')) LIKE ?)";
             $search = '%' . $filters['search'] . '%';
             $params[] = $search;
             $params[] = $search;
