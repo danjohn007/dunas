@@ -122,9 +122,11 @@
                                     'paid' => 'Pagado',
                                     'cancelled' => 'Cancelado'
                                 ];
+                                // Usar actual_payment_status si está disponible, sino usar payment_status
+                                $displayStatus = $transaction['actual_payment_status'] ?? $transaction['payment_status'];
                                 ?>
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $statusColors[$transaction['payment_status']] ?? 'bg-gray-100 text-gray-800'; ?>">
-                                    <?php echo $statusLabels[$transaction['payment_status']] ?? $transaction['payment_status']; ?>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $statusColors[$displayStatus] ?? 'bg-gray-100 text-gray-800'; ?>">
+                                    <?php echo $statusLabels[$displayStatus] ?? $displayStatus; ?>
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
