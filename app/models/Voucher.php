@@ -137,6 +137,9 @@ class Voucher {
      * Obtiene el siguiente folio disponible para una serie
      */
     public function getNextAvailableFolio($serie, $startFrom = 1) {
+        // Constante para límite de búsqueda de huecos en folios
+        $MAX_GAP_SEARCH = 100;
+        
         // Buscar el folio más alto en la serie
         $sql = "SELECT MAX(folio) as max_folio FROM vouchers WHERE serie = ?";
         $result = $this->db->fetchOne($sql, [$serie]);
@@ -144,7 +147,7 @@ class Voucher {
         $maxFolio = $result['max_folio'] ?? 0;
         
         // Si no hay folios, empezar desde startFrom
-        if ($maxFolio == 0) {
+        if ($maxFolio === 0) {
             return $startFrom;
         }
         
@@ -154,7 +157,7 @@ class Voucher {
         }
         
         // Buscar el primer folio disponible desde startFrom
-        for ($i = $startFrom; $i <= $maxFolio + 100; $i++) {
+        for ($i = $startFrom; $i <= $maxFolio + $MAX_GAP_SEARCH; $i++) {
             if (!$this->seriesFolioExists($serie, $i)) {
                 return $i;
             }

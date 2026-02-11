@@ -83,8 +83,8 @@
         }
         
         .qr-code canvas {
-            max-width: 110px !important;
-            max-height: 110px !important;
+            max-width: 120px !important;
+            max-height: 120px !important;
         }
     </style>
 </head>
