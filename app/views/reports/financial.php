@@ -223,7 +223,7 @@
                                     + $<?php echo number_format($companyVoucher['total_paid_registered'], 2); ?> registrado
                                 </div>
                                 <?php endif; ?>
-                                <?php if ($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending'] > 0): ?>
+                                <?php if (($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending']) > 0): ?>
                                 <div class="text-sm">
                                     <span class="text-gray-600">Pendiente:</span>
                                     <span class="font-bold text-orange-600">$<?php echo number_format($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending'], 2); ?></span>
@@ -406,7 +406,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (table) {
                 const rows = table.querySelectorAll('tbody tr');
                 rows.forEach(function(row) {
-                    const companyName = row.querySelector('td:first-child').textContent.toLowerCase();
+                    const firstCell = row.querySelector('td:first-child');
+                    if (!firstCell) return;
+                    const companyName = firstCell.textContent.toLowerCase();
                     if (companyName.includes(searchTerm)) {
                         row.style.display = '';
                     } else {

@@ -384,7 +384,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (table) {
                 const rows = table.querySelectorAll('tbody tr');
                 rows.forEach(function(row) {
-                    const companyName = row.querySelector('td:first-child').textContent.toLowerCase();
+                    const firstCell = row.querySelector('td:first-child');
+                    if (!firstCell) return;
+                    const companyName = firstCell.textContent.toLowerCase();
                     if (companyName.includes(searchTerm)) {
                         row.style.display = '';
                     } else {

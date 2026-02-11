@@ -104,7 +104,7 @@ class ReportController extends BaseController {
         $vouchersByCompany = $this->voucherModel->getVouchersByCompany($dateFrom, $dateTo);
         
         // Agregar pagos registrados para cada empresa
-        foreach ($vouchersByCompany as &$company) {
+        foreach ($vouchersByCompany as $key => $company) {
             if ($company['client_id']) {
                 $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
                     $company['client_id'], 
@@ -117,6 +117,7 @@ class ReportController extends BaseController {
                 $company['total_paid_registered'] = 0;
                 $company['actual_pending'] = $company['total_pending'];
             }
+            $vouchersByCompany[$key] = $company;
         }
         
         // Calcular estadísticas
