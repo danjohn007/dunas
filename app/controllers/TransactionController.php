@@ -32,7 +32,8 @@ class TransactionController extends BaseController {
             'payment_method' => $_GET['payment_method'] ?? '',
             'client_id' => $_GET['client_id'] ?? '',
             'date_from' => $_GET['date_from'] ?? '',
-            'date_to' => $_GET['date_to'] ?? ''
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => $_GET['search'] ?? ''
         ];
         
         // Get total count for pagination

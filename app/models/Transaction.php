@@ -38,14 +38,24 @@ class Transaction {
             $params[] = $filters['date_to'];
         }
         
+        if (!empty($filters['search'])) {
+            $conditions[] = "(al.ticket_code LIKE ? OR v.qr_code LIKE ? OR CONCAT(v.serie, '-', v.folio) LIKE ?)";
+            $search = '%' . $filters['search'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+        
         return $conditions;
     }
     
     public function getAll($filters = []) {
-        $sql = "SELECT t.*, c.business_name as client_name, al.ticket_code
+        $sql = "SELECT t.*, c.business_name as client_name, al.ticket_code,
+                v.qr_code as voucher_code, v.serie as voucher_serie, v.folio as voucher_folio
                 FROM transactions t
                 JOIN clients c ON t.client_id = c.id
                 JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
                 WHERE 1=1";
         $params = [];
         
@@ -71,6 +81,7 @@ class Transaction {
                 FROM transactions t
                 JOIN clients c ON t.client_id = c.id
                 JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
                 WHERE 1=1";
         $params = [];
         
@@ -88,6 +99,7 @@ class Transaction {
                 FROM transactions t
                 JOIN clients c ON t.client_id = c.id
                 JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
                 WHERE 1=1";
         $params = [];
         
@@ -102,10 +114,12 @@ class Transaction {
     
     public function getById($id) {
         $sql = "SELECT t.*, c.business_name as client_name, c.phone as client_phone,
-                al.ticket_code, al.entry_datetime, al.exit_datetime
+                al.ticket_code, al.entry_datetime, al.exit_datetime,
+                v.qr_code as voucher_code, v.serie as voucher_serie, v.folio as voucher_folio
                 FROM transactions t
                 JOIN clients c ON t.client_id = c.id
                 JOIN access_logs al ON t.access_log_id = al.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id AND t.payment_method = 'voucher'
                 WHERE t.id = ?";
         
         return $this->db->fetchOne($sql, [$id]);

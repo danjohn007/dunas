@@ -8,7 +8,8 @@
             'payment_method' => $filters['payment_method'] ?? '',
             'client_id' => $filters['client_id'] ?? '',
             'date_from' => $filters['date_from'] ?? '',
-            'date_to' => $filters['date_to'] ?? ''
+            'date_to' => $filters['date_to'] ?? '',
+            'search' => $filters['search'] ?? ''
         ]);
         unset($queryParams['limit'], $queryParams['offset']);
         return http_build_query($queryParams);
@@ -29,6 +30,13 @@
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
         <form method="GET" action="<?php echo BASE_URL; ?>/transactions" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search Field -->
+            <div class="md:col-span-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar por Número de Vale o Código de Ticket</label>
+                <input type="text" name="search" value="<?php echo htmlspecialchars($filters['search']); ?>" 
+                    placeholder="Ingrese código de ticket o número de vale..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
                 <input type="date" name="date_from" value="<?php echo htmlspecialchars($filters['date_from']); ?>" 

@@ -79,6 +79,20 @@
                                 ?>
                             </p>
                         </div>
+                        <?php if ($transaction['payment_method'] === 'voucher' && !empty($transaction['voucher_code'])): ?>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Número de Vale</label>
+                            <p class="text-base font-semibold text-blue-600">
+                                <?php 
+                                if (!empty($transaction['voucher_serie']) && !empty($transaction['voucher_folio'])) {
+                                    echo htmlspecialchars($transaction['voucher_serie']) . '-' . htmlspecialchars($transaction['voucher_folio']);
+                                } else {
+                                    echo htmlspecialchars($transaction['voucher_code']);
+                                }
+                                ?>
+                            </p>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 
