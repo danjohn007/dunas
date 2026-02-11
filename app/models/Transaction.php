@@ -14,7 +14,11 @@ class Transaction {
         $conditions = [];
         
         if (!empty($filters['payment_status'])) {
-            $conditions[] = "t.payment_status = ?";
+            // Filtrar por el estado de pago real (considerando vouchers)
+            $conditions[] = "(CASE 
+                WHEN t.payment_method = 'voucher' AND v.id IS NOT NULL THEN v.payment_status
+                ELSE t.payment_status
+            END) = ?";
             $params[] = $filters['payment_status'];
         }
         

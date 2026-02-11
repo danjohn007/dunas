@@ -209,12 +209,15 @@
                             <div class="space-y-1">
                                 <div class="text-sm">
                                     <span class="text-gray-600">Pagado:</span>
-                                    <span class="font-bold text-green-700">$<?php echo number_format($companyVoucher['total_paid'], 2); ?></span>
+                                    <span class="font-bold text-green-700">$<?php echo number_format($companyVoucher['total_paid_registered'] ?? $companyVoucher['total_paid'], 2); ?></span>
                                 </div>
-                                <?php if ($companyVoucher['total_pending'] > 0): ?>
+                                <?php 
+                                $pendingAmount = $companyVoucher['actual_pending'] ?? $companyVoucher['total_pending'];
+                                if ($pendingAmount > 0): 
+                                ?>
                                 <div class="text-sm">
                                     <span class="text-gray-600">Pendiente:</span>
-                                    <span class="font-bold text-orange-600">$<?php echo number_format($companyVoucher['total_pending'], 2); ?></span>
+                                    <span class="font-bold text-orange-600">$<?php echo number_format($pendingAmount, 2); ?></span>
                                 </div>
                                 <?php endif; ?>
                             </div>
