@@ -799,6 +799,10 @@ class ReportController extends BaseController {
             ];
             
             $this->voucherPaymentModel->create($paymentData);
+            
+            // El trigger automáticamente actualiza el payment_status de los vouchers
+            // No se necesita código adicional aquí
+            
             $this->setFlash('success', 'Pago registrado exitosamente.');
         } catch (Exception $e) {
             $this->setFlash('error', 'Error al registrar el pago: ' . $e->getMessage());

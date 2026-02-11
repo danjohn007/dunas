@@ -50,8 +50,13 @@ class Transaction {
     }
     
     public function getAll($filters = []) {
+        // Usar la vista que calcula el payment_status correcto basado en vouchers
         $sql = "SELECT t.*, c.business_name as client_name, al.ticket_code,
-                v.qr_code as voucher_code, v.serie as voucher_serie, v.folio as voucher_folio
+                v.qr_code as voucher_code, v.serie as voucher_serie, v.folio as voucher_folio,
+                CASE 
+                    WHEN t.payment_method = 'voucher' AND v.id IS NOT NULL THEN v.payment_status
+                    ELSE t.payment_status
+                END as actual_payment_status
                 FROM transactions t
                 JOIN clients c ON t.client_id = c.id
                 JOIN access_logs al ON t.access_log_id = al.id

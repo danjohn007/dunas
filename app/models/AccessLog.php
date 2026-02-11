@@ -269,7 +269,8 @@ class AccessLog {
     }
     
     public function registerExit($id, $literSupplied) {
-        $sql = "UPDATE access_logs SET exit_datetime = NOW(), liters_supplied = ?, status = 'completed' 
+        // Marcar el PIN como usado cuando se registra la salida (acceso completado)
+        $sql = "UPDATE access_logs SET exit_datetime = NOW(), liters_supplied = ?, status = 'completed', pin_used = 1 
                 WHERE id = ?";
         
         return $this->db->execute($sql, [$literSupplied, $id]);
@@ -278,6 +279,37 @@ class AccessLog {
     public function cancel($id) {
         $sql = "UPDATE access_logs SET status = 'cancelled' WHERE id = ?";
         return $this->db->execute($sql, [$id]);
+    }
+    
+    /**
+     * Verifica si un PIN/ticket code ya ha sido usado
+     * @param string $ticketCode Código del ticket (PIN de 4 dígitos)
+     * @return bool True si el PIN ya fue usado, False si está disponible
+     */
+    public function isPinUsed($ticketCode) {
+        $sql = "SELECT pin_used FROM access_logs WHERE ticket_code = ? LIMIT 1";
+        $result = $this->db->fetchOne($sql, [$ticketCode]);
+        
+        if (!$result) {
+            return false; // No existe el ticket
+        }
+        
+        return (bool)$result['pin_used'];
+    }
+    
+    /**
+     * Obtiene información sobre el uso de un PIN/ticket code
+     * @param string $ticketCode Código del ticket (PIN de 4 dígitos)
+     * @return array|null Información del acceso o null si no existe
+     */
+    public function getPinUsageInfo($ticketCode) {
+        $sql = "SELECT al.*, c.business_name as client_name
+                FROM access_logs al
+                LEFT JOIN clients c ON al.client_id = c.id
+                WHERE al.ticket_code = ?
+                LIMIT 1";
+        
+        return $this->db->fetchOne($sql, [$ticketCode]);
     }
     
     private function generateTicketCode() {
