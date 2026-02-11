@@ -77,24 +77,14 @@
             border-top: 2px solid #2c5f3b;
         }
         
-        .folio-badge {
-            background: #e74c3c;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
-            display: inline-block;
-        }
-        
         .qr-container {
             text-align: center;
-            margin: 6px 0;
+            margin: 0;
         }
         
         .qr-code canvas {
-            max-width: 85px !important;
-            max-height: 85px !important;
+            max-width: 110px !important;
+            max-height: 110px !important;
         }
     </style>
 </head>
@@ -129,7 +119,7 @@
             <div class="voucher-title">SUMINISTRO DE AGUA</div>
             
             <!-- Main Content -->
-            <div class="grid grid-cols-2 gap-4" style="margin-top: 16px;">
+            <div class="grid grid-cols-2 gap-3" style="margin-top: 12px;">
                 <!-- Left Column -->
                 <div>
                     <div class="voucher-field">
@@ -149,10 +139,6 @@
                         <span class="voucher-value"><?php echo number_format($voucher['capacity']); ?> L</span>
                     </div>
                     <div class="voucher-field">
-                        <span class="voucher-label">TELÉFONO:</span>
-                        <span class="voucher-value"><?php echo !empty($voucher['client_phone']) ? htmlspecialchars($voucher['client_phone']) : '_________________'; ?></span>
-                    </div>
-                    <div class="voucher-field">
                         <span class="voucher-label">FECHA:</span>
                         <span class="voucher-value">_________________</span>
                     </div>
@@ -162,17 +148,10 @@
                     </div>
                 </div>
                 
-                <!-- Right Column - QR Code and Folio -->
-                <div class="text-right">
+                <!-- Right Column - QR Code Only -->
+                <div class="flex items-center justify-center">
                     <div class="qr-container">
                         <div id="qrcode-<?php echo $voucher['id']; ?>" class="qr-code inline-block"></div>
-                    </div>
-                    <div class="text-center mt-2">
-                        <div class="text-sm" style="color: #e74c3c; font-weight: bold;">FOLIO</div>
-                        <div class="text-sm" style="color: #e74c3c; font-weight: bold;">SERIE "<?php echo htmlspecialchars($voucher['serie']); ?>"</div>
-                        <div class="folio-badge" style="margin-top: 4px;">
-                            N° <?php echo str_pad($voucher['folio'], 4, '0', STR_PAD_LEFT); ?>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -198,8 +177,8 @@
         try {
             new QRCode(document.getElementById('qrcode-<?php echo $voucher['id']; ?>'), {
                 text: '<?php echo htmlspecialchars($voucher['qr_code']); ?>',
-                width: 98,
-                height: 98,
+                width: 120,
+                height: 120,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
