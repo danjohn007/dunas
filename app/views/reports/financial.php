@@ -99,6 +99,15 @@
                         <div class="text-xs text-gray-500"><?php echo $stats['vouchers']['paid_count']; ?> vales</div>
                     </div>
                 </div>
+                <?php if (!empty($stats['vouchers']['total_paid_registered'])): ?>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700"><i class="fas fa-coins text-green-500 mr-2"></i>Pagos Parciales</span>
+                    <div class="text-right">
+                        <div class="font-semibold text-green-600">$<?php echo number_format($stats['vouchers']['total_paid_registered'], 2); ?></div>
+                        <div class="text-xs text-gray-500">Registrados</div>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-700"><i class="fas fa-clock text-orange-600 mr-2"></i>Pendientes (Crédito)</span>
                     <div class="text-right">

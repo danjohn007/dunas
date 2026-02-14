@@ -109,7 +109,10 @@ class ReportController extends BaseController {
                 $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
                     $company['client_id'], 
                     $dateFrom, 
-                    $dateTo
+                    $dateTo,
+                    $company['serie'],
+                    $company['folio_inicial'],
+                    $company['folio_final']
                 );
                 // Calculate actual pending (total pending - registered payments)
                 $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
@@ -139,16 +142,22 @@ class ReportController extends BaseController {
         }
         
         // Agregar datos de vales al reporte
+        // Incluir pagos parciales registrados en el total
+        $totalRegisteredPayments = $this->voucherPaymentModel->getTotalPaymentsInPeriod($dateFrom, $dateTo);
+        
         $stats['vouchers'] = [
             'total_paid' => (float)$voucherStats['total_paid'],
+            'total_paid_registered' => (float)$totalRegisteredPayments,
             'total_pending' => (float)$voucherStats['total_pending'],
             'total_amount' => (float)$voucherStats['total_amount'],
             'paid_count' => (int)$voucherStats['paid_count'],
             'pending_count' => (int)$voucherStats['pending_count']
         ];
         
-        // Sumar vales pagados al total de ingresos
-        $stats['total_revenue'] += $stats['vouchers']['total_paid'];
+        // Sumar vales pagados (incluyendo los pagos parciales registrados) al total de ingresos
+        // El total_paid ya incluye vales marcados como pagados
+        // El total_paid_registered incluye pagos parciales que aún no completan el lote
+        $stats['total_revenue'] += $stats['vouchers']['total_paid'] + $stats['vouchers']['total_paid_registered'];
         
         // Obtener ingresos por día
         $revenueByDay = $this->transactionModel->getRevenueByPeriod($dateFrom, $dateTo);
@@ -252,7 +261,10 @@ class ReportController extends BaseController {
                 $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
                     $company['client_id'], 
                     $dateFrom, 
-                    $dateTo
+                    $dateTo,
+                    $company['serie'],
+                    $company['folio_inicial'],
+                    $company['folio_final']
                 );
                 // Calculate actual pending (total pending - registered payments)
                 $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
@@ -807,6 +819,9 @@ class ReportController extends BaseController {
         try {
             $paymentData = [
                 'client_id' => (int)$_POST['client_id'],
+                'serie' => !empty($_POST['serie']) ? $_POST['serie'] : null,
+                'folio_inicio' => !empty($_POST['folio_inicio']) ? (int)$_POST['folio_inicio'] : null,
+                'folio_fin' => !empty($_POST['folio_fin']) ? (int)$_POST['folio_fin'] : null,
                 'amount' => $amount,
                 'payment_date' => $_POST['payment_date'],
                 'payment_method' => $_POST['payment_method'],
@@ -817,10 +832,16 @@ class ReportController extends BaseController {
             
             $this->voucherPaymentModel->create($paymentData);
             
-            // El trigger automáticamente actualiza el payment_status de los vouchers
+            // El trigger automáticamente actualiza el payment_status de los vouchers del lote específico
             // No se necesita código adicional aquí
             
-            $this->setFlash('success', 'Pago registrado exitosamente.');
+            $batchInfo = '';
+            if ($paymentData['serie']) {
+                $batchInfo = ' para el lote ' . $paymentData['serie'] . 
+                            ' (folios ' . $paymentData['folio_inicio'] . '-' . $paymentData['folio_fin'] . ')';
+            }
+            
+            $this->setFlash('success', 'Pago registrado exitosamente' . $batchInfo . '.');
         } catch (Exception $e) {
             $this->setFlash('error', 'Error al registrar el pago: ' . $e->getMessage());
         }
@@ -877,7 +898,10 @@ class ReportController extends BaseController {
                 $company['total_paid_registered'] = $this->voucherPaymentModel->getTotalPaidByClient(
                     $company['client_id'], 
                     $dateFrom, 
-                    $dateTo
+                    $dateTo,
+                    $company['serie'],
+                    $company['folio_inicial'],
+                    $company['folio_final']
                 );
                 $company['actual_pending'] = max(0, $company['total_pending'] - $company['total_paid_registered']);
             } else {

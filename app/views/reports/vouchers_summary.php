@@ -245,12 +245,26 @@
         <form method="POST" action="<?php echo BASE_URL; ?>/reports/registerPayment" id="paymentForm">
             <div class="px-6 py-4">
                 <input type="hidden" name="client_id" id="payment_client_id">
+                <input type="hidden" name="serie" id="payment_serie">
+                <input type="hidden" name="folio_inicio" id="payment_folio_inicio">
+                <input type="hidden" name="folio_fin" id="payment_folio_fin">
                 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Empresa
                     </label>
                     <div id="payment_client_name" class="text-base font-semibold text-gray-900"></div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Lote de Vales
+                    </label>
+                    <div class="text-sm text-gray-700">
+                        <span class="font-semibold">Serie:</span> <span id="payment_serie_display" class="text-purple-600"></span>
+                        <span class="mx-2">|</span>
+                        <span class="font-semibold">Folios:</span> <span id="payment_folio_range" class="text-blue-600"></span>
+                    </div>
                 </div>
                 
                 <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -331,7 +345,14 @@
 <script>
 function openPaymentModal(company) {
     document.getElementById('payment_client_id').value = company.client_id;
+    document.getElementById('payment_serie').value = company.serie || '';
+    document.getElementById('payment_folio_inicio').value = company.folio_inicial || '';
+    document.getElementById('payment_folio_fin').value = company.folio_final || '';
+    
     document.getElementById('payment_client_name').textContent = company.client_name || 'Sin asignar';
+    document.getElementById('payment_serie_display').textContent = company.serie || 'N/A';
+    document.getElementById('payment_folio_range').textContent = 
+        (company.folio_inicial || 'N/A') + ' - ' + (company.folio_final || 'N/A');
     
     const pendingAmount = company.actual_pending || company.total_pending || 0;
     document.getElementById('payment_pending_amount').textContent = '$' + pendingAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
