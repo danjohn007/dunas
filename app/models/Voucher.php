@@ -134,6 +134,40 @@ class Voucher {
     }
     
     /**
+     * Obtiene el siguiente folio disponible para una serie
+     */
+    public function getNextAvailableFolio($serie, $startFrom = 1) {
+        // Constante para límite de búsqueda de huecos en folios
+        $MAX_GAP_SEARCH = 100;
+        
+        // Buscar el folio más alto en la serie
+        $sql = "SELECT MAX(folio) as max_folio FROM vouchers WHERE serie = ?";
+        $result = $this->db->fetchOne($sql, [$serie]);
+        
+        $maxFolio = $result['max_folio'] ?? 0;
+        
+        // Si no hay folios, empezar desde startFrom
+        if ($maxFolio === 0) {
+            return $startFrom;
+        }
+        
+        // Si el folio solicitado es mayor que el máximo, usarlo
+        if ($startFrom > $maxFolio) {
+            return $startFrom;
+        }
+        
+        // Buscar el primer folio disponible desde startFrom
+        for ($i = $startFrom; $i <= $maxFolio + $MAX_GAP_SEARCH; $i++) {
+            if (!$this->seriesFolioExists($serie, $i)) {
+                return $i;
+            }
+        }
+        
+        // Si no se encuentra ningún hueco, devolver siguiente al máximo
+        return $maxFolio + 1;
+    }
+    
+    /**
      * Genera un código QR único (formato corto: SERIE-FOLIO)
      */
     private function generateUniqueQRCode($serie, $folio) {
@@ -447,7 +481,7 @@ class Voucher {
         }
         
         $sql .= " GROUP BY c.id, c.business_name, v.serie
-                  ORDER BY c.business_name ASC, v.serie ASC";
+                  ORDER BY MIN(v.created_at) DESC, v.serie ASC";
         
         return $this->db->fetchAll($sql, $params);
     }

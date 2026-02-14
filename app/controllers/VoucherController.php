@@ -145,6 +145,15 @@ class VoucherController extends BaseController {
             return;
         }
         
+        // Verificar si el folio inicial ya existe y ajustar
+        $originalStartFolio = $startFolio;
+        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startFolio);
+        
+        if ($nextAvailable != $startFolio) {
+            $this->setFlash('warning', "El folio {$startFolio} ya existe para la serie {$serie}. Se iniciará desde el folio {$nextAvailable}.");
+            $startFolio = $nextAvailable;
+        }
+        
         // Generar vales
         try {
             $result = $this->voucherModel->generateBatch(

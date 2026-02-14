@@ -1,169 +1,169 @@
-# DEPLOYMENT CHECKLIST - DUNAS v1.1.0
+# Deployment Checklist for Dunas System Fixes
 
 ## Pre-Deployment
 
-- [ ] Backup de base de datos actual
-- [ ] Backup de archivos del sistema actual
-- [ ] Verificar versión de PHP (7.4+)
-- [ ] Verificar acceso a base de datos
+### 1. Code Review
+- [x] All code changes reviewed
+- [x] Code review feedback addressed
+- [x] No security vulnerabilities found
+- [x] Syntax validation passed
+- [x] No linting errors
 
-## Deployment Steps
+### 2. Testing Preparation
+- [ ] Review TESTING_GUIDE.md
+- [ ] Prepare test data
+- [ ] Identify test users/accounts
+- [ ] Note current system behavior for comparison
 
-### 1. Base de Datos
-- [ ] Ejecutar script `config/update_1.1.0.sql`
-- [ ] Verificar que la tabla `settings` fue creada
-- [ ] Verificar configuraciones por defecto insertadas
+### 3. Backup
+- [ ] Backup production database
+- [ ] Backup production code
+- [ ] Document current version/commit: `45b0d19`
+- [ ] Ensure rollback procedure is clear
 
-```sql
--- Verificar tabla settings
-SELECT COUNT(*) FROM settings;
--- Debe retornar al menos 12 registros
-```
+## Deployment
 
-### 2. Archivos del Sistema
-- [ ] Subir/actualizar todos los archivos modificados
-- [ ] Verificar permisos de directorios:
+### 4. Staging Deployment (if available)
+- [ ] Deploy to staging environment
+- [ ] Run smoke tests
+- [ ] Test payment tracking feature
+- [ ] Test chronological sorting
+- [ ] Test company search
+- [ ] Test transaction status filter
+- [ ] Test folio generation
+- [ ] Check browser console for errors
+- [ ] Review server logs
+
+### 5. Production Deployment
+- [ ] Schedule deployment during low-traffic period
+- [ ] Notify users of potential brief disruption
+- [ ] Deploy code to production
+- [ ] Clear PHP opcode cache (if applicable)
   ```bash
-  chmod 755 public/uploads
-  chmod 755 public/uploads/logos
+  # Example for OPcache
+  sudo service php-fpm reload
+  # OR
+  sudo systemctl reload php8.1-fpm
   ```
+- [ ] Clear application cache (if applicable)
 
-### 3. Verificación de Archivos Críticos
+## Post-Deployment
 
-**Nuevos Controladores:**
-- [ ] `app/controllers/ProfileController.php`
-- [ ] `app/controllers/SettingsController.php`
+### 6. Immediate Verification (First 10 minutes)
+- [ ] Website loads successfully
+- [ ] Login functionality works
+- [ ] Financial report loads
+- [ ] Voucher reports load
+- [ ] Transaction page loads
+- [ ] No PHP errors in logs
 
-**Nuevos Modelos:**
-- [ ] `app/models/Settings.php`
+### 7. Feature Testing (First 30 minutes)
+- [ ] **Payment Tracking**
+  - [ ] Navigate to Reporte Financiero
+  - [ ] Verify MONTOS column shows registered payments
+  - [ ] Check calculations are correct
+  
+- [ ] **Chronological Sorting**
+  - [ ] Verify newest vouchers appear first
+  - [ ] Confirm order is not alphabetical
+  
+- [ ] **Company Search**
+  - [ ] Type in search box on financial report
+  - [ ] Verify filtering works
+  - [ ] Test on vouchers summary page
+  
+- [ ] **Transaction Status Filter**
+  - [ ] Go to Gestión de Transacciones
+  - [ ] Select "Pendiente" from dropdown
+  - [ ] Verify pending transactions appear
+  - [ ] Test other status options
 
-**Nuevas Vistas:**
-- [ ] `app/views/reports/access.php`
-- [ ] `app/views/reports/operational.php`
-- [ ] `app/views/profile/index.php`
-- [ ] `app/views/settings/index.php`
+### 8. Regression Testing (First 2 hours)
+- [ ] Create new vouchers
+- [ ] Record a transaction
+- [ ] Register a payment
+- [ ] Generate a report
+- [ ] Export to Excel
+- [ ] Export to PDF
+- [ ] Access logs are created correctly
 
-**Archivos Actualizados:**
-- [ ] `app/views/layouts/main.php`
-- [ ] `app/views/transactions/create.php`
-- [ ] `app/views/access/create.php`
-- [ ] `app/views/reports/financial.php`
-- [ ] `app/controllers/ProfileController.php`
-- [ ] `public/index.php`
+### 9. Monitoring (First 24-48 hours)
+- [ ] Monitor error logs for PHP errors
+- [ ] Check database query performance
+- [ ] Monitor page load times
+- [ ] Watch for user-reported issues
+- [ ] Review browser console reports (if users report issues)
 
-## Post-Deployment Testing
+### 10. User Communication
+- [ ] Notify users of new features:
+  - Company search functionality
+  - Improved payment tracking
+  - Fixed status filter
+- [ ] Provide training if needed
+- [ ] Collect feedback
 
-### 1. Funcionalidad Básica
-- [ ] Login funciona correctamente
-- [ ] Dashboard se carga sin errores
-- [ ] Menú de navegación funciona
+## Rollback Procedure (If Needed)
 
-### 2. Nuevas Funcionalidades
-
-**Reportes:**
-- [ ] Acceder a `/reports`
-- [ ] Click en "Reporte de Accesos" - debe cargar sin errores
-- [ ] Click en "Reporte Operativo" - debe cargar sin errores
-- [ ] Click en "Reporte Financiero" - gráficas deben mostrarse
-- [ ] Click en "Ingresos del Mes" - debe cargar correctamente
-- [ ] Click en "Ingresos Anuales" - debe cargar correctamente
-
-**Transacciones:**
-- [ ] Acceder a `/transactions`
-- [ ] Click en "Nueva Transacción"
-- [ ] Formulario se muestra completo
-- [ ] Crear una transacción de prueba
-
-**Accesos:**
-- [ ] Acceder a `/access`
-- [ ] Click en "Nuevo Acceso" desde dashboard
-- [ ] Formulario se muestra completo
-- [ ] Los selectores muestran datos (clientes, unidades, choferes)
-
-**Perfil:**
-- [ ] Click en nombre de usuario (esquina superior derecha)
-- [ ] Verificar que aparece dropdown
-- [ ] Click en "Perfil"
-- [ ] Actualizar nombre y email
-- [ ] Cambiar contraseña (opcional)
-
-**Configuraciones (Solo Admin):**
-- [ ] Click en nombre de usuario
-- [ ] Click en "Configuraciones"
-- [ ] Verificar que todos los campos se muestran
-- [ ] Guardar configuraciones de prueba
-- [ ] Verificar que se guardaron correctamente
-
-### 3. Gráficas
-- [ ] Dashboard: Gráfica "Ingresos Mensuales" se muestra
-- [ ] Reporte Financiero: Gráfica "Ingresos por Día" se muestra
-- [ ] No hay errores en consola del navegador (F12)
-
-### 4. Navegación
-- [ ] Todos los enlaces del menú funcionan
-- [ ] Dropdown de usuario funciona
-- [ ] Click fuera del dropdown lo cierra
-
-## Rollback Plan (Si hay problemas)
-
-1. **Restaurar Base de Datos:**
+### If Critical Issues Occur:
+1. [ ] Document the issue thoroughly
+2. [ ] Take screenshots/logs
+3. [ ] Revert to previous commit
    ```bash
-   mysql -u [usuario] -p [base_datos] < backup_[fecha].sql
+   git checkout 45b0d19
+   # Or deploy previous version
    ```
+4. [ ] Clear caches
+5. [ ] Verify system is stable
+6. [ ] Analyze issue offline
+7. [ ] Plan fix and redeploy
 
-2. **Restaurar Archivos:**
-   ```bash
-   # Restaurar desde backup de archivos
-   cp -r backup_[fecha]/* /ruta/sistema/
-   ```
+## Success Criteria
 
-## Issues Conocidos y Soluciones
+The deployment is considered successful when:
+- [x] All tests pass
+- [ ] No critical errors in logs
+- [ ] Users can access all features
+- [ ] Performance is acceptable
+- [ ] User feedback is positive
+- [ ] No rollback required for 48 hours
 
-### Problema: Gráficas no se muestran
-**Solución:**
-1. Verificar consola del navegador (F12)
-2. Asegurarse que Chart.js se carga
-3. Verificar que hay datos en el período seleccionado
+## Sign-Off
 
-### Problema: Error "settings table doesn't exist"
-**Solución:**
-1. Ejecutar nuevamente `config/update_1.1.0.sql`
-2. Verificar que el usuario de BD tiene permisos CREATE TABLE
+### Deployment Team
+- [ ] Developer: _________________ Date: _______
+- [ ] QA Tester: _________________ Date: _______
+- [ ] System Admin: ______________ Date: _______
+- [ ] Product Owner: _____________ Date: _______
 
-### Problema: No se pueden subir logos
-**Solución:**
-1. Crear directorio: `mkdir -p public/uploads/logos`
-2. Dar permisos: `chmod 755 public/uploads/logos`
+### Production Approval
+- [ ] Approved for Production: _________ Date: _______
 
-### Problema: Dropdown de usuario no funciona
-**Solución:**
-1. Limpiar caché del navegador
-2. Verificar que `app/views/layouts/main.php` está actualizado
-3. Verificar consola de JavaScript por errores
+## Notes
 
-## Notas de Producción
-
-- **Caché:** Limpiar caché de navegador después del deployment
-- **Sesiones:** Los usuarios activos pueden necesitar hacer logout/login
-- **Logs:** Monitorear logs de PHP y Apache/Nginx por las primeras 24 horas
-- **Backup:** Mantener backup por al menos 7 días
-
-## Contacto de Emergencia
-
-En caso de problemas críticos:
-1. Restaurar desde backup inmediatamente
-2. Documentar el error (screenshots, logs)
-3. Contactar soporte técnico
-
-## Sign-off
-
-- [ ] Deployment completado por: ________________
-- [ ] Fecha y hora: ________________
-- [ ] Testing completado por: ________________
-- [ ] Aprobación final: ________________
+_Use this space to document any issues, observations, or important notes during deployment:_
 
 ---
 
-**Versión:** 1.1.0  
-**Fecha:** 2024-10-28  
-**Deployment ID:** ______________
+---
+
+---
+
+## Contact Information
+
+**For Issues During Deployment:**
+- Technical Lead: _________________
+- Database Admin: _________________
+- Emergency Contact: _________________
+
+**Documentation References:**
+- FIXES_IMPLEMENTATION.md - Technical details
+- TESTING_GUIDE.md - Testing procedures  
+- SUMMARY.md - Implementation overview
+- VISUAL_CHANGES.md - Visual comparison guide
+
+---
+
+**Deployment Date**: ____________
+**Deployed By**: ____________
+**Version/Commit**: 74261b1
+**Previous Version**: 45b0d19

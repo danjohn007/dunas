@@ -145,8 +145,15 @@
         </div>
         
         <?php if (!empty($vouchersByCompany)): ?>
+        <!-- Search Box for Company Name -->
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+            <input type="text" 
+                   id="companySearchInput" 
+                   placeholder="Buscar por nombre de empresa..." 
+                   class="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full">
+            <table class="min-w-full" id="vouchersCompanyTable">
                 <thead class="bg-gray-100 border-b-2 border-gray-300">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Empresa</th>
@@ -211,11 +218,21 @@
                                     <span class="text-gray-600">Pagado:</span>
                                     <span class="font-bold text-green-700">$<?php echo number_format($companyVoucher['total_paid'], 2); ?></span>
                                 </div>
-                                <?php if ($companyVoucher['total_pending'] > 0): ?>
+                                <?php if (!empty($companyVoucher['total_paid_registered'])): ?>
+                                <div class="text-xs text-green-600">
+                                    + $<?php echo number_format($companyVoucher['total_paid_registered'], 2); ?> registrado
+                                </div>
+                                <?php endif; ?>
+                                <?php if (($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending']) > 0): ?>
                                 <div class="text-sm">
                                     <span class="text-gray-600">Pendiente:</span>
-                                    <span class="font-bold text-orange-600">$<?php echo number_format($companyVoucher['total_pending'], 2); ?></span>
+                                    <span class="font-bold text-orange-600">$<?php echo number_format($companyVoucher['actual_pending'] ?? $companyVoucher['total_pending'], 2); ?></span>
                                 </div>
+                                <?php if (!empty($companyVoucher['total_paid_registered'])): ?>
+                                <div class="text-xs text-gray-500 line-through">
+                                    $<?php echo number_format($companyVoucher['total_pending'], 2); ?>
+                                </div>
+                                <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </td>
@@ -376,6 +393,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } catch (error) {
         console.error('Error al crear la gráfica:', error);
+    }
+});
+
+// Company search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('companySearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const table = document.getElementById('vouchersCompanyTable');
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(function(row) {
+                    const firstCell = row.querySelector('td:first-child');
+                    if (!firstCell) return;
+                    const companyName = firstCell.textContent.toLowerCase();
+                    if (companyName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        });
     }
 });
 </script>
