@@ -14,11 +14,14 @@ class VoucherPayment {
      * Registra un nuevo pago
      */
     public function create($data) {
-        $sql = "INSERT INTO voucher_payments (client_id, amount, payment_date, payment_method, reference, notes, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO voucher_payments (client_id, serie, folio_inicio, folio_fin, amount, payment_date, payment_method, reference, notes, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             $data['client_id'],
+            $data['serie'] ?? null,
+            $data['folio_inicio'] ?? null,
+            $data['folio_fin'] ?? null,
             $data['amount'],
             $data['payment_date'],
             $data['payment_method'],
@@ -61,12 +64,20 @@ class VoucherPayment {
     /**
      * Obtiene el total pagado por un cliente en un período
      */
-    public function getTotalPaidByClient($clientId, $dateFrom = null, $dateTo = null) {
+    public function getTotalPaidByClient($clientId, $dateFrom = null, $dateTo = null, $serie = null, $folioInicio = null, $folioFin = null) {
         $sql = "SELECT COALESCE(SUM(amount), 0) as total
                 FROM voucher_payments
                 WHERE client_id = ?";
         
         $params = [$clientId];
+        
+        // Si se especifica lote (serie + rango folios), filtrar por lote
+        if ($serie !== null && $folioInicio !== null && $folioFin !== null) {
+            $sql .= " AND serie = ? AND folio_inicio = ? AND folio_fin = ?";
+            $params[] = $serie;
+            $params[] = $folioInicio;
+            $params[] = $folioFin;
+        }
         
         if ($dateFrom) {
             $sql .= " AND payment_date >= ?";
@@ -99,10 +110,13 @@ class VoucherPayment {
      */
     public function update($id, $data) {
         $sql = "UPDATE voucher_payments 
-                SET amount = ?, payment_date = ?, payment_method = ?, reference = ?, notes = ?
+                SET serie = ?, folio_inicio = ?, folio_fin = ?, amount = ?, payment_date = ?, payment_method = ?, reference = ?, notes = ?
                 WHERE id = ?";
         
         $params = [
+            $data['serie'] ?? null,
+            $data['folio_inicio'] ?? null,
+            $data['folio_fin'] ?? null,
             $data['amount'],
             $data['payment_date'],
             $data['payment_method'],
@@ -120,5 +134,29 @@ class VoucherPayment {
     public function delete($id) {
         $sql = "DELETE FROM voucher_payments WHERE id = ?";
         return $this->db->execute($sql, [$id]);
+    }
+    
+    /**
+     * Obtiene el total de pagos registrados en un período (para incluir en totales del reporte financiero)
+     */
+    public function getTotalPaymentsInPeriod($dateFrom = null, $dateTo = null) {
+        $sql = "SELECT COALESCE(SUM(amount), 0) as total
+                FROM voucher_payments
+                WHERE 1=1";
+        
+        $params = [];
+        
+        if ($dateFrom) {
+            $sql .= " AND payment_date >= ?";
+            $params[] = $dateFrom;
+        }
+        
+        if ($dateTo) {
+            $sql .= " AND payment_date <= ?";
+            $params[] = $dateTo;
+        }
+        
+        $result = $this->db->fetchOne($sql, $params);
+        return $result['total'] ?? 0;
     }
 }
