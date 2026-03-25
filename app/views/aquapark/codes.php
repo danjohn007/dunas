@@ -76,7 +76,7 @@
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Válida</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Válido hasta</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Validado</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Generado por</th>

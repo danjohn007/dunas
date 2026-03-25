@@ -8,10 +8,17 @@
             </h1>
             <p class="text-gray-600">Boletos registrados manualmente en el Parque Acuático</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/aquapark/registerVisitor"
-           class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
-            <i class="fas fa-plus mr-2"></i>Registrar Visitante
-        </a>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <a href="<?php echo BASE_URL; ?>/aquapark/validateCode"
+               target="_blank"
+               class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-qrcode mr-2"></i>Validación de boletos
+            </a>
+            <a href="<?php echo BASE_URL; ?>/aquapark/registerVisitor"
+               class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
+                <i class="fas fa-plus mr-2"></i>Registrar Visitante
+            </a>
+        </div>
     </div>
 
     <!-- Filtros -->

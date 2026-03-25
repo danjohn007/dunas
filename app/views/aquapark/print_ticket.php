@@ -26,7 +26,9 @@
                 max-width: 100%;
                 box-shadow: none !important;
                 border: 1px solid #ddd;
+                page-break-inside: avoid;
             }
+            .ticket-page-break { page-break-after: always; }
             @page { size: letter portrait; margin: 1cm; }
         }
     </style>
@@ -45,8 +47,16 @@
         </button>
     </div>
 
-    <!-- Ticket -->
-    <div class="max-w-xl mx-auto px-4 pb-8">
+    <?php
+    // Determine which codes to show: individual items if they exist, else the parent ticket code
+    $printItems = !empty($items) ? $items : [['code' => $ticket['code'], 'item_number' => null]];
+    $totalItems  = count($printItems);
+    ?>
+
+    <?php foreach ($printItems as $idx => $item): ?>
+    <?php $isLast = ($idx === $totalItems - 1); ?>
+    <!-- Ticket <?php echo $idx + 1; ?> -->
+    <div class="max-w-xl mx-auto px-4 pb-8 <?php echo !$isLast ? 'ticket-page-break' : ''; ?>">
         <div class="ticket-wrapper bg-white rounded-2xl shadow-xl overflow-hidden">
 
             <!-- Header -->
@@ -63,10 +73,15 @@
 
                     <!-- QR Code -->
                     <div class="flex flex-col items-center">
-                        <div id="qrcode" class="p-2 border border-gray-200 rounded-lg bg-white"></div>
+                        <div id="qrcode-<?php echo $idx; ?>" class="p-2 border border-gray-200 rounded-lg bg-white"></div>
                         <p class="text-xs text-gray-500 mt-2 font-mono text-center" style="max-width:160px;word-break:break-all;">
-                            <?php echo htmlspecialchars($ticket['code']); ?>
+                            <?php echo htmlspecialchars($item['code']); ?>
                         </p>
+                        <?php if ($item['item_number'] !== null): ?>
+                        <p class="text-xs text-blue-600 font-semibold mt-1">
+                            Boleto <?php echo (int)$item['item_number']; ?> de <?php echo $totalItems; ?>
+                        </p>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Info -->
@@ -88,11 +103,6 @@
                         <div>
                             <p class="text-xs text-gray-400 uppercase tracking-wide">Fecha de Visita</p>
                             <p class="font-semibold text-gray-900"><?php echo date('d/m/Y', strtotime($ticket['visit_date'])); ?></p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-gray-400 uppercase tracking-wide">Boletos</p>
-                            <p class="text-3xl font-bold text-blue-600"><?php echo (int)$ticket['ticket_count']; ?></p>
                         </div>
 
                         <?php if ($ticket['total_amount'] !== null): ?>
@@ -119,25 +129,33 @@
             </div>
         </div>
     </div>
+    <?php endforeach; ?>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        try {
-            new QRCode(document.getElementById('qrcode'), {
-                text: '<?php echo addslashes($ticket['code']); ?>',
-                width: 160,
-                height: 160,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
-        } catch (e) {
-            document.getElementById('qrcode').innerHTML = '<p class="text-red-500 text-xs">Error al generar QR</p>';
-        }
+        var items = <?php echo json_encode(array_values(array_map(function($item) {
+            return $item['code'];
+        }, $printItems))); ?>;
 
-        // Auto-print if requested
+        items.forEach(function(code, idx) {
+            try {
+                new QRCode(document.getElementById('qrcode-' + idx), {
+                    text: code,
+                    width: 160,
+                    height: 160,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (e) {
+                var el = document.getElementById('qrcode-' + idx);
+                if (el) el.innerHTML = '<p class="text-red-500 text-xs">Error al generar QR</p>';
+            }
+        });
+
+        // Delay allows all QR codes to finish rendering before the print dialog opens
         if (window.location.search.indexOf('print=1') !== -1) {
-            setTimeout(function () { window.print(); }, 500);
+            setTimeout(function () { window.print(); }, 800);
         }
     });
     </script>

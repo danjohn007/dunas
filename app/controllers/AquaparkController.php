@@ -133,7 +133,7 @@ class AquaparkController extends BaseController {
 
     /**
      * Página pública para validar un código QR de parque acuático.
-     * Acepta códigos de pulsera (AQP-...) y boletos (TKT-...).
+     * Acepta códigos de pulsera (AQP-...) y boletos individuales (TKT-...).
      */
     public function validateCode() {
         // Página pública, sin autenticación requerida
@@ -153,44 +153,84 @@ class AquaparkController extends BaseController {
                 if (strpos($code, 'AQP-') === 0) {
                     $validationResult = $this->codeModel->validate($code, 'Escaneo público');
                 } elseif (strpos($code, 'TKT-') === 0) {
-                    // Código de boleto manual: solo verificar existencia
-                    $ticket = $this->ticketModel->getByCode($code);
-                    if ($ticket) {
+                    // Intentar primero como boleto individual (aquapark_ticket_items)
+                    $item = $this->ticketModel->getItemByCode($code);
+                    if ($item) {
                         $today = date('Y-m-d');
-                        if ($ticket['visit_date'] === $today) {
-                            $validationResult = [
-                                'valid'   => true,
-                                'status'  => 'ok',
-                                'message' => '¡Boleto válido! ' . ($ticket['ticket_count'] > 1 ? $ticket['ticket_count'] . ' boletos' : '1 boleto'),
-                                'ticket'  => $ticket
-                            ];
-                        } else {
+                        if ($item['visit_date'] !== $today) {
                             $validationResult = [
                                 'valid'   => false,
                                 'status'  => 'expired',
-                                'message' => 'Este boleto es para el ' . date('d/m/Y', strtotime($ticket['visit_date'])),
-                                'ticket'  => $ticket
+                                'message' => 'Este boleto es para el ' . date('d/m/Y', strtotime($item['visit_date'])),
+                                'ticket'  => $item
+                            ];
+                        } elseif (!empty($item['validated_at'])) {
+                            $validationResult = [
+                                'valid'   => false,
+                                'status'  => 'already_used',
+                                'message' => 'Este boleto ya fue utilizado a las ' . date('H:i', strtotime($item['validated_at'])),
+                                'ticket'  => $item
+                            ];
+                        } else {
+                            // Marcar item como validado
+                            $this->ticketModel->markItemValidated($item['id']);
+                            $validationResult = [
+                                'valid'   => true,
+                                'status'  => 'ok',
+                                'message' => '¡Boleto válido! Boleto #' . $item['item_number'] . ((!empty($item['visitor_name'])) ? ' - ' . $item['visitor_name'] : ''),
+                                'ticket'  => $item
                             ];
                         }
                     } else {
-                        $validationResult = [
-                            'valid'   => false,
-                            'status'  => 'not_found',
-                            'message' => 'Código no encontrado en el sistema.'
-                        ];
+                        // Fallback: boleto padre (registros sin items individuales)
+                        $ticket = $this->ticketModel->getByCode($code);
+                        if ($ticket) {
+                            $today = date('Y-m-d');
+                            if ($ticket['visit_date'] === $today) {
+                                $validationResult = [
+                                    'valid'   => true,
+                                    'status'  => 'ok',
+                                    'message' => '¡Boleto válido! ' . ($ticket['ticket_count'] > 1 ? $ticket['ticket_count'] . ' boletos' : '1 boleto'),
+                                    'ticket'  => $ticket
+                                ];
+                            } else {
+                                $validationResult = [
+                                    'valid'   => false,
+                                    'status'  => 'expired',
+                                    'message' => 'Este boleto es para el ' . date('d/m/Y', strtotime($ticket['visit_date'])),
+                                    'ticket'  => $ticket
+                                ];
+                            }
+                        } else {
+                            $validationResult = [
+                                'valid'   => false,
+                                'status'  => 'not_found',
+                                'message' => 'Código no encontrado en el sistema.'
+                            ];
+                        }
                     }
                 } else {
                     // Intento genérico en ambas tablas
                     $validationResult = $this->codeModel->validate($code, 'Escaneo público');
                     if ($validationResult['status'] === 'not_found') {
-                        $ticket = $this->ticketModel->getByCode($code);
-                        if ($ticket) {
+                        $item = $this->ticketModel->getItemByCode($code);
+                        if ($item) {
                             $validationResult = [
                                 'valid'   => true,
                                 'status'  => 'ok',
                                 'message' => '¡Boleto válido!',
-                                'ticket'  => $ticket
+                                'ticket'  => $item
                             ];
+                        } else {
+                            $ticket = $this->ticketModel->getByCode($code);
+                            if ($ticket) {
+                                $validationResult = [
+                                    'valid'   => true,
+                                    'status'  => 'ok',
+                                    'message' => '¡Boleto válido!',
+                                    'ticket'  => $ticket
+                                ];
+                            }
                         }
                     }
                 }
@@ -319,11 +359,13 @@ class AquaparkController extends BaseController {
             return;
         }
 
+        $items    = $this->ticketModel->getItemsByTicketId($id);
         $settings = $this->settingsModel->getAll();
 
         $data = [
             'title'          => 'Boleto de Visita',
             'ticket'         => $ticket,
+            'items'          => $items,
             'systemSettings' => $settings,
             'showNav'        => false,
         ];
