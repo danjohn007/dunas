@@ -126,11 +126,11 @@ class AquaparkCode {
         }
 
         $today = date('Y-m-d');
-        if ($record['valid_date'] !== $today) {
+        if ($record['valid_date'] < $today) {
             return [
                 'valid' => false,
                 'status' => 'expired',
-                'message' => 'Este código es válido para ' . date('d/m/Y', strtotime($record['valid_date'])) . ', no para hoy',
+                'message' => 'Este código venció el ' . date('d/m/Y', strtotime($record['valid_date'])),
                 'record' => $record
             ];
         }

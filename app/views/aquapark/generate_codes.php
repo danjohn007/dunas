@@ -38,17 +38,17 @@
                            placeholder="p. ej. 1461">
                 </div>
 
-                <!-- Fecha de validez -->
+                <!-- Válidos hasta -->
                 <div class="sm:col-span-2">
                     <label for="valid_date" class="block text-sm font-medium text-gray-700 mb-1">
-                        Fecha de validez <span class="text-red-500">*</span>
+                        Válidos hasta <span class="text-red-500">*</span>
                     </label>
                     <input type="date" id="valid_date" name="valid_date" required
-                           value="<?php echo date('Y-m-d'); ?>"
+                           value="<?php echo date('Y-m-d', strtotime('+1 year')); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <p class="mt-1 text-xs text-gray-500">
                         <i class="fas fa-info-circle mr-1"></i>
-                        Los códigos sólo serán válidos durante este día.
+                        Los códigos serán válidos hasta esta fecha (inclusive).
                     </p>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                 <p class="text-sm text-blue-800">
                     <i class="fas fa-info-circle mr-1"></i>
                     Se generarán <strong id="countLabel">0</strong> códigos (del <strong id="startLabel">—</strong> al <strong id="endLabel">—</strong>)
-                    válidos para el <strong id="dateLabel">—</strong>.
+                    válidos hasta el <strong id="dateLabel">—</strong>.
                 </p>
             </div>
 

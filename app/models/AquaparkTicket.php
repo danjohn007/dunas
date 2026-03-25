@@ -4,6 +4,9 @@
  */
 class AquaparkTicket {
 
+    /** Identificador de validación por escaneo público (usado en validated_by) */
+    const VALIDATOR_PUBLIC = 'Escaneo público';
+
     private $db;
 
     public function __construct() {
@@ -19,7 +22,7 @@ class AquaparkTicket {
     }
 
     /**
-     * Crea un nuevo boleto de visitante.
+     * Crea un nuevo boleto de visitante y genera los items individuales.
      */
     public function create($data) {
         $visitDate = $data['visit_date'] ?: date('Y-m-d');
@@ -43,7 +46,64 @@ class AquaparkTicket {
         $this->db->execute($sql, $params);
         $id = $this->db->lastInsertId();
 
+        // Generate one individual item per ticket
+        $this->createItems($id, (int)$data['ticket_count'], $visitDate);
+
         return $this->getById($id);
+    }
+
+    /**
+     * Crea los items individuales para un registro de visitante.
+     * @param int    $ticketId  ID del registro padre
+     * @param int    $count     Número de boletos individuales
+     * @param string $visitDate Fecha de visita (YYYY-MM-DD)
+     */
+    public function createItems($ticketId, $count, $visitDate) {
+        for ($i = 1; $i <= $count; $i++) {
+            $itemCode = $this->generateCode($visitDate);
+            $sql = "INSERT INTO aquapark_ticket_items (ticket_id, item_number, code)
+                    VALUES (?, ?, ?)";
+            $this->db->execute($sql, [$ticketId, $i, $itemCode]);
+        }
+    }
+
+    /**
+     * Obtiene todos los items individuales de un registro de visitante.
+     * @param int $ticketId
+     * @return array
+     */
+    public function getItemsByTicketId($ticketId) {
+        $sql = "SELECT * FROM aquapark_ticket_items
+                WHERE ticket_id = ?
+                ORDER BY item_number ASC";
+        return $this->db->fetchAll($sql, [$ticketId]);
+    }
+
+    /**
+     * Busca un item individual por su código QR.
+     * @param string $code
+     * @return array|null  Item + datos del ticket padre, o null si no existe
+     */
+    public function getItemByCode($code) {
+        $sql = "SELECT i.*, t.visitor_name, t.phone, t.visit_date, t.ticket_count,
+                       t.total_amount, t.notes, t.code AS parent_code,
+                       u.full_name AS created_by_name
+                FROM aquapark_ticket_items i
+                JOIN aquapark_tickets t ON i.ticket_id = t.id
+                LEFT JOIN users u ON t.created_by = u.id
+                WHERE i.code = ?";
+        return $this->db->fetchOne($sql, [$code]);
+    }
+
+    /**
+     * Marca un item individual como validado (usado en la entrada).
+     * @param int $itemId
+     */
+    public function markItemValidated($itemId) {
+        $sql = "UPDATE aquapark_ticket_items
+                SET validated_at = NOW(), validated_by = ?
+                WHERE id = ?";
+        $this->db->execute($sql, [self::VALIDATOR_PUBLIC, $itemId]);
     }
 
     /**
