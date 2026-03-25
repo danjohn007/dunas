@@ -257,6 +257,39 @@
             </div>
         </div>
         
+        <!-- Parque Acuático - Precios de Boletos -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-swimming-pool text-blue-600 mr-2"></i>Parque Acuático — Costo de Boletos
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Precio por pulsera (código de serie)
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                        <input type="number" name="aquapark_ticket_price_series" step="0.01" min="0"
+                               value="<?php echo htmlspecialchars($settings['aquapark_ticket_price_series'] ?? '0.00'); ?>"
+                               class="w-full pl-7 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Precio unitario para calcular ingresos de pulseras QR generadas por serie</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Precio por boleto (registro manual)
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                        <input type="number" name="aquapark_ticket_price_manual" step="0.01" min="0"
+                               value="<?php echo htmlspecialchars($settings['aquapark_ticket_price_manual'] ?? '0.00'); ?>"
+                               class="w-full pl-7 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Precio unitario para calcular el monto al registrar visitantes manualmente</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Botones -->
         <div class="flex justify-end space-x-4 mb-6">
             <a href="<?php echo BASE_URL; ?>/dashboard" 

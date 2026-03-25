@@ -92,6 +92,7 @@
                         <option value="operator">Operador</option>
                         <option value="viewer">Visualizador</option>
                         <option value="client">Cliente</option>
+                        <option value="cajero_parque">Cajero Parque</option>
                     </select>
                 </div>
                 

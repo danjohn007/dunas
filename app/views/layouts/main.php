@@ -247,6 +247,42 @@
                     </a>
                 </li>
                 <?php endif; ?>
+
+                <?php if (Auth::hasRole(['admin', 'supervisor', 'operator', 'cajero_parque'])): ?>
+                <!-- PARQUE ACUÁTICO module -->
+                <li>
+                    <button type="button" onclick="toggleAquapark()"
+                            class="sidebar-nav-item flex items-center text-white px-4 py-3 w-full text-left">
+                        <i class="fas fa-swimming-pool w-6 mr-3"></i>
+                        <span class="flex-1">Parque Acuático</span>
+                        <i id="aquaparkArrow" class="fas fa-chevron-down text-xs text-white/70 transition-transform"></i>
+                    </button>
+                    <ul id="aquaparkSubmenu" class="hidden bg-black/20 pl-4">
+                        <?php if (Auth::hasRole(['admin', 'supervisor', 'operator'])): ?>
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/aquapark/codes"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-qrcode w-5 mr-3"></i>Códigos de Acceso
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/aquapark/visitors"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-ticket-alt w-5 mr-3"></i>Visitantes
+                            </a>
+                        </li>
+                        <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/aquapark/reports"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-chart-pie w-5 mr-3"></i>Reportes
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
+                <?php endif; ?>
                 
                 <li class="border-t border-white/20 mt-4 pt-4">
                     <a href="<?php echo BASE_URL; ?>/profile" 
@@ -466,6 +502,31 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
+
+        // Parque Acuático submenu toggle
+        function toggleAquapark() {
+            const submenu = document.getElementById('aquaparkSubmenu');
+            const arrow   = document.getElementById('aquaparkArrow');
+            if (submenu) {
+                submenu.classList.toggle('hidden');
+                if (arrow) {
+                    arrow.style.transform = submenu.classList.contains('hidden') ? '' : 'rotate(180deg)';
+                }
+            }
+        }
+
+        // Auto-expand Parque Acuático if on one of its pages
+        document.addEventListener('DOMContentLoaded', function () {
+            const path = window.location.pathname;
+            if (path.indexOf('/aquapark') !== -1) {
+                const submenu = document.getElementById('aquaparkSubmenu');
+                const arrow   = document.getElementById('aquaparkArrow');
+                if (submenu) {
+                    submenu.classList.remove('hidden');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                }
+            }
+        });
     </script>
 </body>
 </html>

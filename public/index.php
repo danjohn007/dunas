@@ -48,6 +48,7 @@ $controllerMap = [
     'devices' => 'DevicesController',
     'vouchers' => 'VoucherController',
     'errors' => 'ErrorController',
+    'aquapark' => 'AquaparkController',
     'access-denied' => 'HomeController',
 ];
 

@@ -24,6 +24,7 @@
                     <option value="operator" <?php echo ($filters['role'] ?? '') === 'operator' ? 'selected' : ''; ?>>Operador</option>
                     <option value="viewer" <?php echo ($filters['role'] ?? '') === 'viewer' ? 'selected' : ''; ?>>Visualizador</option>
                     <option value="client" <?php echo ($filters['role'] ?? '') === 'client' ? 'selected' : ''; ?>>Cliente</option>
+                    <option value="cajero_parque" <?php echo ($filters['role'] ?? '') === 'cajero_parque' ? 'selected' : ''; ?>>Cajero Parque</option>
                 </select>
             </div>
             <div>
@@ -84,14 +85,16 @@
                                     'supervisor' => 'bg-blue-100 text-blue-800',
                                     'operator' => 'bg-green-100 text-green-800',
                                     'viewer' => 'bg-gray-100 text-gray-800',
-                                    'client' => 'bg-purple-100 text-purple-800'
+                                    'client' => 'bg-purple-100 text-purple-800',
+                                    'cajero_parque' => 'bg-cyan-100 text-cyan-800'
                                 ];
                                 $roleLabels = [
                                     'admin' => 'Administrador',
                                     'supervisor' => 'Supervisor',
                                     'operator' => 'Operador',
                                     'viewer' => 'Visualizador',
-                                    'client' => 'Cliente'
+                                    'client' => 'Cliente',
+                                    'cajero_parque' => 'Cajero Parque'
                                 ];
                                 ?>
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $roleColors[$user['role']] ?? 'bg-gray-100 text-gray-800'; ?>">
