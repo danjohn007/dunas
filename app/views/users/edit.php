@@ -58,6 +58,7 @@
                         <option value="operator" <?php echo $user['role'] === 'operator' ? 'selected' : ''; ?>>Operador</option>
                         <option value="viewer" <?php echo $user['role'] === 'viewer' ? 'selected' : ''; ?>>Visualizador</option>
                         <option value="client" <?php echo $user['role'] === 'client' ? 'selected' : ''; ?>>Cliente</option>
+                        <option value="cajero_parque" <?php echo $user['role'] === 'cajero_parque' ? 'selected' : ''; ?>>Cajero Parque</option>
                     </select>
                 </div>
                 
