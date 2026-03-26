@@ -97,7 +97,7 @@
     <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
         <p class="text-sm text-yellow-800">
             <i class="fas fa-print mr-1"></i>
-            Al generar los códigos, se abrirá automáticamente la vista de impresión de pulseras (11 por hoja carta).
+            Al generar los códigos, se abrirá automáticamente la vista de impresión de pulseras (11 por hoja carta, orientación vertical de arriba hacia abajo).
         </p>
     </div>
 </div>
