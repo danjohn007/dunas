@@ -38,6 +38,24 @@
                            placeholder="p. ej. 1461">
                 </div>
 
+                <!-- Tipo de boleto -->
+                <div class="sm:col-span-2">
+                    <label for="ticket_type" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tipo de boleto <span class="text-red-500">*</span>
+                    </label>
+                    <select id="ticket_type" name="ticket_type" required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="normal">Normal</option>
+                        <option value="nino">Niño</option>
+                        <option value="adulto_mayor">Adulto Mayor</option>
+                        <option value="capacidades_diferentes">Capacidades Diferentes</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        El costo correspondiente se imprimirá en cada pulsera.
+                    </p>
+                </div>
+
                 <!-- Válidos hasta -->
                 <div class="sm:col-span-2">
                     <label for="valid_date" class="block text-sm font-medium text-gray-700 mb-1">

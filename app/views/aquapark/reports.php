@@ -67,40 +67,38 @@
         </h2>
         <?php if (empty($codeStats)): ?>
         <p class="text-gray-500 text-sm text-center py-4">Sin datos para el período seleccionado.</p>
-        <?php else: ?>
+        <?php else:
+            // Group rows by validated_date for display
+            $codeStatsByDate = [];
+            foreach ($codeStats as $row) {
+                $d = $row['validated_date'];
+                if (!isset($codeStatsByDate[$d])) {
+                    $codeStatsByDate[$d] = ['validated_date' => $d, 'validated_count' => 0, 'amount' => 0];
+                }
+                $typePrice = $ticketPrices[$row['ticket_type']] ?? $priceSerials;
+                $codeStatsByDate[$d]['validated_count'] += (int)$row['validated_count'];
+                $codeStatsByDate[$d]['amount']          += (int)$row['validated_count'] * $typePrice;
+            }
+        ?>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total generadas</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Validadas</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Uso</th>
-                        <?php if ($priceSerials > 0): ?>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Pulseras validadas</th>
+                        <?php if ($priceSerials > 0 || max(array_values($ticketPrices)) > 0): ?>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ingresos</th>
                         <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    <?php foreach ($codeStats as $row): ?>
-                    <?php
-                    $pct = $row['total_codes'] > 0 ? round($row['validated_count'] / $row['total_codes'] * 100) : 0;
-                    ?>
+                    <?php foreach ($codeStatsByDate as $row): ?>
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm font-semibold"><?php echo date('d/m/Y', strtotime($row['valid_date'])); ?></td>
-                        <td class="px-4 py-3 text-sm text-center"><?php echo (int)$row['total_codes']; ?></td>
+                        <td class="px-4 py-3 text-sm font-semibold"><?php echo date('d/m/Y', strtotime($row['validated_date'])); ?></td>
                         <td class="px-4 py-3 text-sm text-center text-green-700 font-semibold"><?php echo (int)$row['validated_count']; ?></td>
-                        <td class="px-4 py-3 text-sm text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <div class="w-16 h-2 bg-gray-200 rounded-full">
-                                    <div class="h-2 bg-green-500 rounded-full" style="width:<?php echo $pct; ?>%"></div>
-                                </div>
-                                <span class="text-xs text-gray-600"><?php echo $pct; ?>%</span>
-                            </div>
-                        </td>
-                        <?php if ($priceSerials > 0): ?>
+                        <?php if ($priceSerials > 0 || max(array_values($ticketPrices)) > 0): ?>
                         <td class="px-4 py-3 text-sm text-right font-semibold">
-                            $<?php echo number_format($row['validated_count'] * $priceSerials, 2); ?>
+                            $<?php echo number_format($row['amount'], 2); ?>
                         </td>
                         <?php endif; ?>
                     </tr>

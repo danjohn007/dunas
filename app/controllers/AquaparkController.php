@@ -84,10 +84,11 @@ class AquaparkController extends BaseController {
                 }
 
                 $userId = Auth::user()['id'];
-                $count  = $this->codeModel->generateBatch($start, $end, $date, $userId);
+                $ticketType = $_POST['ticket_type'] ?? 'normal';
+                $count  = $this->codeModel->generateBatch($start, $end, $date, $userId, $ticketType);
 
                 // Redirect to print wristbands
-                $this->redirect('/aquapark/printWristbands?start=' . $start . '&end=' . $end . '&date=' . urlencode($date));
+                $this->redirect('/aquapark/printWristbands?start=' . $start . '&end=' . $end . '&date=' . urlencode($date) . '&type=' . urlencode($ticketType));
                 return;
 
             } catch (Exception $e) {
@@ -115,13 +116,22 @@ class AquaparkController extends BaseController {
 
         $codes = $this->codeModel->getBySeriesAndDate($start, $end, $date);
 
+        $settings = $this->settingsModel->getAll();
+        $ticketPrices = [
+            'normal'                  => (float)($settings['aquapark_ticket_price_series']    ?? 0),
+            'nino'                    => (float)($settings['aquapark_ticket_price_nino']       ?? 0),
+            'adulto_mayor'            => (float)($settings['aquapark_ticket_price_adulto_mayor'] ?? 0),
+            'capacidades_diferentes'  => (float)($settings['aquapark_ticket_price_capacidades'] ?? 0),
+        ];
+
         $data = [
-            'title'   => 'Imprimir Pulseras',
-            'codes'   => $codes,
-            'date'    => $date,
-            'start'   => $start,
-            'end'     => $end,
-            'showNav' => false,
+            'title'        => 'Imprimir Pulseras',
+            'codes'        => $codes,
+            'date'         => $date,
+            'start'        => $start,
+            'end'          => $end,
+            'ticketPrices' => $ticketPrices,
+            'showNav'      => false,
         ];
 
         $this->view('aquapark/print_wristbands', $data);
@@ -387,10 +397,16 @@ class AquaparkController extends BaseController {
         $dateTo   = $_GET['date_to']   ?? date('Y-m-d');
 
         $settings      = $this->settingsModel->getAll();
-        $priceSerials  = (float)($settings['aquapark_ticket_price_series'] ?? 0);
-        $priceManual   = (float)($settings['aquapark_ticket_price_manual'] ?? 0);
+        $priceSerials  = (float)($settings['aquapark_ticket_price_series']    ?? 0);
+        $priceManual   = (float)($settings['aquapark_ticket_price_manual']    ?? 0);
+        $ticketPrices  = [
+            'normal'                 => $priceSerials,
+            'nino'                   => (float)($settings['aquapark_ticket_price_nino']          ?? 0),
+            'adulto_mayor'           => (float)($settings['aquapark_ticket_price_adulto_mayor']  ?? 0),
+            'capacidades_diferentes' => (float)($settings['aquapark_ticket_price_capacidades']   ?? 0),
+        ];
 
-        // Stats for wristband codes
+        // Stats for wristband codes (grouped by validated_date and ticket_type)
         $codeStats   = $this->codeModel->getStatsByDate($dateFrom, $dateTo);
 
         // Stats for manual tickets
@@ -402,12 +418,16 @@ class AquaparkController extends BaseController {
         $codes   = $this->codeModel->getAll(array_merge($filters, ['validated' => '1']));
         $tickets = $this->ticketModel->getAll($filters);
 
-        // Aggregate totals
-        $totalCodesValidated   = array_sum(array_column($codeStats,   'validated_count'));
-        $totalTickets          = array_sum(array_column($ticketStats,  'total_tickets'));
-        $totalAmountCodes      = $totalCodesValidated * $priceSerials;
-        $totalAmountTickets    = array_sum(array_column($ticketStats,  'total_amount'));
-        $grandTotal            = $totalAmountCodes + $totalAmountTickets;
+        // Aggregate totals — calculate per ticket_type using its specific price
+        $totalCodesValidated = array_sum(array_column($codeStats, 'validated_count'));
+        $totalAmountCodes    = 0;
+        foreach ($codeStats as $row) {
+            $typePrice = $ticketPrices[$row['ticket_type']] ?? $priceSerials;
+            $totalAmountCodes += (int)$row['validated_count'] * $typePrice;
+        }
+        $totalTickets       = array_sum(array_column($ticketStats, 'total_tickets'));
+        $totalAmountTickets = array_sum(array_column($ticketStats, 'total_amount'));
+        $grandTotal         = $totalAmountCodes + $totalAmountTickets;
 
         $data = [
             'title'              => 'Reportes - Parque Acuático',
@@ -419,6 +439,7 @@ class AquaparkController extends BaseController {
             'tickets'            => $tickets,
             'priceSerials'       => $priceSerials,
             'priceManual'        => $priceManual,
+            'ticketPrices'       => $ticketPrices,
             'totalCodesValidated'=> $totalCodesValidated,
             'totalTickets'       => $totalTickets,
             'totalAmountCodes'   => $totalAmountCodes,
