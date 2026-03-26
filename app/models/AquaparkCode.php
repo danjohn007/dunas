@@ -177,4 +177,20 @@ class AquaparkCode {
                 ORDER BY validated_date DESC, ticket_type ASC";
         return $this->db->fetchAll($sql, [$dateFrom, $dateTo]);
     }
+
+    /**
+     * Obtiene el detalle de cada pulsera validada en un rango de fechas.
+     * Usado en el reporte "Detalle de Pulseras por Día".
+     */
+    public function getDetailsByDate($dateFrom, $dateTo) {
+        $sql = "SELECT c.series_number, c.code, c.ticket_type, c.valid_date,
+                       c.validated_at, c.validated_by,
+                       u.full_name AS created_by_name
+                FROM aquapark_codes c
+                LEFT JOIN users u ON c.created_by = u.id
+                WHERE c.validated_at IS NOT NULL
+                  AND DATE(c.validated_at) BETWEEN ? AND ?
+                ORDER BY c.validated_at ASC";
+        return $this->db->fetchAll($sql, [$dateFrom, $dateTo]);
+    }
 }

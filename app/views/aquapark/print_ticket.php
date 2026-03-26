@@ -137,6 +137,9 @@
     <?php
     $printItems = !empty($items) ? $items : [['code' => $ticket['code'], 'item_number' => null]];
     $totalItems = count($printItems);
+    $unitPrice  = (!empty($ticket['ticket_count']) && (int)$ticket['ticket_count'] > 0 && $ticket['total_amount'] !== null)
+        ? $ticket['total_amount'] / (int)$ticket['ticket_count']
+        : $ticket['total_amount'];
     ?>
 
     <!-- ── Screen preview ───────────────────────────────────── -->
@@ -183,10 +186,10 @@
                                 <p class="text-xs text-gray-400 uppercase tracking-wide">Fecha de Visita</p>
                                 <p class="font-semibold text-gray-900"><?php echo date('d/m/Y', strtotime($ticket['visit_date'])); ?></p>
                             </div>
-                            <?php if ($ticket['total_amount'] !== null): ?>
+                            <?php if ($unitPrice !== null): ?>
                             <div>
-                                <p class="text-xs text-gray-400 uppercase tracking-wide">Total</p>
-                                <p class="font-semibold text-gray-900">$<?php echo number_format($ticket['total_amount'], 2); ?></p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wide">Precio Unitario</p>
+                                <p class="font-semibold text-gray-900">$<?php echo number_format($unitPrice, 2); ?></p>
                             </div>
                             <?php endif; ?>
                             <div>
@@ -250,10 +253,10 @@
             <span class="value"><?php echo date('d/m/Y H:i', strtotime($ticket['created_at'])); ?></span>
         </div>
 
-        <?php if ($ticket['total_amount'] !== null): ?>
+        <?php if ($unitPrice !== null): ?>
         <div class="thermal-total">
-            <span>TOTAL:</span>
-            <span>$<?php echo number_format($ticket['total_amount'], 2); ?></span>
+            <span>PRECIO:</span>
+            <span>$<?php echo number_format($unitPrice, 2); ?></span>
         </div>
         <?php endif; ?>
 
