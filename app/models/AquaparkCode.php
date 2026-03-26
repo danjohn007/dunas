@@ -12,19 +12,24 @@ class AquaparkCode {
 
     /**
      * Genera un lote de códigos por serie para una fecha dada.
-     * @param int $start  Número inicial de serie
-     * @param int $end    Número final de serie
-     * @param string $date Fecha de validez (YYYY-MM-DD)
-     * @param int $createdBy ID del usuario que genera
+     * @param int $start      Número inicial de serie
+     * @param int $end        Número final de serie
+     * @param string $date    Fecha de validez (YYYY-MM-DD)
+     * @param int $createdBy  ID del usuario que genera
+     * @param string $ticketType Tipo de boleto (normal|nino|adulto_mayor|capacidades_diferentes)
      * @return int Cantidad de códigos generados
      */
-    public function generateBatch($start, $end, $date, $createdBy) {
+    public function generateBatch($start, $end, $date, $createdBy, $ticketType = 'normal') {
+        $allowedTypes = ['normal', 'nino', 'adulto_mayor', 'capacidades_diferentes'];
+        if (!in_array($ticketType, $allowedTypes)) {
+            $ticketType = 'normal';
+        }
         $count = 0;
         for ($n = $start; $n <= $end; $n++) {
             $code = $this->buildCode($n, $date);
-            $sql = "INSERT IGNORE INTO aquapark_codes (series_number, code, valid_date, created_by)
-                    VALUES (?, ?, ?, ?)";
-            $this->db->execute($sql, [$n, $code, $date, $createdBy]);
+            $sql = "INSERT IGNORE INTO aquapark_codes (series_number, code, valid_date, ticket_type, created_by)
+                    VALUES (?, ?, ?, ?, ?)";
+            $this->db->execute($sql, [$n, $code, $date, $ticketType, $createdBy]);
             $count++;
         }
         return $count;
@@ -157,16 +162,19 @@ class AquaparkCode {
     }
 
     /**
-     * Obtiene estadísticas por fecha.
+     * Obtiene estadísticas de pulseras VALIDADAS agrupadas por fecha de validación.
+     * Usa DATE(validated_at) para mostrar correctamente los accesos del día,
+     * independientemente de cuándo vence el código.
      */
     public function getStatsByDate($dateFrom, $dateTo) {
-        $sql = "SELECT valid_date,
-                       COUNT(*) AS total_codes,
-                       SUM(CASE WHEN validated_at IS NOT NULL THEN 1 ELSE 0 END) AS validated_count
+        $sql = "SELECT DATE(validated_at) AS validated_date,
+                       COUNT(*) AS validated_count,
+                       ticket_type
                 FROM aquapark_codes
-                WHERE valid_date BETWEEN ? AND ?
-                GROUP BY valid_date
-                ORDER BY valid_date DESC";
+                WHERE validated_at IS NOT NULL
+                  AND DATE(validated_at) BETWEEN ? AND ?
+                GROUP BY DATE(validated_at), ticket_type
+                ORDER BY validated_date DESC, ticket_type ASC";
         return $this->db->fetchAll($sql, [$dateFrom, $dateTo]);
     }
 }

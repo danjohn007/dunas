@@ -47,44 +47,96 @@
             margin-right: 10px;
         }
 
-        /* -------- Print page -------- */
+        /* -------- Print page (landscape) -------- */
         .print-area {
             margin-top: 60px;
             padding: 20px;
         }
 
-        /* Each page holds up to 11 wristbands stacked vertically.
-           Letter = 8.5 × 11 in.  Wristband strip ≈ 0.9 in tall × 8.5 in wide */
+        /*
+         * Letter landscape = 11 × 8.5 in.
+         * 11 wristband columns per page (≈ 1 in each).
+         * Content inside each column is rotated 90° CCW so the
+         * strip reads naturally left-to-right when worn on a wrist.
+         */
         .page {
-            width: 8.5in;
-            min-height: 10in;
+            width: 11in;
+            height: 8.5in;
             background: white;
             margin: 0 auto 20px auto;
-            padding: 0.25in 0.1in;
+            padding: 0.15in 0.05in;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-
-        /* One wristband row */
-        .wristband-row {
-            display: flex;
-            align-items: center;
-            height: 0.88in;
-            border-bottom: 1px dashed #aaa;
-            padding: 2px 4px;
-            gap: 6px;
             overflow: hidden;
         }
-        .wristband-row:last-child {
-            border-bottom: none;
+
+        /* One wristband column */
+        .wristband-col {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;   /* QR at bottom */
+            border-right: 1px dashed #aaa;
+            padding: 4px 2px;
+            overflow: hidden;
+        }
+        .wristband-col:last-child {
+            border-right: none;
+        }
+
+        /*
+         * Text block — rotated 90° CCW (reading from bottom to top).
+         * writing-mode + transform combo works in Chrome/Edge print.
+         */
+        .wristband-info {
+            flex: 1;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: flex;
+            flex-direction: row;   /* logical "row" = physical column after rotation */
+            align-items: center;
+            justify-content: flex-end;
+            gap: 3px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .wristband-number {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #111;
+            white-space: nowrap;
+        }
+        .wristband-date {
+            font-size: 9px;
+            color: #555;
+            white-space: nowrap;
+        }
+        .wristband-code {
+            font-size: 6px;
+            color: #888;
+            word-break: break-all;
+        }
+        .wristband-price {
+            font-size: 11px;
+            font-weight: bold;
+            color: #1e40af;
+            white-space: nowrap;
+        }
+        .wristband-type-label {
+            font-size: 7px;
+            color: #666;
+            white-space: nowrap;
         }
 
         /* QR code cell */
         .wristband-qr {
-            width: 0.75in;
-            height: 0.75in;
+            width: 0.78in;
+            height: 0.78in;
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -92,34 +144,8 @@
         }
         .wristband-qr canvas,
         .wristband-qr img {
-            width: 0.75in !important;
-            height: 0.75in !important;
-        }
-
-        /* Info cell */
-        .wristband-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .wristband-number {
-            font-size: 22px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: #111;
-        }
-        .wristband-date {
-            font-size: 10px;
-            color: #555;
-            margin-top: 2px;
-        }
-        .wristband-code {
-            font-size: 7px;
-            color: #888;
-            margin-top: 1px;
-            word-break: break-all;
+            width: 0.78in !important;
+            height: 0.78in !important;
         }
 
         /* -------- Print styles -------- */
@@ -128,15 +154,15 @@
             .print-area { margin-top: 0; padding: 0; }
             .page {
                 width: 100%;
-                min-height: 0;
+                height: 100%;
                 margin: 0;
-                padding: 0.2in 0.05in;
+                padding: 0.15in 0.05in;
                 box-shadow: none;
                 page-break-after: always;
             }
             .page:last-child { page-break-after: auto; }
             @page {
-                size: letter portrait;
+                size: letter landscape;
                 margin: 0;
             }
         }
@@ -163,21 +189,39 @@
     <!-- Print area -->
     <div class="print-area">
         <?php
-        $perPage  = 11;
+        // Label map for ticket types
+        $typeLabels = [
+            'normal'                 => 'Normal',
+            'nino'                   => 'Niño',
+            'adulto_mayor'           => 'Adulto Mayor',
+            'capacidades_diferentes' => 'Cap. Dif.',
+        ];
+
+        $perPage  = 11;   // 11 columns per landscape page
         $pages    = array_chunk($codes, $perPage);
         $baseUrl  = BASE_URL;
         ?>
 
         <?php foreach ($pages as $pageIndex => $pageRows): ?>
         <div class="page">
-            <?php foreach ($pageRows as $c): ?>
-            <div class="wristband-row">
-                <div class="wristband-qr" id="qr-<?php echo (int)$c['id']; ?>"></div>
+            <?php foreach ($pageRows as $c):
+                $type      = $c['ticket_type'] ?? 'normal';
+                $price     = $ticketPrices[$type] ?? 0;
+                $typeLabel = $typeLabels[$type] ?? $type;
+            ?>
+            <div class="wristband-col">
+                <!-- Info block (rotated) -->
                 <div class="wristband-info">
                     <div class="wristband-number"><?php echo (int)$c['series_number']; ?></div>
                     <div class="wristband-date"><?php echo date('d/m/Y', strtotime($c['valid_date'])); ?></div>
                     <div class="wristband-code"><?php echo htmlspecialchars($c['code']); ?></div>
+                    <?php if ($price > 0): ?>
+                    <div class="wristband-price">$<?php echo number_format($price, 2); ?></div>
+                    <?php endif; ?>
+                    <div class="wristband-type-label"><?php echo htmlspecialchars($typeLabel); ?></div>
                 </div>
+                <!-- QR code at the bottom of the column -->
+                <div class="wristband-qr" id="qr-<?php echo (int)$c['id']; ?>"></div>
             </div>
             <?php endforeach; ?>
         </div>
@@ -185,10 +229,10 @@
     </div>
 
     <script>
-    // Build QR codes for each wristband using the validation code
+    // Build QR codes for each wristband
     (function () {
         var codes = <?php echo json_encode(array_map(fn($c) => ['id' => $c['id'], 'code' => $c['code']], $codes)); ?>;
-        var px = Math.round(0.75 * 96); // 0.75 in at 96dpi
+        var px = Math.round(0.78 * 96); // 0.78 in at 96dpi
 
         codes.forEach(function (c) {
             var el = document.getElementById('qr-' + c.id);
