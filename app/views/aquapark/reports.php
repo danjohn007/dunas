@@ -95,7 +95,12 @@
                     <?php foreach ($codeStatsByDate as $row): ?>
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm font-semibold"><?php echo date('d/m/Y', strtotime($row['validated_date'])); ?></td>
-                        <td class="px-4 py-3 text-sm text-center text-green-700 font-semibold"><?php echo (int)$row['validated_count']; ?></td>
+                        <td class="px-4 py-3 text-sm text-center text-green-700 font-semibold">
+                            <a href="#detalle-pulseras-<?php echo date('Ymd', strtotime($row['validated_date'])); ?>"
+                               class="hover:underline">
+                                <?php echo (int)$row['validated_count']; ?>
+                            </a>
+                        </td>
                         <?php if ($priceSerials > 0 || max(array_values($ticketPrices)) > 0): ?>
                         <td class="px-4 py-3 text-sm text-right font-semibold">
                             $<?php echo number_format($row['amount'], 2); ?>
@@ -108,6 +113,67 @@
         </div>
         <?php endif; ?>
     </div>
+
+    <!-- Detalle de pulseras validadas por día -->
+    <?php if (!empty($codeDetails)):
+        // Group detail rows by validated_date for anchor links
+        $codeDetailsByDate = [];
+        foreach ($codeDetails as $detail) {
+            $d = date('Y-m-d', strtotime($detail['validated_at']));
+            $codeDetailsByDate[$d][] = $detail;
+        }
+    ?>
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-list-alt text-blue-500 mr-2"></i>Detalle de Pulseras por Día
+        </h2>
+        <?php foreach ($codeDetailsByDate as $detailDate => $rows): ?>
+        <div id="detalle-pulseras-<?php echo date('Ymd', strtotime($detailDate)); ?>" class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2 border-b pb-1">
+                <?php echo date('d/m/Y', strtotime($detailDate)); ?>
+                <span class="text-gray-400 font-normal ml-2">(<?php echo count($rows); ?> pulseras)</span>
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Precio</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Validado a las</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Validado por</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <?php
+                        $typeLabelsReport = [
+                            'normal'                 => 'Normal',
+                            'nino'                   => 'Niño',
+                            'adulto_mayor'           => 'Adulto Mayor',
+                            'capacidades_diferentes' => 'Cap. Dif.',
+                        ];
+                        foreach ($rows as $r):
+                            $rType  = $r['ticket_type'] ?? 'normal';
+                            $rPrice = $ticketPrices[$rType] ?? $priceSerials ?? 0;
+                            $rLabel = $typeLabelsReport[$rType] ?? $rType;
+                        ?>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 font-bold text-gray-800"><?php echo (int)$r['series_number']; ?></td>
+                            <td class="px-3 py-2 font-mono text-xs text-gray-500"><?php echo htmlspecialchars($r['code']); ?></td>
+                            <td class="px-3 py-2"><?php echo htmlspecialchars($rLabel); ?></td>
+                            <td class="px-3 py-2 text-right font-semibold"><?php echo $rPrice > 0 ? '$' . number_format($rPrice, 2) : '—'; ?></td>
+                            <td class="px-3 py-2"><?php echo date('H:i:s', strtotime($r['validated_at'])); ?></td>
+                            <td class="px-3 py-2 text-gray-500"><?php echo htmlspecialchars($r['validated_by'] ?: '—'); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
     <!-- Sección boletos manuales por día -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">

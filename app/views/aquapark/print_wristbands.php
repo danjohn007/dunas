@@ -133,6 +133,25 @@
             white-space: nowrap;
         }
 
+        /* Bottom stub: QR + cost info grouped together */
+        .wristband-stub {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 4px;
+            gap: 2px;
+        }
+        .wristband-stub-info {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
         /* QR code cell */
         .wristband-qr {
             width: 0.78in;
@@ -210,18 +229,24 @@
                 $typeLabel = $typeLabels[$type] ?? $type;
             ?>
             <div class="wristband-col">
-                <!-- Info block (rotated) -->
+                <!-- Info block (rotated): series number, date, code -->
                 <div class="wristband-info">
                     <div class="wristband-number"><?php echo (int)$c['series_number']; ?></div>
                     <div class="wristband-date"><?php echo date('d/m/Y', strtotime($c['valid_date'])); ?></div>
                     <div class="wristband-code"><?php echo htmlspecialchars($c['code']); ?></div>
-                    <?php if ($price > 0): ?>
-                    <div class="wristband-price">$<?php echo number_format($price, 2); ?></div>
-                    <?php endif; ?>
-                    <div class="wristband-type-label"><?php echo htmlspecialchars($typeLabel); ?></div>
                 </div>
-                <!-- QR code at the bottom of the column -->
-                <div class="wristband-qr" id="qr-<?php echo (int)$c['id']; ?>"></div>
+                <!-- Bottom stub: price + type label + QR code, all together -->
+                <div class="wristband-stub">
+                    <?php if ($price > 0 || $typeLabel): ?>
+                    <div class="wristband-stub-info">
+                        <?php if ($price > 0): ?>
+                        <span class="wristband-price">$<?php echo number_format($price, 2); ?></span>
+                        <?php endif; ?>
+                        <span class="wristband-type-label"><?php echo htmlspecialchars($typeLabel); ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <div class="wristband-qr" id="qr-<?php echo (int)$c['id']; ?>"></div>
+                </div>
             </div>
             <?php endforeach; ?>
         </div>

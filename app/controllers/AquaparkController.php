@@ -409,6 +409,9 @@ class AquaparkController extends BaseController {
         // Stats for wristband codes (grouped by validated_date and ticket_type)
         $codeStats   = $this->codeModel->getStatsByDate($dateFrom, $dateTo);
 
+        // Detailed individual wristband codes (for "Detalle de Pulseras por Día")
+        $codeDetails = $this->codeModel->getDetailsByDate($dateFrom, $dateTo);
+
         // Stats for manual tickets
         $ticketStats = $this->ticketModel->getStatsByDate($dateFrom, $dateTo);
 
@@ -434,6 +437,7 @@ class AquaparkController extends BaseController {
             'dateFrom'           => $dateFrom,
             'dateTo'             => $dateTo,
             'codeStats'          => $codeStats,
+            'codeDetails'        => $codeDetails,
             'ticketStats'        => $ticketStats,
             'codes'              => $codes,
             'tickets'            => $tickets,
