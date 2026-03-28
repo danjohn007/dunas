@@ -47,63 +47,53 @@
             margin-right: 10px;
         }
 
-        /* -------- Print page (landscape) -------- */
+        /* -------- Print page (portrait) -------- */
         .print-area {
             margin-top: 60px;
             padding: 20px;
         }
 
         /*
-         * Letter landscape = 11 × 8.5 in.
-         * 11 wristband columns per page (≈ 1 in each).
-         * Content inside each column is rotated 90° CCW so the
-         * strip reads naturally left-to-right when worn on a wrist.
+         * Letter portrait = 8.5 × 11 in.
+         * 11 wristband rows per page (≈ 1 in each).
+         * Strips are arranged from top to bottom; the left stub
+         * holds the QR code + data, the right section is the wristband body.
          */
         .page {
-            width: 11in;
-            height: 8.5in;
+            width: 8.5in;
+            height: 11in;
             background: white;
             margin: 0 auto 20px auto;
-            padding: 0.15in 0.05in;
+            padding: 0.1in 0.05in;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             gap: 0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             overflow: hidden;
         }
 
-        /* One wristband column */
+        /* One wristband row (horizontal strip) */
         .wristband-col {
             flex: 1;
-            height: 100%;
+            width: 100%;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            justify-content: flex-end;   /* QR at bottom */
-            border-right: 1px dashed #aaa;
-            padding: 4px 2px;
+            justify-content: flex-start;
+            border-bottom: 1px dashed #aaa;
+            padding: 3px 6px;
             overflow: hidden;
         }
         .wristband-col:last-child {
-            border-right: none;
+            border-bottom: none;
         }
 
-        /*
-         * Text block — rotated 90° CCW (reading from bottom to top).
-         * writing-mode + transform combo works in Chrome/Edge print.
-         */
+        /* Right: wristband body area (empty space for the physical wristband) */
         .wristband-info {
             flex: 1;
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            display: flex;
-            flex-direction: row;   /* logical "row" = physical column after rotation */
-            align-items: center;
-            justify-content: flex-end;
-            gap: 3px;
-            overflow: hidden;
-            width: 100%;
+            height: 100%;
         }
+
         .wristband-number {
             font-size: 20px;
             font-weight: bold;
@@ -133,23 +123,21 @@
             white-space: nowrap;
         }
 
-        /* Bottom stub: number + code + cost + QR all grouped together */
+        /* Left stub: QR code + text info side by side */
         .wristband-stub {
             flex-shrink: 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-bottom: 4px;
-            gap: 2px;
-        }
-        .wristband-stub-info {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: flex-end;
-            gap: 3px;
+            gap: 6px;
+            padding-right: 8px;
+            border-right: 1px dashed #aaa;
+        }
+        .wristband-stub-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1px;
         }
 
         /* QR code cell */
@@ -175,13 +163,13 @@
                 width: 100%;
                 height: 100%;
                 margin: 0;
-                padding: 0.15in 0.05in;
+                padding: 0.1in 0.05in;
                 box-shadow: none;
                 page-break-after: always;
             }
             .page:last-child { page-break-after: auto; }
             @page {
-                size: letter landscape;
+                size: letter portrait;
                 margin: 0;
             }
         }
@@ -216,7 +204,7 @@
             'capacidades_diferentes' => 'Cap. Dif.',
         ];
 
-        $perPage  = 11;   // 11 columns per landscape page
+        $perPage  = 11;   // 11 rows per portrait page
         $pages    = array_chunk($codes, $perPage);
         $baseUrl  = BASE_URL;
         ?>
@@ -229,10 +217,9 @@
                 $typeLabel = $typeLabels[$type] ?? $type;
             ?>
             <div class="wristband-col">
-                <!-- Empty spacer for the main wristband body area -->
-                <div class="wristband-info"></div>
-                <!-- Bottom stub: number + code + cost + QR code, all together -->
+                <!-- Left stub: QR code + info text -->
                 <div class="wristband-stub">
+                    <div class="wristband-qr" id="qr-<?php echo (int)$c['id']; ?>"></div>
                     <div class="wristband-stub-info">
                         <span class="wristband-number"><?php echo (int)$c['series_number']; ?></span>
                         <span class="wristband-date"><?php echo date('d/m/Y', strtotime($c['valid_date'])); ?></span>
@@ -244,8 +231,9 @@
                         <span class="wristband-type-label"><?php echo htmlspecialchars($typeLabel); ?></span>
                         <?php endif; ?>
                     </div>
-                    <div class="wristband-qr" id="qr-<?php echo (int)$c['id']; ?>"></div>
                 </div>
+                <!-- Right: wristband body area (physical wristband space) -->
+                <div class="wristband-info"></div>
             </div>
             <?php endforeach; ?>
         </div>
