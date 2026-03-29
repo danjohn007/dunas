@@ -283,8 +283,17 @@
                                <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'adhesiva') ? 'checked' : ''; ?>
                                class="mt-0.5 text-blue-600">
                         <span>
-                            <span class="block font-medium text-gray-800">Etiquetas adhesivas</span>
-                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A11 (38 × 13 mm) — 5 columnas por hoja</span>
+                            <span class="block font-medium text-gray-800">Etiquetas adhesivas A11</span>
+                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A11 (38 × 13 mm) — 5 columnas × 9 renglones por hoja</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-blue-50 transition <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'adhesiva_a14') ? 'border-blue-500 bg-blue-50' : 'border-gray-300'; ?>">
+                        <input type="radio" name="aquapark_qr_print_type" value="adhesiva_a14"
+                               <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'adhesiva_a14') ? 'checked' : ''; ?>
+                               class="mt-0.5 text-blue-600">
+                        <span>
+                            <span class="block font-medium text-gray-800">Etiquetas adhesivas A14</span>
+                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A14 (19 × 50 mm) — 4 columnas × 6 renglones por hoja</span>
                         </span>
                     </label>
                 </div>
