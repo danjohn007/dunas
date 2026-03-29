@@ -105,7 +105,10 @@ class AquaparkController extends BaseController {
     }
 
     /**
-     * Vista de impresión de pulseras (11 por hoja carta).
+     * Vista de impresión de pulseras.
+     * Redirige a la plantilla de pulsera (11 por hoja carta) o a la
+     * plantilla de etiquetas adhesivas Tuk-Stik A11 según la
+     * configuración "aquapark_qr_print_type".
      */
     public function printWristbands() {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
@@ -124,6 +127,8 @@ class AquaparkController extends BaseController {
             'capacidades_diferentes'  => (float)($settings['aquapark_ticket_price_capacidades'] ?? 0),
         ];
 
+        $printType = $settings['aquapark_qr_print_type'] ?? 'pulsera';
+
         $data = [
             'title'        => 'Imprimir Pulseras',
             'codes'        => $codes,
@@ -134,7 +139,11 @@ class AquaparkController extends BaseController {
             'showNav'      => false,
         ];
 
-        $this->view('aquapark/print_wristbands', $data);
+        if ($printType === 'adhesiva') {
+            $this->view('aquapark/print_stickers', $data);
+        } else {
+            $this->view('aquapark/print_wristbands', $data);
+        }
     }
 
     // =========================================================

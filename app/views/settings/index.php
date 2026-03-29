@@ -262,6 +262,34 @@
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
                 <i class="fas fa-swimming-pool text-blue-600 mr-2"></i>Parque Acuático — Costo de Boletos
             </h2>
+
+            <!-- Tipo de impresión de códigos QR -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    Tipo de impresión de los códigos QR
+                </label>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <label class="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-blue-50 transition <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'pulsera') ? 'border-blue-500 bg-blue-50' : 'border-gray-300'; ?>">
+                        <input type="radio" name="aquapark_qr_print_type" value="pulsera"
+                               <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'pulsera') ? 'checked' : ''; ?>
+                               class="mt-0.5 text-blue-600">
+                        <span>
+                            <span class="block font-medium text-gray-800">Etiqueta de pulsera</span>
+                            <span class="block text-xs text-gray-500">11 pulseras por hoja carta (formato actual)</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-blue-50 transition <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'adhesiva') ? 'border-blue-500 bg-blue-50' : 'border-gray-300'; ?>">
+                        <input type="radio" name="aquapark_qr_print_type" value="adhesiva"
+                               <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'adhesiva') ? 'checked' : ''; ?>
+                               class="mt-0.5 text-blue-600">
+                        <span>
+                            <span class="block font-medium text-gray-800">Etiquetas adhesivas</span>
+                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A11 (38 × 13 mm) — 5 columnas por hoja</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
