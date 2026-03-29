@@ -78,7 +78,8 @@
             display: flex;
             flex-wrap: wrap;
             align-content: flex-start;
-            gap: 0;
+            row-gap: 0;
+            column-gap: <?php echo number_format($colGap ?? 0, 2, '.', ''); ?>mm;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             overflow: hidden;
         }
@@ -86,10 +87,11 @@
         /*
          * A14 sticker cell: exactly 1/4 of the container width (4 columns).
          * Height = 19 mm sticker content + row gap (configurable, default 1 mm).
+         * Width accounts for 3 column gaps distributed across 4 columns.
          */
         .sticker {
-            flex: 0 0 25%;
-            width: 25%;
+            flex: 0 0 calc(25% - <?php echo number_format(3 / 4 * ($colGap ?? 0), 4, '.', ''); ?>mm);
+            width: calc(25% - <?php echo number_format(3 / 4 * ($colGap ?? 0), 4, '.', ''); ?>mm);
             height: <?php echo number_format(19 + ($rowGap ?? 1), 2, '.', ''); ?>mm;
             display: flex;
             flex-direction: row;
