@@ -299,6 +299,20 @@
                 </div>
             </div>
 
+            <!-- Distancia entre renglones (solo etiquetas adhesivas) -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Distancia entre renglones de impresión (mm)
+                </label>
+                <div class="flex items-center gap-3" style="max-width: 220px;">
+                    <input type="number" name="aquapark_qr_row_gap" step="0.5" min="0" max="50"
+                           value="<?php echo htmlspecialchars($settings['aquapark_qr_row_gap'] ?? '1'); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <span class="text-sm text-gray-500 whitespace-nowrap">mm</span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Espacio en milímetros entre cada renglón al imprimir etiquetas adhesivas A11 y A14. Valor predeterminado: 1 mm.</p>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
