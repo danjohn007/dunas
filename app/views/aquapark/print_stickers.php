@@ -64,13 +64,10 @@
         /*
          * Tuk-Stik A11: 38 mm wide × 13 mm tall per sticker.
          * Letter portrait: 8.5 in × 11 in (215.9 mm × 279.4 mm).
-         * Usable area after 8 mm margins each side:
-         *   width  ≈ 199.9 mm  → 5 columns, cell pitch = 199.9/5 ≈ 40 mm
-         *   height ≈ 263.4 mm  → 9 rows,    cell pitch = 263.4/9 ≈ 29.3 mm
-         * = 45 stickers per sheet (5 × 9).
-         * Each cell is 40 mm wide × 29.3 mm tall; only the top 13 mm contains
-         * the printed sticker content — the remaining space is the inter-row gap
-         * on the physical sheet, ensuring millimetre-accurate alignment.
+         * Layout: 5 columns × 9 rows = 45 stickers per sheet.
+         * Column width uses 20% (1/5) of the flex-container content width so
+         * that exactly 5 columns are guaranteed regardless of DPI rounding.
+         * Row height = 13 mm (sticker content) + configurable row gap.
          */
         .page {
             width: 8.5in;
@@ -87,15 +84,13 @@
         }
 
         /*
-         * Cell pitch for A11 (5 × 9 on letter):
-         *   width:  (8.5in − 16 mm) / 5 ≈ 40 mm
-         *   height: (11in  − 16 mm) / 9 ≈ 29.3 mm
-         * The sticker content (QR + text) occupies only the top 13 mm;
-         * the remaining ~16.3 mm is the transparent gap between sticker rows.
+         * A11 sticker cell: exactly 1/5 of the container width (5 columns).
+         * Height = 13 mm sticker content + row gap (configurable, default 1 mm).
          */
         .sticker {
-            width: 40mm;
-            height: 29.3mm;
+            flex: 0 0 20%;
+            width: 20%;
+            height: <?php echo number_format(13 + ($rowGap ?? 1), 2, '.', ''); ?>mm;
             display: flex;
             flex-direction: row;
             align-items: flex-start;

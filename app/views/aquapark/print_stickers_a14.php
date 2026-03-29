@@ -64,13 +64,10 @@
         /*
          * Tuk-Stik A14: 19 mm tall × 50 mm wide per sticker (landscape label).
          * Letter portrait: 8.5 in × 11 in (215.9 mm × 279.4 mm).
-         * Usable area after 8 mm margins each side:
-         *   width  ≈ 199.9 mm  → 4 columns, cell pitch = 199.9/4 ≈ 50 mm
-         *   height ≈ 263.4 mm  → 6 rows,    cell pitch = 263.4/6 ≈ 43.9 mm
-         * = 24 stickers per sheet (4 × 6).
-         * Each cell is 50 mm wide × 43.9 mm tall; only the top 19 mm contains
-         * the printed sticker content — the remaining space is the inter-row gap
-         * on the physical sheet, ensuring millimetre-accurate alignment.
+         * Layout: 4 columns × 6 rows = 24 stickers per sheet.
+         * Column width uses 25% (1/4) of the flex-container content width so
+         * that exactly 4 columns are guaranteed regardless of DPI rounding.
+         * Row height = 19 mm (sticker content) + configurable row gap.
          */
         .page {
             width: 8.5in;
@@ -87,15 +84,13 @@
         }
 
         /*
-         * Cell pitch for A14 (4 × 6 on letter):
-         *   width:  (8.5in − 16 mm) / 4 ≈ 50 mm
-         *   height: (11in  − 16 mm) / 6 ≈ 43.9 mm
-         * The sticker content (QR + text) occupies only the top 19 mm;
-         * the remaining ~24.9 mm is the transparent gap between sticker rows.
+         * A14 sticker cell: exactly 1/4 of the container width (4 columns).
+         * Height = 19 mm sticker content + row gap (configurable, default 1 mm).
          */
         .sticker {
-            width: 50mm;
-            height: 43.9mm;
+            flex: 0 0 25%;
+            width: 25%;
+            height: <?php echo number_format(19 + ($rowGap ?? 1), 2, '.', ''); ?>mm;
             display: flex;
             flex-direction: row;
             align-items: flex-start;
