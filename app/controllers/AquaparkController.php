@@ -129,6 +129,7 @@ class AquaparkController extends BaseController {
 
         $printType = $settings['aquapark_qr_print_type'] ?? 'pulsera';
         $rowGap    = max(0, (float)($settings['aquapark_qr_row_gap'] ?? 1));
+        $colGap    = max(0, (float)($settings['aquapark_qr_col_gap'] ?? 0));
 
         $data = [
             'title'        => 'Imprimir Pulseras',
@@ -138,6 +139,7 @@ class AquaparkController extends BaseController {
             'end'          => $end,
             'ticketPrices' => $ticketPrices,
             'rowGap'       => $rowGap,
+            'colGap'       => $colGap,
             'showNav'      => false,
         ];
 
