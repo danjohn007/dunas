@@ -305,7 +305,7 @@
                     Distancia entre renglones de impresión (mm)
                 </label>
                 <div class="flex items-center gap-3" style="max-width: 220px;">
-                    <input type="number" name="aquapark_qr_row_gap" step="0.5" min="0" max="50"
+                    <input type="number" name="aquapark_qr_row_gap" step="any" min="0" max="50"
                            value="<?php echo htmlspecialchars($settings['aquapark_qr_row_gap'] ?? '1'); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <span class="text-sm text-gray-500 whitespace-nowrap">mm</span>
@@ -319,7 +319,7 @@
                     Distancia entre columnas de impresión (mm)
                 </label>
                 <div class="flex items-center gap-3" style="max-width: 220px;">
-                    <input type="number" name="aquapark_qr_col_gap" step="0.5" min="0" max="50"
+                    <input type="number" name="aquapark_qr_col_gap" step="any" min="0" max="50"
                            value="<?php echo htmlspecialchars($settings['aquapark_qr_col_gap'] ?? '0'); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <span class="text-sm text-gray-500 whitespace-nowrap">mm</span>
