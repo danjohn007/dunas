@@ -139,7 +139,9 @@ class AquaparkController extends BaseController {
             'showNav'      => false,
         ];
 
-        if ($printType === 'adhesiva') {
+        if ($printType === 'adhesiva_a14') {
+            $this->view('aquapark/print_stickers_a14', $data);
+        } elseif ($printType === 'adhesiva') {
             $this->view('aquapark/print_stickers', $data);
         } else {
             $this->view('aquapark/print_wristbands', $data);

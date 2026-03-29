@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imprimir Etiquetas Adhesivas - Parque Acuático</title>
+    <title>Imprimir Etiquetas Adhesivas A14 - Parque Acuático</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -62,13 +62,13 @@
         }
 
         /*
-         * Tuk-Stik A11: 38 mm wide × 13 mm tall per sticker.
+         * Tuk-Stik A14: 19 mm tall × 50 mm wide per sticker (landscape label).
          * Letter portrait: 8.5 in × 11 in (215.9 mm × 279.4 mm).
          * Usable area after 8 mm margins each side:
-         *   width  ≈ 199.9 mm  → 5 columns, cell pitch = 199.9/5 ≈ 40 mm
-         *   height ≈ 263.4 mm  → 9 rows,    cell pitch = 263.4/9 ≈ 29.3 mm
-         * = 45 stickers per sheet (5 × 9).
-         * Each cell is 40 mm wide × 29.3 mm tall; only the top 13 mm contains
+         *   width  ≈ 199.9 mm  → 4 columns, cell pitch = 199.9/4 ≈ 50 mm
+         *   height ≈ 263.4 mm  → 6 rows,    cell pitch = 263.4/6 ≈ 43.9 mm
+         * = 24 stickers per sheet (4 × 6).
+         * Each cell is 50 mm wide × 43.9 mm tall; only the top 19 mm contains
          * the printed sticker content — the remaining space is the inter-row gap
          * on the physical sheet, ensuring millimetre-accurate alignment.
          */
@@ -87,39 +87,38 @@
         }
 
         /*
-         * Cell pitch for A11 (5 × 9 on letter):
-         *   width:  (8.5in − 16 mm) / 5 ≈ 40 mm
-         *   height: (11in  − 16 mm) / 9 ≈ 29.3 mm
-         * The sticker content (QR + text) occupies only the top 13 mm;
-         * the remaining ~16.3 mm is the transparent gap between sticker rows.
+         * Cell pitch for A14 (4 × 6 on letter):
+         *   width:  (8.5in − 16 mm) / 4 ≈ 50 mm
+         *   height: (11in  − 16 mm) / 6 ≈ 43.9 mm
+         * The sticker content (QR + text) occupies only the top 19 mm;
+         * the remaining ~24.9 mm is the transparent gap between sticker rows.
          */
         .sticker {
-            width: 40mm;
-            height: 29.3mm;
+            width: 50mm;
+            height: 43.9mm;
             display: flex;
             flex-direction: row;
             align-items: flex-start;
             overflow: hidden;
             /* subtle outline to help align on screen; hidden on print */
             outline: 0.3px dashed #ccc;
-            padding: 0.5mm 1mm 0 1mm;
+            padding: 1mm 1.5mm 0 1.5mm;
         }
 
         /* QR code area inside the sticker */
         .sticker-qr {
             flex-shrink: 0;
-            width: 11mm;
-            height: 11mm;
+            width: 16mm;
+            height: 16mm;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 1.5mm;
-            margin-top: 1mm;
+            margin-right: 2mm;
         }
         .sticker-qr canvas,
         .sticker-qr img {
-            width: 11mm !important;
-            height: 11mm !important;
+            width: 16mm !important;
+            height: 16mm !important;
         }
 
         /* Text area beside the QR code */
@@ -128,31 +127,31 @@
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            gap: 0.3mm;
+            gap: 0.5mm;
             overflow: hidden;
-            margin-top: 1mm;
+            padding-top: 0.5mm;
         }
         .sticker-number {
-            font-size: 7pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #111;
             white-space: nowrap;
             line-height: 1;
         }
         .sticker-date {
-            font-size: 5pt;
+            font-size: 7pt;
             color: #555;
             white-space: nowrap;
             line-height: 1;
         }
         .sticker-type {
-            font-size: 4.5pt;
+            font-size: 6pt;
             color: #777;
             white-space: nowrap;
             line-height: 1;
         }
         .sticker-price {
-            font-size: 5pt;
+            font-size: 7pt;
             font-weight: bold;
             color: #1e40af;
             white-space: nowrap;
@@ -187,7 +186,7 @@
     <div class="toolbar">
         <div>
             <h1>Imprimir Etiquetas Adhesivas - Parque Acuático
-                <span class="badge">Tuk-Stik A11 · 38×13 mm · 5×9 por hoja</span>
+                <span class="badge">Tuk-Stik A14 · 19×50 mm · 4×6 por hoja</span>
             </h1>
             <div class="info">
                 Serie <?php echo (int)$start; ?> – <?php echo (int)$end; ?> |
@@ -211,8 +210,8 @@
             'capacidades_diferentes' => 'Cap. Dif.',
         ];
 
-        // 5 columns × 9 rows = 45 stickers per letter page
-        $perPage = 45;
+        // 4 columns × 6 rows = 24 stickers per letter page
+        $perPage = 24;
         $pages   = array_chunk($codes, $perPage);
         ?>
 
@@ -242,8 +241,8 @@
     <script>
     (function () {
         var codes = <?php echo json_encode(array_map(fn($c) => ['id' => $c['id'], 'code' => $c['code']], $codes), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-        // 11 mm at 96 dpi ≈ 41 px  (1 in = 25.4 mm, 96 px/in → 1 mm ≈ 3.78 px)
-        var px = Math.round(11 * 3.7795275591);
+        // 16 mm at 96 dpi ≈ 60 px  (1 in = 25.4 mm, 96 px/in → 1 mm ≈ 3.78 px)
+        var px = Math.round(16 * 3.7795275591);
 
         codes.forEach(function (c) {
             var el = document.getElementById('qr-' + c.id);
