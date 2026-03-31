@@ -208,8 +208,8 @@
             'capacidades_diferentes' => 'Cap. Dif.',
         ];
 
-        // configurable columns × 9 rows per letter page
-        $perPage = ($cols ?? 5) * 9;
+        // configurable columns × configurable rows per letter page
+        $perPage = ($cols ?? 5) * ($rows ?? 9);
         $pages   = array_chunk($codes, $perPage);
         ?>
 
