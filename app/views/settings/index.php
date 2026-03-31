@@ -284,7 +284,7 @@
                                class="mt-0.5 text-blue-600">
                         <span>
                             <span class="block font-medium text-gray-800">Etiquetas adhesivas A11</span>
-                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A11 (38 × 13 mm) — 5 columnas × 9 renglones por hoja</span>
+                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A11 (38 × 13 mm) — <?php echo (int)($settings['aquapark_qr_cols_a11'] ?? 5); ?> columnas × 9 renglones por hoja</span>
                         </span>
                     </label>
                     <label class="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-blue-50 transition <?php echo (($settings['aquapark_qr_print_type'] ?? 'pulsera') === 'adhesiva_a14') ? 'border-blue-500 bg-blue-50' : 'border-gray-300'; ?>">
@@ -293,9 +293,37 @@
                                class="mt-0.5 text-blue-600">
                         <span>
                             <span class="block font-medium text-gray-800">Etiquetas adhesivas A14</span>
-                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A14 (19 × 50 mm) — 4 columnas × 6 renglones por hoja</span>
+                            <span class="block text-xs text-gray-500">Modelo Tuk-Stik A14 (19 × 50 mm) — <?php echo (int)($settings['aquapark_qr_cols_a14'] ?? 4); ?> columnas × 6 renglones por hoja</span>
                         </span>
                     </label>
+                </div>
+            </div>
+
+            <!-- Número de columnas por tipo de etiqueta adhesiva -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Columnas por hoja — Tuk-Stik A11
+                    </label>
+                    <div class="flex items-center gap-3" style="max-width: 220px;">
+                        <input type="number" name="aquapark_qr_cols_a11" step="1" min="1" max="20"
+                               value="<?php echo (int)($settings['aquapark_qr_cols_a11'] ?? 5); ?>"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <span class="text-sm text-gray-500 whitespace-nowrap">cols</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Número de columnas por hoja al imprimir etiquetas adhesivas A11. Valor predeterminado: 5.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Columnas por hoja — Tuk-Stik A14
+                    </label>
+                    <div class="flex items-center gap-3" style="max-width: 220px;">
+                        <input type="number" name="aquapark_qr_cols_a14" step="1" min="1" max="20"
+                               value="<?php echo (int)($settings['aquapark_qr_cols_a14'] ?? 4); ?>"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <span class="text-sm text-gray-500 whitespace-nowrap">cols</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Número de columnas por hoja al imprimir etiquetas adhesivas A14. Valor predeterminado: 4.</p>
                 </div>
             </div>
 

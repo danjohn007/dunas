@@ -64,9 +64,9 @@
         /*
          * Tuk-Stik A11: 38 mm wide × 13 mm tall per sticker.
          * Letter portrait: 8.5 in × 11 in (215.9 mm × 279.4 mm).
-         * Layout: 5 columns × 9 rows = 45 stickers per sheet.
-         * Column width uses 20% (1/5) of the flex-container content width so
-         * that exactly 5 columns are guaranteed regardless of DPI rounding.
+         * Layout: configurable columns × 9 rows per sheet (default 5 columns).
+         * Column width uses 1/cols of the flex-container content width so
+         * that exactly $cols columns are guaranteed regardless of DPI rounding.
          * Row height = 13 mm (sticker content) + configurable row gap.
          */
         .page {
@@ -85,13 +85,13 @@
         }
 
         /*
-         * A11 sticker cell: exactly 1/5 of the container width (5 columns).
+         * A11 sticker cell: exactly 1/$cols of the container width.
          * Height = 13 mm sticker content + row gap (configurable, default 1 mm).
-         * Width accounts for 4 column gaps distributed across 5 columns.
+         * Width accounts for ($cols-1) column gaps distributed across $cols columns.
          */
         .sticker {
-            flex: 0 0 calc(20% - <?php echo number_format(4 / 5 * ($colGap ?? 0), 4, '.', ''); ?>mm);
-            width: calc(20% - <?php echo number_format(4 / 5 * ($colGap ?? 0), 4, '.', ''); ?>mm);
+            flex: 0 0 calc(<?php echo number_format(100 / ($cols ?? 5), 6, '.', ''); ?>% - <?php echo number_format(($cols - 1) / $cols * ($colGap ?? 0), 4, '.', ''); ?>mm);
+            width: calc(<?php echo number_format(100 / ($cols ?? 5), 6, '.', ''); ?>% - <?php echo number_format(($cols - 1) / $cols * ($colGap ?? 0), 4, '.', ''); ?>mm);
             height: <?php echo number_format(13 + ($rowGap ?? 1), 2, '.', ''); ?>mm;
             display: flex;
             flex-direction: row;
@@ -184,7 +184,7 @@
     <div class="toolbar">
         <div>
             <h1>Imprimir Etiquetas Adhesivas - Parque Acuático
-                <span class="badge">Tuk-Stik A11 · 38×13 mm · 5×9 por hoja</span>
+                <span class="badge">Tuk-Stik A11 · 38×13 mm · <?php echo (int)($cols ?? 5); ?>×9 por hoja</span>
             </h1>
             <div class="info">
                 Serie <?php echo (int)$start; ?> – <?php echo (int)$end; ?> |
@@ -208,8 +208,8 @@
             'capacidades_diferentes' => 'Cap. Dif.',
         ];
 
-        // 5 columns × 9 rows = 45 stickers per letter page
-        $perPage = 45;
+        // configurable columns × 9 rows per letter page
+        $perPage = ($cols ?? 5) * 9;
         $pages   = array_chunk($codes, $perPage);
         ?>
 
