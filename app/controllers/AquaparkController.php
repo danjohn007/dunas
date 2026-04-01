@@ -132,6 +132,8 @@ class AquaparkController extends BaseController {
         $colGap    = max(0, (float)($settings['aquapark_qr_col_gap'] ?? 0));
         $colsA11   = max(1, (int)($settings['aquapark_qr_cols_a11'] ?? 5));
         $colsA14   = max(1, (int)($settings['aquapark_qr_cols_a14'] ?? 4));
+        $rowsA11   = max(1, (int)($settings['aquapark_qr_rows_a11'] ?? 9));
+        $rowsA14   = max(1, (int)($settings['aquapark_qr_rows_a14'] ?? 6));
 
         $data = [
             'title'        => 'Imprimir Pulseras',
@@ -143,6 +145,7 @@ class AquaparkController extends BaseController {
             'rowGap'       => $rowGap,
             'colGap'       => $colGap,
             'cols'         => ($printType === 'adhesiva_a14') ? $colsA14 : $colsA11,
+            'rows'         => ($printType === 'adhesiva_a14') ? $rowsA14 : $rowsA11,
             'showNav'      => false,
         ];
 
