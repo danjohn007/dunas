@@ -11,6 +11,7 @@
     $primaryColor       = $systemSettings['theme_primary_color']             ?? '#2563eb';
     $secondaryColor     = $systemSettings['theme_secondary_color']           ?? '#1e40af';
     $autoResetSeconds   = max(1, (int)($systemSettings['aquapark_validate_reset_seconds'] ?? 3));
+    $autoValidate       = ($systemSettings['aquapark_validate_auto'] ?? '1') === '1';
     ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -226,6 +227,19 @@
             const pos = this.selectionStart;
             this.value = this.value.toUpperCase();
             this.setSelectionRange(pos, pos);
+        });
+    }
+
+    // Auto-submit when complete code format is detected
+    var autoValidate = <?php echo $autoValidate ? 'true' : 'false'; ?>;
+    var AQP_PATTERN = /^AQP-\d{8}-\d{6}$/;
+    var TKT_PATTERN = /^TKT-[A-Z0-9]{8}-[A-Z0-9]{8}$/;
+    if (autoValidate && codeInput) {
+        codeInput.addEventListener('input', function () {
+            var val = this.value.trim();
+            if (AQP_PATTERN.test(val) || TKT_PATTERN.test(val)) {
+                document.getElementById('manualForm').submit();
+            }
         });
     }
 

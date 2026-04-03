@@ -277,6 +277,21 @@
                 <p class="mt-1 text-xs text-gray-500">Segundos que espera la pantalla de validación antes de regresar automáticamente al modo Manual tras mostrar el resultado. Valor predeterminado: 3.</p>
             </div>
 
+            <!-- Validación automática en Validar Código QR -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Validación automática en Validar Código QR
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="hidden" name="aquapark_validate_auto" value="0">
+                    <input type="checkbox" name="aquapark_validate_auto" value="1"
+                           <?php echo (($settings['aquapark_validate_auto'] ?? '1') === '1') ? 'checked' : ''; ?>
+                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700">Activada</span>
+                </label>
+                <p class="mt-1 text-xs text-gray-500">Cuando está activada, al ingresar manualmente un código con el formato completo (AQP-XXXXXXXX-XXXXXX o TKT-XXXXXXXX-XXXXXXXX) la validación se ejecuta de forma automática sin necesidad de presionar el botón Validar. Valor predeterminado: activada.</p>
+            </div>
+
             <!-- Tipo de impresión de códigos QR -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-3">
