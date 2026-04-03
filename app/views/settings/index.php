@@ -263,6 +263,20 @@
                 <i class="fas fa-swimming-pool text-blue-600 mr-2"></i>Parque Acuático — Costo de Boletos
             </h2>
 
+            <!-- Tiempo de restablecimiento automático en Validación QR -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tiempo de restablecimiento automático en Validación QR (segundos)
+                </label>
+                <div class="flex items-center gap-3" style="max-width: 220px;">
+                    <input type="number" name="aquapark_validate_reset_seconds" step="1" min="1" max="60"
+                           value="<?php echo (int)($settings['aquapark_validate_reset_seconds'] ?? 3); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <span class="text-sm text-gray-500 whitespace-nowrap">seg</span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Segundos que espera la pantalla de validación antes de regresar automáticamente al modo Manual tras mostrar el resultado. Valor predeterminado: 3.</p>
+            </div>
+
             <!-- Tipo de impresión de códigos QR -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-3">

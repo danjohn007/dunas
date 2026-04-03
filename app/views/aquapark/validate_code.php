@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <?php
-    $primaryColor   = $systemSettings['theme_primary_color']   ?? '#2563eb';
-    $secondaryColor = $systemSettings['theme_secondary_color'] ?? '#1e40af';
+    $primaryColor       = $systemSettings['theme_primary_color']             ?? '#2563eb';
+    $secondaryColor     = $systemSettings['theme_secondary_color']           ?? '#1e40af';
+    $autoResetSeconds   = max(1, (int)($systemSettings['aquapark_validate_reset_seconds'] ?? 3));
     ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -149,10 +150,15 @@
 
             <!-- Nuevo intento -->
             <div class="mt-6 text-center">
-                <a href="<?php echo BASE_URL; ?>/aquapark/validateCode"
+                <a href="<?php echo BASE_URL; ?>/aquapark/validateCode?mode=manual"
                    class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg text-sm">
                     <i class="fas fa-redo mr-2"></i>Nueva Validación
                 </a>
+                <?php if (isset($validationResult)): ?>
+                <p class="text-xs text-gray-400 mt-2" aria-live="polite">
+                    <i class="fas fa-clock mr-1"></i>Restableciendo en <span id="autoResetCountdown"><?php echo $autoResetSeconds; ?></span> segundo(s)...
+                </p>
+                <?php endif; ?>
             </div>
         </div>
     </main>
@@ -225,7 +231,28 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         <?php if (!isset($validationResult)): ?>
-        startScanner();
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('mode') === 'manual') {
+            showManual();
+        } else {
+            startScanner();
+        }
+        <?php else: ?>
+        // Auto-reset countdown after showing result
+        (function () {
+            var remaining = <?php echo $autoResetSeconds; ?>;
+            var el = document.getElementById('autoResetCountdown');
+            var timer = setInterval(function () {
+                remaining--;
+                el = document.getElementById('autoResetCountdown');
+                if (!el) { clearInterval(timer); return; }
+                el.textContent = remaining;
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    window.location.href = '<?php echo BASE_URL; ?>/aquapark/validateCode?mode=manual';
+                }
+            }, 1000);
+        })();
         <?php endif; ?>
     });
     </script>
