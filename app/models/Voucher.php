@@ -371,12 +371,14 @@ class Voucher {
                   AND status = 'pending_assignment'
                   AND client_id IS NULL";
         
-        return $this->db->execute($sql, [
+        $stmt = $this->db->execute($sql, [
             (int)$clientId,
             strtoupper(trim($serie)),
             (int)$folioStart,
             (int)$folioEnd
         ]);
+        
+        return $stmt->rowCount();
     }
 
     /**
@@ -397,7 +399,7 @@ class Voucher {
                     used_by_access_log_id = ?
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$accessLogId, $id]);
+        $affectedRows = $this->db->execute($sql, [$accessLogId, $id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo marcar el vale como usado. El vale puede estar ya usado o cancelado.");
@@ -416,7 +418,7 @@ class Voucher {
                     used_by_access_log_id = ?
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$accessLogId, $id]);
+        $affectedRows = $this->db->execute($sql, [$accessLogId, $id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo registrar el vale. El vale puede estar ya usado, registrado o cancelado.");
@@ -433,7 +435,7 @@ class Voucher {
                 SET status = 'cancelled'
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$id]);
+        $affectedRows = $this->db->execute($sql, [$id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo cancelar el vale. El vale puede estar ya usado o cancelado.");
