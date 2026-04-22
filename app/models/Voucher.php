@@ -9,6 +9,10 @@ class Voucher {
     public function __construct() {
         $this->db = Database::getInstance();
     }
+
+    public function formatAccessPin($folio) {
+        return str_pad((string)$folio, 4, '0', STR_PAD_LEFT);
+    }
     
     /**
      * Obtiene todos los vales con filtros opcionales
@@ -178,7 +182,7 @@ class Voucher {
         
         // Formato corto: SERIE-FOLIO (sin timestamp)
         // El folio no lleva padding porque queremos mantenerlo corto
-        $folioPart = $padFolio ? str_pad((string)((int)$folio), 4, '0', STR_PAD_LEFT) : $folio;
+        $folioPart = $padFolio ? $this->formatAccessPin($folio) : $folio;
         $qrCode = strtoupper($serie) . '-' . $folioPart;
         
         // Verificar que el código no esté vacío

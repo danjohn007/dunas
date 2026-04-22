@@ -133,7 +133,7 @@ class AccessLog {
                 throw new Exception("El PIN debe contener exactamente 4 dígitos");
             }
             if ($this->ticketCodeExists($ticketCode)) {
-                throw new Exception("El PIN {$ticketCode} ya fue utilizado, valide otro vale.");
+                throw new Exception("El PIN {$ticketCode} ya fue utilizado, seleccione otro vale.");
             }
         } else {
             $ticketCode = $this->generateTicketCode();

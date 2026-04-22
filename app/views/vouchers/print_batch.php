@@ -22,8 +22,8 @@
                 height: 3.25in; /* Fits 3 per column with margins */
                 <?php endif; ?>
                 page-break-inside: avoid;
-                margin: 0.1in;
-                padding: 0.15in;
+                margin: <?php echo $isImprentaMode ? '0.2cm' : '0.1in'; ?>;
+                padding: <?php echo $isImprentaMode ? '0.35cm' : '0.15in'; ?>;
             }
         }
         
@@ -58,7 +58,7 @@
             border: 2px solid #2c5f3b;
             border-radius: 5px;
             padding: <?php echo $isImprentaMode ? '0.35cm' : '0.25in'; ?>;
-            margin: 0.1in;
+            margin: <?php echo $isImprentaMode ? '0.2cm' : '0.1in'; ?>;
             display: <?php echo $isImprentaMode ? 'block' : 'inline-block'; ?>;
             vertical-align: top;
             background: white;
@@ -158,7 +158,7 @@
                 <div>
                     <div class="voucher-field">
                         <span class="voucher-label">EMPRESA:</span>
-                        <span class="voucher-value">_________________</span>
+                        <span class="voucher-value">SIN ASIGNAR</span>
                     </div>
                     <div class="voucher-field">
                         <span class="voucher-label">OPERADOR:</span>

@@ -141,7 +141,7 @@ class AccessController extends BaseController {
                         }
                         
                         if (($voucher['voucher_type'] ?? 'standard') === 'imprenta') {
-                            $pin = str_pad((string)((int)$voucher['folio']), 4, '0', STR_PAD_LEFT);
+                            $pin = $this->voucherModel->formatAccessPin($voucher['folio']);
                             $data['ticket_code'] = $pin;
                         }
                     }
@@ -538,7 +538,7 @@ class AccessController extends BaseController {
             ];
             
             if ($voucher && ($voucher['voucher_type'] ?? 'standard') === 'imprenta') {
-                $accessData['ticket_code'] = str_pad((string)((int)$voucher['folio']), 4, '0', STR_PAD_LEFT);
+                $accessData['ticket_code'] = $this->voucherModel->formatAccessPin($voucher['folio']);
             }
             
             // Leer placa desde cámara Hikvision

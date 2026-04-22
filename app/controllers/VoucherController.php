@@ -475,7 +475,7 @@ class VoucherController extends BaseController {
                     'qr_code' => $voucher['qr_code'],
                     'status' => $voucher['status'],
                     'voucher_type' => $voucher['voucher_type'] ?? 'standard',
-                    'access_pin' => str_pad((string)((int)$voucher['folio']), 4, '0', STR_PAD_LEFT)
+                    'access_pin' => $this->voucherModel->formatAccessPin($voucher['folio'])
                 ]
             ];
             
