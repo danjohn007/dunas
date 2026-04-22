@@ -139,6 +139,11 @@ class AccessController extends BaseController {
                             $this->redirect('/access/create');
                             return;
                         }
+                        
+                        if (($voucher['voucher_type'] ?? 'standard') === 'imprenta') {
+                            $pin = str_pad((string)((int)$voucher['folio']), 4, '0', STR_PAD_LEFT);
+                            $data['ticket_code'] = $pin;
+                        }
                     }
                     
                     // Obtener placa de la unidad seleccionada
@@ -506,6 +511,7 @@ class AccessController extends BaseController {
                 $unitId = $this->unitModel->create($unitData);
             }
             
+            $voucher = null;
             // Validar vale si el método de pago es 'voucher'
             if ($_POST['payment_method'] === 'voucher') {
                 if (empty($_POST['voucher_id'])) {
@@ -530,6 +536,10 @@ class AccessController extends BaseController {
                 'client_id' => $clientId,
                 'payment_method' => $_POST['payment_method'] ?? 'cash'
             ];
+            
+            if ($voucher && ($voucher['voucher_type'] ?? 'standard') === 'imprenta') {
+                $accessData['ticket_code'] = str_pad((string)((int)$voucher['folio']), 4, '0', STR_PAD_LEFT);
+            }
             
             // Leer placa desde cámara Hikvision
             $cameraReading = HikvisionAPI::readLicensePlate();

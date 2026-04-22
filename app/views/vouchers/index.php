@@ -5,11 +5,23 @@
             <p class="text-gray-600">Administre los vales de suministro de agua</p>
         </div>
         <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
-        <a href="<?php echo BASE_URL; ?>/vouchers/create" 
-           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-            <i class="fas fa-plus mr-2"></i>
-            Generar Vales
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <a href="<?php echo BASE_URL; ?>/vouchers/create" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                Generar Vales
+            </a>
+            <a href="<?php echo BASE_URL; ?>/vouchers/imprenta" 
+               class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
+                <i class="fas fa-print mr-2"></i>
+                Imprenta
+            </a>
+            <a href="<?php echo BASE_URL; ?>/vouchers/relate" 
+               class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors">
+                <i class="fas fa-link mr-2"></i>
+                RELACIONAR VALES
+            </a>
+        </div>
         <?php endif; ?>
     </div>
 
@@ -85,6 +97,7 @@
                 <select name="status" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Todos los estados</option>
                     <option value="active" <?php echo ($filters['status'] === 'active') ? 'selected' : ''; ?>>Activo</option>
+                    <option value="pending_assignment" <?php echo ($filters['status'] === 'pending_assignment') ? 'selected' : ''; ?>>Pendiente de Relación</option>
                     <option value="registered" <?php echo ($filters['status'] === 'registered') ? 'selected' : ''; ?>>Registrado</option>
                     <option value="used" <?php echo ($filters['status'] === 'used') ? 'selected' : ''; ?>>Usado</option>
                     <option value="cancelled" <?php echo ($filters['status'] === 'cancelled') ? 'selected' : ''; ?>>Cancelado</option>
@@ -169,13 +182,15 @@
                                 'active' => 'bg-green-100 text-green-800',
                                 'registered' => 'bg-blue-100 text-blue-800',
                                 'used' => 'bg-gray-100 text-gray-800',
-                                'cancelled' => 'bg-red-100 text-red-800'
+                                'cancelled' => 'bg-red-100 text-red-800',
+                                'pending_assignment' => 'bg-yellow-100 text-yellow-800'
                             ];
                             $statusLabels = [
                                 'active' => 'Activo',
                                 'registered' => 'Registrado',
                                 'used' => 'Usado',
-                                'cancelled' => 'Cancelado'
+                                'cancelled' => 'Cancelado',
+                                'pending_assignment' => 'Pendiente de Relación'
                             ];
                             $colorClass = $statusColors[$voucher['status']] ?? 'bg-gray-100 text-gray-800';
                             $label = $statusLabels[$voucher['status']] ?? $voucher['status'];

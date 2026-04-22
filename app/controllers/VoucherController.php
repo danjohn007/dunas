@@ -77,6 +77,21 @@ class VoucherController extends BaseController {
         
         $this->view('vouchers/create', $data);
     }
+
+    /**
+     * Muestra formulario de generación de vales imprenta
+     */
+    public function imprenta() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        $data = [
+            'title' => 'Imprenta de Vales',
+            'showNav' => true
+        ];
+        
+        $this->view('vouchers/imprenta', $data);
+    }
     
     /**
      * Procesa la generación de vales en lote
@@ -178,6 +193,7 @@ class VoucherController extends BaseController {
                 
                 // Guardar IDs de vales creados en sesión para impresión
                 Session::set('last_voucher_batch', array_column($result['created'], 'id'));
+                Session::set('last_voucher_print_mode', 'standard');
                 
                 $this->redirect('/vouchers/printBatch');
             } else {
@@ -193,6 +209,97 @@ class VoucherController extends BaseController {
         } catch (Exception $e) {
             $this->setFlash('error', 'Error al generar vales: ' . $e->getMessage());
             $this->redirect('/vouchers/create');
+        }
+    }
+
+    /**
+     * Procesa la generación de vales de imprenta
+     */
+    public function storeImprenta() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers/imprenta');
+            return;
+        }
+        
+        $required = ['serie', 'start_pin', 'quantity', 'capacity'];
+        foreach ($required as $field) {
+            if (!isset($_POST[$field]) || trim((string)$_POST[$field]) === '') {
+                $this->setFlash('error', 'Todos los campos son requeridos.');
+                $this->redirect('/vouchers/imprenta');
+                return;
+            }
+        }
+        
+        $serie = strtoupper(trim($_POST['serie']));
+        $startPin = (int)$_POST['start_pin'];
+        $quantity = (int)$_POST['quantity'];
+        $capacity = (int)$_POST['capacity'];
+        
+        if (!preg_match('/^[A-Z]{1}$/', $serie)) {
+            $this->setFlash('error', 'La serie de imprenta debe ser una sola letra (A-Z).');
+            $this->redirect('/vouchers/imprenta');
+            return;
+        }
+        
+        if ($startPin < 0 || $startPin > 9999) {
+            $this->setFlash('error', 'El PIN inicial debe estar entre 0000 y 9999.');
+            $this->redirect('/vouchers/imprenta');
+            return;
+        }
+        
+        if ($quantity < 1 || $quantity > 1000) {
+            $this->setFlash('error', 'La cantidad debe estar entre 1 y 1000 vales.');
+            $this->redirect('/vouchers/imprenta');
+            return;
+        }
+        
+        if (($startPin + $quantity - 1) > 9999) {
+            $this->setFlash('error', 'El rango de PIN excede 9999. Ajuste PIN inicial o cantidad.');
+            $this->redirect('/vouchers/imprenta');
+            return;
+        }
+        
+        if ($capacity < 1) {
+            $this->setFlash('error', 'La capacidad debe ser mayor a 0 litros.');
+            $this->redirect('/vouchers/imprenta');
+            return;
+        }
+        
+        try {
+            $result = $this->voucherModel->generateImprentaBatch(
+                $serie,
+                $startPin,
+                $quantity,
+                $capacity,
+                Auth::user()['id']
+            );
+            
+            if ($result['total'] > 0) {
+                $message = "Se generaron exitosamente {$result['total']} vales de imprenta.";
+                
+                if (count($result['errors']) > 0) {
+                    $message .= " Se encontraron " . count($result['errors']) . " errores (posibles duplicados).";
+                }
+                
+                $this->setFlash('success', $message);
+                Session::set('last_voucher_batch', array_column($result['created'], 'id'));
+                Session::set('last_voucher_print_mode', 'imprenta');
+                $this->redirect('/vouchers/printBatch');
+            } else {
+                $errorMessage = 'No se pudo generar ningún vale de imprenta.';
+                if (count($result['errors']) > 0) {
+                    $firstError = $result['errors'][0];
+                    $errorMessage .= ' Error en serie ' . $firstError['serie'] . ' folio ' . str_pad((string)$firstError['folio'], 4, '0', STR_PAD_LEFT) . ': ' . $firstError['error'];
+                }
+                $this->setFlash('error', $errorMessage);
+                $this->redirect('/vouchers/imprenta');
+            }
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al generar vales de imprenta: ' . $e->getMessage());
+            $this->redirect('/vouchers/imprenta');
         }
     }
     
@@ -223,6 +330,7 @@ class VoucherController extends BaseController {
         $data = [
             'title' => 'Imprimir Vales',
             'vouchers' => $vouchers,
+            'printMode' => Session::get('last_voucher_print_mode', 'standard'),
             'showNav' => false  // No mostrar navegación en vista de impresión
         ];
         
@@ -247,6 +355,7 @@ class VoucherController extends BaseController {
         $data = [
             'title' => 'Imprimir Vale',
             'vouchers' => [$voucher],  // Array con un solo voucher para reutilizar la vista
+            'printMode' => 'standard',
             'showNav' => false  // No mostrar navegación en vista de impresión
         ];
         
@@ -347,6 +456,14 @@ class VoucherController extends BaseController {
             }
             
             // Vale válido - incluir datos del cliente si existen
+            if (empty($voucher['client_id']) || $voucher['status'] === 'pending_assignment') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Este vale de imprenta aún no está relacionado a una empresa.'
+                ]);
+                return;
+            }
+            
             $response = [
                 'success' => true,
                 'message' => 'Vale válido',
@@ -356,7 +473,9 @@ class VoucherController extends BaseController {
                     'folio' => $voucher['folio'],
                     'capacity' => $voucher['capacity'],
                     'qr_code' => $voucher['qr_code'],
-                    'status' => $voucher['status']
+                    'status' => $voucher['status'],
+                    'voucher_type' => $voucher['voucher_type'] ?? 'standard',
+                    'access_pin' => str_pad((string)((int)$voucher['folio']), 4, '0', STR_PAD_LEFT)
                 ]
             ];
             
@@ -382,5 +501,79 @@ class VoucherController extends BaseController {
                 'message' => 'Error al validar vale: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Muestra formulario para relacionar vales de imprenta
+     */
+    public function relate() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        $clients = $clientModel->getAll(['status' => 'active']);
+        
+        $data = [
+            'title' => 'Relacionar Vales',
+            'clients' => $clients,
+            'series' => $this->voucherModel->getUniqueSeriesByType('imprenta'),
+            'showNav' => true
+        ];
+        
+        $this->view('vouchers/relate', $data);
+    }
+
+    /**
+     * Procesa la relación de vales de imprenta con una empresa
+     */
+    public function relateStore() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers/relate');
+            return;
+        }
+        
+        $required = ['client_id', 'serie', 'folio_start', 'folio_end'];
+        foreach ($required as $field) {
+            if (!isset($_POST[$field]) || trim((string)$_POST[$field]) === '') {
+                $this->setFlash('error', 'Todos los campos son requeridos para relacionar vales.');
+                $this->redirect('/vouchers/relate');
+                return;
+            }
+        }
+        
+        $clientId = (int)$_POST['client_id'];
+        $serie = strtoupper(trim($_POST['serie']));
+        $folioStart = (int)$_POST['folio_start'];
+        $folioEnd = (int)$_POST['folio_end'];
+        
+        if (!preg_match('/^[A-Z]{1}$/', $serie)) {
+            $this->setFlash('error', 'La serie debe ser una sola letra (A-Z).');
+            $this->redirect('/vouchers/relate');
+            return;
+        }
+        
+        if ($folioStart < 0 || $folioStart > 9999 || $folioEnd < 0 || $folioEnd > 9999 || $folioEnd < $folioStart) {
+            $this->setFlash('error', 'El rango de PIN debe estar entre 0000 y 9999.');
+            $this->redirect('/vouchers/relate');
+            return;
+        }
+        
+        try {
+            $updated = $this->voucherModel->relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId);
+            
+            if ((int)$updated > 0) {
+                $this->setFlash('success', "Se relacionaron {$updated} vales y quedaron activos.");
+            } else {
+                $this->setFlash('warning', 'No se encontraron vales pendientes de relación en el rango indicado.');
+            }
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al relacionar vales: ' . $e->getMessage());
+        }
+        
+        $this->redirect('/vouchers');
     }
 }
