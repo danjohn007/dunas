@@ -64,7 +64,7 @@
         .voucher-card {
             width: 12.5cm;
             height: 9.2cm;
-            background-color: #d5e8d3;
+            background-color: #ffffff;
             border: 2px solid #333;
             border-radius: 4px;
             padding: 0.45cm 0.5cm 0.35cm 0.5cm;
@@ -149,14 +149,6 @@
             color: #111;
         }
 
-        .serie-title {
-            font-size: 10px;
-            font-weight: 700;
-            line-height: 1.25;
-            color: #111;
-            margin-bottom: 0.12cm;
-        }
-
         .folio-digits {
             display: flex;
             justify-content: center;
@@ -219,9 +211,8 @@
         <?php foreach ($vouchers as $index => $voucher):
             $folioStr  = str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT);
             $digits    = str_split($folioStr);
-            $serieUpper = strtoupper($voucher['serie']);
-            /* QR encodes the short SERIE-FOLIO format, e.g. S-1000 */
-            $qrContent = $serieUpper . '-' . $voucher['folio'];
+            /* QR encodes the 4-digit folio only, e.g. 1000 */
+            $qrContent = $folioStr;
         ?>
         <div class="voucher-card">
 
@@ -267,7 +258,6 @@
                     </div>
                     <div class="folio-section">
                         <div class="folio-title">FOLIO</div>
-                        <div class="serie-title">SERIE &ldquo;<?php echo htmlspecialchars($serieUpper); ?>&rdquo;</div>
                         <div class="folio-digits">
                             <?php foreach ($digits as $digit): ?>
                             <div class="folio-digit-box"><?php echo htmlspecialchars($digit); ?></div>
@@ -293,7 +283,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         <?php foreach ($vouchers as $voucher):
-            $qrContent = strtoupper($voucher['serie']) . '-' . $voucher['folio'];
+            $qrContent = str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT);
         ?>
         try {
             new QRCode(document.getElementById('qrcode-<?php echo (int)$voucher['id']; ?>'), {
