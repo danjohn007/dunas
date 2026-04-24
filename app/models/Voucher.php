@@ -172,25 +172,23 @@ class Voucher {
     }
     
     /**
-     * Genera un código QR único (formato corto: SERIE-FOLIO)
+     * Genera un código QR único (solo folio de 4 dígitos)
      */
-    private function generateUniqueQRCode($serie, $folio, $padFolio = false) {
-        // Validar que serie y folio no estén vacíos
-        if (empty($serie) || $folio < 1) {
-            throw new Exception("Serie y folio son requeridos para generar el código QR");
+    private function generateUniqueQRCode($folio) {
+        // Validar que folio no esté vacío
+        if ($folio < 1) {
+            throw new Exception("El folio debe ser mayor a 0 para generar el código QR");
         }
         
-        // Formato corto: SERIE-FOLIO (sin timestamp)
-        // El folio no lleva padding porque queremos mantenerlo corto
-        $folioPart = $padFolio ? $this->formatAccessPin($folio) : $folio;
-        $qrCode = strtoupper($serie) . '-' . $folioPart;
+        // Formato: solo los 4 dígitos del folio (sin serie)
+        $qrCode = $this->formatAccessPin($folio);
         
         // Verificar que el código no esté vacío
-        if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
+        if (empty($qrCode) || strlen($qrCode) < 4) {
             throw new Exception("Error al generar código QR válido");
         }
         
-        // Verificar que no exista (debería no existir ya que serie+folio es único)
+        // Verificar que no exista
         if ($this->qrCodeExists($qrCode)) {
             throw new Exception("Ya existe un vale con el código QR {$qrCode}");
         }
@@ -233,10 +231,8 @@ class Voucher {
             throw new Exception("Tipo de vale no válido");
         }
         
-        $padFolio = !empty($data['pad_folio']) || $voucherType === 'imprenta';
-        
         // Generar código QR único
-        $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio'], $padFolio);
+        $qrCode = $this->generateUniqueQRCode($data['folio']);
         
         // Última validación antes de insertar
         if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
