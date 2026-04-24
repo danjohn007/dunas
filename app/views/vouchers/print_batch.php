@@ -4,233 +4,311 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imprimir Vales</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        <?php $isImprentaMode = isset($printMode) && $printMode === 'imprenta'; ?>
-        @media print {
-            .no-print { display: none !important; }
-            .page-break { page-break-after: always; }
-            body { margin: 0; }
-            .voucher-card {
-                <?php if ($isImprentaMode): ?>
-                width: 9.2cm;
-                height: 12.5cm;
-                <?php else: ?>
-                width: 3.75in; /* Fits 2 per row with margins */
-                height: 3.25in; /* Fits 3 per column with margins */
-                <?php endif; ?>
-                page-break-inside: avoid;
-                margin: <?php echo $isImprentaMode ? '0.2cm' : '0.1in'; ?>;
-                padding: <?php echo $isImprentaMode ? '0.35cm' : '0.15in'; ?>;
-            }
-        }
-        
-        @page {
-            <?php if ($isImprentaMode): ?>
-            size: auto;
-            margin: 1cm;
-            <?php else: ?>
-            size: letter;
-            margin: 0.25in;
-            <?php endif; ?>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #e5e7eb;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
-        .vouchers-container {
-            <?php if ($isImprentaMode): ?>
-            display: grid;
-            grid-template-columns: repeat(4, 9.2cm);
-            gap: 0.6cm;
-            justify-content: center;
-            padding: 1cm;
-            <?php endif; ?>
+        .no-print-bar {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,.15);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
         }
-        
-        .voucher-card {
-            <?php if ($isImprentaMode): ?>
-            width: 9.2cm;
-            height: 12.5cm;
-            <?php else: ?>
-            width: 3.75in; /* Fits 2 per row with margins */
-            height: 3.25in; /* Fits 3 per column with margins */
-            <?php endif; ?>
-            border: 2px solid #2c5f3b;
-            border-radius: 5px;
-            padding: <?php echo $isImprentaMode ? '0.35cm' : '0.25in'; ?>;
-            margin: <?php echo $isImprentaMode ? '0.2cm' : '0.1in'; ?>;
-            display: <?php echo $isImprentaMode ? 'block' : 'inline-block'; ?>;
-            vertical-align: top;
-            background: white;
-            box-sizing: border-box;
-        }
-        
-        .voucher-title {
-            color: #2c5f3b;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
-        }
-        
-        .voucher-field {
-            margin-bottom: 4px;
-            font-size: 9px;
-        }
-        
-        .voucher-label {
-            color: #2c5f3b;
+
+        .no-print-bar h1 { font-size: 20px; font-weight: bold; color: #111; flex: 1; }
+        .no-print-bar p  { font-size: 13px; color: #555; }
+
+        .btn-print {
+            padding: 8px 18px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
             font-weight: 600;
-            display: inline-block;
-            min-width: 75px;
+            white-space: nowrap;
         }
-        
-        .voucher-value {
-            border-bottom: 1px solid #cbd5e0;
-            display: inline-block;
-            min-width: 120px;
+        .btn-print:hover { background: #1d4ed8; }
+
+        .btn-close {
+            padding: 8px 18px;
+            background: #4b5563;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .btn-close:hover { background: #374151; }
+
+        /* ── Vouchers grid ── */
+        .vouchers-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6cm;
+            padding: 1cm;
+            justify-content: center;
+        }
+
+        /* ── Single voucher card: 12.5 cm wide × 9.2 cm tall (landscape) ── */
+        .voucher-card {
+            width: 12.5cm;
+            height: 9.2cm;
+            background-color: #d5e8d3;
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 0.45cm 0.5cm 0.35cm 0.5cm;
+            display: flex;
+            flex-direction: column;
+            page-break-inside: avoid;
+        }
+
+        /* ── Body: left fields + right QR/folio ── */
+        .voucher-body {
+            display: flex;
+            flex: 1;
+            gap: 0.35cm;
+            overflow: hidden;
+        }
+
+        /* ── Left column: form fields ── */
+        .voucher-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: flex-end;
+            line-height: 1;
+        }
+
+        .field-label {
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-right: 3px;
+            color: #111;
             padding-bottom: 1px;
         }
-        
-        .voucher-footer {
-            color: #2c5f3b;
+
+        .field-line {
+            flex: 1;
+            border-bottom: 1.5px solid #333;
+            font-size: 9.5px;
+            font-weight: 600;
+            color: #111;
+            padding-bottom: 1px;
+            min-width: 0;
+        }
+
+        /* ── Right column: QR box + folio ── */
+        .voucher-right {
+            width: 3.8cm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            flex-shrink: 0;
+        }
+
+        .qr-box {
+            width: 3.4cm;
+            height: 3.15cm;
+            background: #fff;
+            border: 1.5px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.18cm;
+            flex-shrink: 0;
+        }
+
+        .folio-section {
+            text-align: center;
+            width: 100%;
+        }
+
+        .folio-title {
             font-size: 12px;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 6px;
-            padding-top: 4px;
-            border-top: 2px solid #2c5f3b;
+            font-weight: 900;
+            line-height: 1.25;
+            color: #111;
         }
-        
-        .qr-container {
-            text-align: center;
-            margin: 0;
+
+        .serie-title {
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #111;
+            margin-bottom: 0.12cm;
         }
-        
-        .qr-code canvas {
-            max-width: 120px !important;
-            max-height: 120px !important;
+
+        .folio-digits {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .folio-digit-box {
+            width: 0.72cm;
+            height: 0.65cm;
+            border: 1.5px solid #333;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            color: #111;
+        }
+
+        /* ── Footer ── */
+        .voucher-footer {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #111;
+            margin-top: 0.22cm;
+            padding-top: 0.12cm;
+            border-top: 2px solid #333;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        /* ── Print overrides ── */
+        @media print {
+            .no-print-bar { display: none !important; }
+            .page-break   { page-break-after: always; }
+            body          { margin: 0; background: #fff; }
+            .vouchers-container { padding: 0.3cm; gap: 0.4cm; }
+        }
+
+        @page {
+            size: auto;
+            margin: 0.5cm;
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    
-    <!-- Print Controls -->
-    <div class="no-print fixed top-4 right-4 z-50 space-x-2">
-        <button onclick="window.print()" 
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg">
-            <i class="fas fa-print mr-2"></i>Imprimir
-        </button>
-        <a href="<?php echo BASE_URL; ?>/vouchers" 
-           class="inline-block px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-lg">
-            <i class="fas fa-times mr-2"></i>Cerrar
-        </a>
-    </div>
-    
-    <div class="no-print bg-white shadow-md p-4 mb-4">
-        <h1 class="text-2xl font-bold text-gray-900">Vista Previa de Impresión</h1>
-        <p class="text-gray-600">Total de vales: <?php echo count($vouchers); ?></p>
-        <p class="text-sm text-gray-500 mt-2">
-            <i class="fas fa-info-circle"></i>
-            <?php if ($isImprentaMode): ?>
-            Formato imprenta: 9.2 x 12.5 cm con margen adicional de 1 cm y distribución de 4 columnas.
-            <?php else: ?>
-            Los vales se imprimirán en formato carta (8.5" x 11"). Se imprimen 6 vales por página (2 columnas x 3 filas).
-            <?php endif; ?>
-        </p>
+<body>
+
+    <!-- Print Controls (hidden when printing) -->
+    <div class="no-print-bar">
+        <h1>Vista Previa de Impresión</h1>
+        <p>Total de vales: <?php echo count($vouchers); ?> &nbsp;|&nbsp; Formato: 12.5 × 9.2 cm (horizontal)</p>
+        <button class="btn-print" onclick="window.print()">&#128438; Imprimir</button>
+        <a class="btn-close" href="<?php echo BASE_URL; ?>/vouchers">&#10005; Cerrar</a>
     </div>
 
-    <!-- Vouchers Grid -->
+    <!-- Vouchers -->
     <div class="vouchers-container">
-        <?php foreach ($vouchers as $index => $voucher): ?>
-        <div class="voucher-card">
-            <!-- Header -->
-            <?php if ($isImprentaMode): ?>
-            <div style="height: 12px;"></div>
-            <?php else: ?>
-            <div class="voucher-title">SUMINISTRO DE AGUA</div>
-            <?php endif; ?>
-            
-            <!-- Main Content -->
-            <div class="grid grid-cols-2 gap-3" style="margin-top: 12px;">
-                <!-- Left Column -->
-                <div>
-                    <div class="voucher-field">
-                        <span class="voucher-label">EMPRESA:</span>
-                        <span class="voucher-value">SIN ASIGNAR</span>
-                    </div>
-                    <div class="voucher-field">
-                        <span class="voucher-label">OPERADOR:</span>
-                        <span class="voucher-value">_________________</span>
-                    </div>
-                    <div class="voucher-field">
-                        <span class="voucher-label">PLACAS:</span>
-                        <span class="voucher-value">_________________</span>
-                    </div>
-                    <div class="voucher-field">
-                        <span class="voucher-label">CAPACIDAD:</span>
-                        <span class="voucher-value"><?php echo number_format($voucher['capacity']); ?> L</span>
-                    </div>
-                    <div class="voucher-field">
-                        <span class="voucher-label">FECHA:</span>
-                        <span class="voucher-value">_________________</span>
-                    </div>
-                    <div class="voucher-field">
-                        <span class="voucher-label">HORA DE CARGA:</span>
-                        <span class="voucher-value">_________________</span>
-                    </div>
-                </div>
-                
-                <!-- Right Column - QR Code Only -->
-                <div class="flex items-center justify-center">
-                    <div class="qr-container">
-                        <div id="qrcode-<?php echo $voucher['id']; ?>" class="qr-code inline-block"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Footer -->
-            <?php if (!$isImprentaMode): ?>
-            <div class="voucher-footer">
-                AGUA DE SERVICIOS
-            </div>
-            <?php endif; ?>
-        </div>
-        <?php 
-        $pageBreakEvery = $isImprentaMode ? 12 : 6;
-        if (($index + 1) % $pageBreakEvery === 0 && $index < count($vouchers) - 1): 
+        <?php foreach ($vouchers as $index => $voucher):
+            $folioStr  = str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT);
+            $digits    = str_split($folioStr);
+            $serieUpper = strtoupper($voucher['serie']);
+            /* QR encodes the short SERIE-FOLIO format, e.g. S-1000 */
+            $qrContent = $serieUpper . '-' . $voucher['folio'];
         ?>
+        <div class="voucher-card">
+
+            <!-- Body -->
+            <div class="voucher-body">
+
+                <!-- Left: form fields -->
+                <div class="voucher-left">
+                    <div class="field-row">
+                        <span class="field-label">EMPRESA:</span>
+                        <span class="field-line"></span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">OPERADOR:</span>
+                        <span class="field-line"></span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">PLACAS:</span>
+                        <span class="field-line"></span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">CAPACIDAD:</span>
+                        <span class="field-line"><?php echo number_format($voucher['capacity']); ?> L</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">TELEFONO:</span>
+                        <span class="field-line"></span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">FECHA:</span>
+                        <span class="field-line"></span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">HORA DE CARGA:</span>
+                        <span class="field-line"></span>
+                    </div>
+                </div>
+
+                <!-- Right: QR box + folio section -->
+                <div class="voucher-right">
+                    <div class="qr-box">
+                        <div id="qrcode-<?php echo $voucher['id']; ?>"></div>
+                    </div>
+                    <div class="folio-section">
+                        <div class="folio-title">FOLIO</div>
+                        <div class="serie-title">SERIE &ldquo;<?php echo htmlspecialchars($serieUpper); ?>&rdquo;</div>
+                        <div class="folio-digits">
+                            <?php foreach ($digits as $digit): ?>
+                            <div class="folio-digit-box"><?php echo htmlspecialchars($digit); ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /voucher-body -->
+
+            <!-- Footer -->
+            <div class="voucher-footer">AGUA DE SERVICIOS</div>
+
+        </div><!-- /voucher-card -->
+
+        <?php if (($index + 1) % 4 === 0 && $index < count($vouchers) - 1): ?>
         <div class="page-break"></div>
         <?php endif; ?>
+
         <?php endforeach; ?>
-    </div>
+    </div><!-- /vouchers-container -->
 
     <script>
-    // Generate QR codes for all vouchers
     document.addEventListener('DOMContentLoaded', function() {
-        <?php foreach ($vouchers as $voucher): ?>
+        <?php foreach ($vouchers as $voucher):
+            $qrContent = strtoupper($voucher['serie']) . '-' . $voucher['folio'];
+        ?>
         try {
-            new QRCode(document.getElementById('qrcode-<?php echo $voucher['id']; ?>'), {
-                text: '<?php echo htmlspecialchars($voucher['qr_code']); ?>',
-                width: 120,
-                height: 120,
+            new QRCode(document.getElementById('qrcode-<?php echo (int)$voucher['id']; ?>'), {
+                text: '<?php echo htmlspecialchars($qrContent, ENT_QUOTES); ?>',
+                width: 108,
+                height: 108,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
             });
-        } catch (error) {
-            console.error('Error generating QR code for voucher <?php echo $voucher['id']; ?>:', error);
-            document.getElementById('qrcode-<?php echo $voucher['id']; ?>').innerHTML = 
-                '<p style="color: red; font-size: 12px;">Error QR</p>';
+        } catch (e) {
+            document.getElementById('qrcode-<?php echo (int)$voucher['id']; ?>').innerHTML =
+                '<p style="color:red;font-size:10px;">Error QR</p>';
         }
         <?php endforeach; ?>
-        
-        // Auto-print after QR codes are generated
-        setTimeout(function() {
-            // Optional: Uncomment to auto-print
-            // window.print();
-        }, 1000);
     });
     </script>
 </body>

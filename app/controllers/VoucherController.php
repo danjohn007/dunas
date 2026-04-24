@@ -426,7 +426,7 @@ class VoucherController extends BaseController {
         }
         
         try {
-            $voucher = $this->voucherModel->getByQRCode($qrCode);
+            $voucher = $this->voucherModel->getByCode($qrCode);
             
             if (!$voucher) {
                 echo json_encode([
