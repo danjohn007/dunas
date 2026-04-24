@@ -255,7 +255,7 @@
                         <span class="field-line"></span>
                     </div>
                     <div class="field-row">
-                        <span class="field-label">HORA DE CARGA</span>
+                        <span class="field-label">HORA DE CARGA:</span>
                         <span class="field-line"></span>
                     </div>
                 </div>
