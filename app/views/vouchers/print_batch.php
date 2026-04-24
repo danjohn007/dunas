@@ -8,32 +8,58 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
+        <?php $isImprentaMode = isset($printMode) && $printMode === 'imprenta'; ?>
         @media print {
             .no-print { display: none !important; }
             .page-break { page-break-after: always; }
             body { margin: 0; }
             .voucher-card {
+                <?php if ($isImprentaMode): ?>
+                width: 9.2cm;
+                height: 12.5cm;
+                <?php else: ?>
                 width: 3.75in; /* Fits 2 per row with margins */
                 height: 3.25in; /* Fits 3 per column with margins */
+                <?php endif; ?>
                 page-break-inside: avoid;
-                margin: 0.1in;
-                padding: 0.15in;
+                margin: <?php echo $isImprentaMode ? '0.2cm' : '0.1in'; ?>;
+                padding: <?php echo $isImprentaMode ? '0.35cm' : '0.15in'; ?>;
             }
         }
         
         @page {
+            <?php if ($isImprentaMode): ?>
+            size: auto;
+            margin: 1cm;
+            <?php else: ?>
             size: letter;
             margin: 0.25in;
+            <?php endif; ?>
+        }
+
+        .vouchers-container {
+            <?php if ($isImprentaMode): ?>
+            display: grid;
+            grid-template-columns: repeat(4, 9.2cm);
+            gap: 0.6cm;
+            justify-content: center;
+            padding: 1cm;
+            <?php endif; ?>
         }
         
         .voucher-card {
+            <?php if ($isImprentaMode): ?>
+            width: 9.2cm;
+            height: 12.5cm;
+            <?php else: ?>
             width: 3.75in; /* Fits 2 per row with margins */
             height: 3.25in; /* Fits 3 per column with margins */
+            <?php endif; ?>
             border: 2px solid #2c5f3b;
             border-radius: 5px;
-            padding: 0.25in;
-            margin: 0.1in;
-            display: inline-block;
+            padding: <?php echo $isImprentaMode ? '0.35cm' : '0.25in'; ?>;
+            margin: <?php echo $isImprentaMode ? '0.2cm' : '0.1in'; ?>;
+            display: <?php echo $isImprentaMode ? 'block' : 'inline-block'; ?>;
             vertical-align: top;
             background: white;
             box-sizing: border-box;
@@ -107,7 +133,11 @@
         <p class="text-gray-600">Total de vales: <?php echo count($vouchers); ?></p>
         <p class="text-sm text-gray-500 mt-2">
             <i class="fas fa-info-circle"></i>
+            <?php if ($isImprentaMode): ?>
+            Formato imprenta: 9.2 x 12.5 cm con margen adicional de 1 cm y distribución de 4 columnas.
+            <?php else: ?>
             Los vales se imprimirán en formato carta (8.5" x 11"). Se imprimen 6 vales por página (2 columnas x 3 filas).
+            <?php endif; ?>
         </p>
     </div>
 
@@ -116,7 +146,11 @@
         <?php foreach ($vouchers as $index => $voucher): ?>
         <div class="voucher-card">
             <!-- Header -->
+            <?php if ($isImprentaMode): ?>
+            <div style="height: 12px;"></div>
+            <?php else: ?>
             <div class="voucher-title">SUMINISTRO DE AGUA</div>
+            <?php endif; ?>
             
             <!-- Main Content -->
             <div class="grid grid-cols-2 gap-3" style="margin-top: 12px;">
@@ -124,7 +158,7 @@
                 <div>
                     <div class="voucher-field">
                         <span class="voucher-label">EMPRESA:</span>
-                        <span class="voucher-value"><?php echo !empty($voucher['client_name']) ? htmlspecialchars($voucher['client_name']) : '_________________'; ?></span>
+                        <span class="voucher-value">SIN ASIGNAR</span>
                     </div>
                     <div class="voucher-field">
                         <span class="voucher-label">OPERADOR:</span>
@@ -157,13 +191,15 @@
             </div>
             
             <!-- Footer -->
+            <?php if (!$isImprentaMode): ?>
             <div class="voucher-footer">
                 AGUA DE SERVICIOS
             </div>
+            <?php endif; ?>
         </div>
         <?php 
-        // Add page break after every 6 vouchers (2 columns x 3 rows)
-        if (($index + 1) % 6 === 0 && $index < count($vouchers) - 1): 
+        $pageBreakEvery = $isImprentaMode ? 12 : 6;
+        if (($index + 1) % $pageBreakEvery === 0 && $index < count($vouchers) - 1): 
         ?>
         <div class="page-break"></div>
         <?php endif; ?>

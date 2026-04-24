@@ -9,6 +9,10 @@ class Voucher {
     public function __construct() {
         $this->db = Database::getInstance();
     }
+
+    public function formatAccessPin($folio) {
+        return str_pad((string)$folio, 4, '0', STR_PAD_LEFT);
+    }
     
     /**
      * Obtiene todos los vales con filtros opcionales
@@ -170,7 +174,7 @@ class Voucher {
     /**
      * Genera un código QR único (formato corto: SERIE-FOLIO)
      */
-    private function generateUniqueQRCode($serie, $folio) {
+    private function generateUniqueQRCode($serie, $folio, $padFolio = false) {
         // Validar que serie y folio no estén vacíos
         if (empty($serie) || $folio < 1) {
             throw new Exception("Serie y folio son requeridos para generar el código QR");
@@ -178,7 +182,8 @@ class Voucher {
         
         // Formato corto: SERIE-FOLIO (sin timestamp)
         // El folio no lleva padding porque queremos mantenerlo corto
-        $qrCode = strtoupper($serie) . '-' . $folio;
+        $folioPart = $padFolio ? $this->formatAccessPin($folio) : $folio;
+        $qrCode = strtoupper($serie) . '-' . $folioPart;
         
         // Verificar que el código no esté vacío
         if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
@@ -216,16 +221,30 @@ class Voucher {
             throw new Exception("Ya existe un vale con la serie {$data['serie']} y folio {$data['folio']}");
         }
         
+        $status = $data['status'] ?? 'active';
+        $allowedStatus = ['active', 'used', 'cancelled', 'registered', 'pending_assignment'];
+        if (!in_array($status, $allowedStatus, true)) {
+            throw new Exception("Estado de vale no válido");
+        }
+        
+        $voucherType = $data['voucher_type'] ?? 'standard';
+        $allowedTypes = ['standard', 'imprenta'];
+        if (!in_array($voucherType, $allowedTypes, true)) {
+            throw new Exception("Tipo de vale no válido");
+        }
+        
+        $padFolio = !empty($data['pad_folio']) || $voucherType === 'imprenta';
+        
         // Generar código QR único
-        $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio']);
+        $qrCode = $this->generateUniqueQRCode($data['serie'], $data['folio'], $padFolio);
         
         // Última validación antes de insertar
         if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
             throw new Exception("Error crítico: código QR generado inválido");
         }
         
-        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')";
+        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status, voucher_type) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             strtoupper(trim($data['serie'])),
@@ -235,7 +254,9 @@ class Voucher {
             isset($data['cost']) ? (float)$data['cost'] : null,
             $data['payment_status'] ?? 'pending',
             $data['created_by'],
-            $data['client_id'] ?? null
+            $data['client_id'] ?? null,
+            $status,
+            $voucherType
         ];
         
         $this->db->execute($sql, $params);
@@ -290,6 +311,83 @@ class Voucher {
             'total' => count($createdVouchers)
         ];
     }
+
+    /**
+     * Genera vales de imprenta (sin cliente y con PIN de 4 dígitos)
+     */
+    public function generateImprentaBatch($serie, $startPin, $quantity, $capacity, $createdBy) {
+        $createdVouchers = [];
+        $errors = [];
+        
+        for ($i = 0; $i < $quantity; $i++) {
+            $pin = $startPin + $i;
+            
+            try {
+                $result = $this->create([
+                    'serie' => strtoupper($serie),
+                    'folio' => $pin,
+                    'capacity' => $capacity,
+                    'created_by' => $createdBy,
+                    'client_id' => null,
+                    'cost' => null,
+                    'payment_status' => 'pending',
+                    'status' => 'pending_assignment',
+                    'voucher_type' => 'imprenta',
+                    'pad_folio' => true
+                ]);
+                
+                $createdVouchers[] = [
+                    'id' => $result['id'],
+                    'serie' => strtoupper($serie),
+                    'folio' => $pin,
+                    'qr_code' => $result['qr_code'],
+                    'capacity' => $capacity
+                ];
+            } catch (Exception $e) {
+                $errors[] = [
+                    'serie' => $serie,
+                    'folio' => $pin,
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+        
+        return [
+            'created' => $createdVouchers,
+            'errors' => $errors,
+            'total' => count($createdVouchers)
+        ];
+    }
+
+    /**
+     * Relaciona vales de imprenta con una empresa y los activa
+     */
+    public function relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId) {
+        $sql = "UPDATE vouchers
+                SET client_id = ?, status = 'active'
+                WHERE serie = ?
+                  AND folio BETWEEN ? AND ?
+                  AND voucher_type = 'imprenta'
+                  AND status = 'pending_assignment'
+                  AND client_id IS NULL";
+        
+        $stmt = $this->db->execute($sql, [
+            (int)$clientId,
+            strtoupper(trim($serie)),
+            (int)$folioStart,
+            (int)$folioEnd
+        ]);
+        
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Obtiene series únicas por tipo de vale
+     */
+    public function getUniqueSeriesByType($voucherType) {
+        $sql = "SELECT DISTINCT serie FROM vouchers WHERE voucher_type = ? ORDER BY serie ASC";
+        return $this->db->fetchAll($sql, [$voucherType]);
+    }
     
     /**
      * Marca un vale como usado
@@ -301,7 +399,7 @@ class Voucher {
                     used_by_access_log_id = ?
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$accessLogId, $id]);
+        $affectedRows = $this->db->execute($sql, [$accessLogId, $id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo marcar el vale como usado. El vale puede estar ya usado o cancelado.");
@@ -320,7 +418,7 @@ class Voucher {
                     used_by_access_log_id = ?
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$accessLogId, $id]);
+        $affectedRows = $this->db->execute($sql, [$accessLogId, $id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo registrar el vale. El vale puede estar ya usado, registrado o cancelado.");
@@ -337,7 +435,7 @@ class Voucher {
                 SET status = 'cancelled'
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$id]);
+        $affectedRows = $this->db->execute($sql, [$id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo cancelar el vale. El vale puede estar ya usado o cancelado.");

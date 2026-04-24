@@ -127,7 +127,17 @@ class AccessLog {
     }
     
     public function create($data) {
-        $ticketCode = $this->generateTicketCode();
+        if (!empty($data['ticket_code'])) {
+            $ticketCode = trim((string)$data['ticket_code']);
+            if (!preg_match('/^\d{4}$/', $ticketCode)) {
+                throw new Exception("El PIN debe contener exactamente 4 dígitos");
+            }
+            if ($this->ticketCodeExists($ticketCode)) {
+                throw new Exception("El PIN {$ticketCode} ya fue utilizado, seleccione otro vale.");
+            }
+        } else {
+            $ticketCode = $this->generateTicketCode();
+        }
         
         // Get cost from capacity if available
         $cost = null;
@@ -193,6 +203,12 @@ class AccessLog {
         }
         
         return $id;
+    }
+
+    private function ticketCodeExists($ticketCode) {
+        $sql = "SELECT COUNT(*) as count FROM access_logs WHERE ticket_code = ?";
+        $result = $this->db->fetchOne($sql, [$ticketCode]);
+        return isset($result['count']) && (int)$result['count'] > 0;
     }
     
     /**

@@ -199,11 +199,28 @@
                     </a>
                 </li>
                 <li>
-                    <a href="<?php echo BASE_URL; ?>/vouchers" 
-                       class="sidebar-nav-item flex items-center text-white px-4 py-3">
+                    <button type="button" onclick="toggleVouchers()"
+                            class="sidebar-nav-item flex items-center text-white px-4 py-3 w-full text-left">
                         <i class="fas fa-ticket-alt w-6 mr-3"></i>
-                        <span>Vales</span>
-                    </a>
+                        <span class="flex-1">Vales</span>
+                        <i id="vouchersArrow" class="fas fa-chevron-down text-xs text-white/70 transition-transform"></i>
+                    </button>
+                    <ul id="vouchersSubmenu" class="hidden bg-black/20 pl-4">
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/vouchers"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-list w-5 mr-3"></i>Gestión de Vales
+                            </a>
+                        </li>
+                        <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/vouchers/imprenta"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-print w-5 mr-3"></i>IMPRENTA
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                    </ul>
                 </li>
                 <li>
                     <a href="<?php echo BASE_URL; ?>/access" 
@@ -515,12 +532,32 @@
             }
         }
 
+        function toggleVouchers() {
+            const submenu = document.getElementById('vouchersSubmenu');
+            const arrow   = document.getElementById('vouchersArrow');
+            if (submenu) {
+                submenu.classList.toggle('hidden');
+                if (arrow) {
+                    arrow.style.transform = submenu.classList.contains('hidden') ? '' : 'rotate(180deg)';
+                }
+            }
+        }
+
         // Auto-expand Parque Acuático if on one of its pages
         document.addEventListener('DOMContentLoaded', function () {
             const path = window.location.pathname;
             if (path.indexOf('/aquapark') !== -1) {
                 const submenu = document.getElementById('aquaparkSubmenu');
                 const arrow   = document.getElementById('aquaparkArrow');
+                if (submenu) {
+                    submenu.classList.remove('hidden');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                }
+            }
+
+            if (path.indexOf('/vouchers') !== -1) {
+                const submenu = document.getElementById('vouchersSubmenu');
+                const arrow   = document.getElementById('vouchersArrow');
                 if (submenu) {
                     submenu.classList.remove('hidden');
                     if (arrow) arrow.style.transform = 'rotate(180deg)';
