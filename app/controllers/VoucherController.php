@@ -238,14 +238,14 @@ class VoucherController extends BaseController {
         $quantity = (int)$_POST['quantity'];
         $capacity = (int)$_POST['capacity'];
         
-        if (!preg_match('/^[A-Z]{1}$/', $serie)) {
-            $this->setFlash('error', 'La serie de imprenta debe ser una sola letra (A-Z).');
+        if (!preg_match('/^[A-Z]{1,2}$/', $serie)) {
+            $this->setFlash('error', 'La serie de imprenta debe ser de 1 a 2 letras (A-Z).');
             $this->redirect('/vouchers/imprenta');
             return;
         }
         
-        if ($startPin < 0 || $startPin > 9999) {
-            $this->setFlash('error', 'El PIN inicial debe estar entre 0000 y 9999.');
+        if ($startPin < 1 || $startPin > 9999) {
+            $this->setFlash('error', 'El PIN inicial debe estar entre 0001 y 9999.');
             $this->redirect('/vouchers/imprenta');
             return;
         }

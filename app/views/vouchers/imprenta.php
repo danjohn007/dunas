@@ -5,7 +5,7 @@
             Volver a Vales
         </a>
         <h1 class="text-3xl font-bold text-gray-900">Imprenta de Vales</h1>
-        <p class="text-gray-600">Genere vales con código de acceso (letra + 4 dígitos) sin relación inicial de cliente</p>
+        <p class="text-gray-600">Genere vales con código de acceso (1-2 letras + 4 dígitos) sin relación inicial de cliente</p>
     </div>
 
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -13,15 +13,15 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Serie (1 letra) <span class="text-red-500">*</span>
+                        Serie (1 a 2 letras) <span class="text-red-500">*</span>
                     </label>
                     <input type="text"
                            name="serie"
                            id="serie"
                            required
-                           maxlength="1"
-                           pattern="[A-Za-z]"
-                           placeholder="Ejemplo: A"
+                           maxlength="2"
+                           pattern="[A-Za-z]{1,2}"
+                           placeholder="Ejemplo: A o AB"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 uppercase"
                            value="<?php echo isset($_POST['serie']) ? htmlspecialchars($_POST['serie']) : ''; ?>">
                 </div>
@@ -34,7 +34,7 @@
                            name="start_pin"
                            id="start_pin"
                            required
-                           min="0"
+                           min="1"
                            max="9999"
                            placeholder="Ejemplo: 1000"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"

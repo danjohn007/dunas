@@ -211,8 +211,8 @@
         <?php foreach ($vouchers as $index => $voucher):
             $folioStr  = str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT);
             $digits    = str_split($folioStr);
-            /* QR encodes the 4-digit folio only, e.g. 1000 */
-            $qrContent = $folioStr;
+            /* QR encodes the stored qr_code (SERIE+capacity+folio for imprenta, 4-digit folio for standard) */
+            $qrContent = $voucher['qr_code'];
         ?>
         <div class="voucher-card">
 
@@ -257,7 +257,6 @@
                         <div id="qrcode-<?php echo $voucher['id']; ?>"></div>
                     </div>
                     <div class="folio-section">
-                        <div class="folio-title">FOLIO</div>
                         <div class="folio-digits">
                             <?php foreach ($digits as $digit): ?>
                             <div class="folio-digit-box"><?php echo htmlspecialchars($digit); ?></div>
@@ -283,7 +282,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         <?php foreach ($vouchers as $voucher):
-            $qrContent = str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT);
+            $qrContent = $voucher['qr_code'];
         ?>
         try {
             new QRCode(document.getElementById('qrcode-<?php echo (int)$voucher['id']; ?>'), {
