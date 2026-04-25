@@ -172,18 +172,28 @@ class Voucher {
     }
     
     /**
-     * Genera un código QR único (solo folio de 4 dígitos)
+     * Genera un código QR único
+     * - imprenta: SERIE + capacidad + folio 4 dígitos (ej: A100000001)
+     * - standard:  solo el folio de 4 dígitos (ej: 0001)
      */
-    private function generateUniqueQRCode($folio) {
+    private function generateUniqueQRCode($folio, $serie = '', $capacity = 0, $voucherType = 'standard') {
         // Validar que folio no esté vacío
         if ($folio < 1) {
             throw new Exception("El folio debe ser mayor a 0 para generar el código QR");
         }
         
-        // Formato: solo los 4 dígitos del folio (sin serie)
-        $qrCode = $this->formatAccessPin($folio);
+        $folioPadded = $this->formatAccessPin($folio);
+
+        if ($voucherType === 'imprenta' && !empty($serie) && $capacity > 0) {
+            // Formato: SERIE + capacidad + folio 4 dígitos (sin separadores)
+            $qrCode = strtoupper(trim($serie)) . $capacity . $folioPadded;
+        } else {
+            // Formato estándar: solo los 4 dígitos del folio
+            $qrCode = $folioPadded;
+        }
         
-        // Verificar que el código no esté vacío
+        // Verificar que el código no esté vacío ni demasiado corto
+        // (estándar mínimo = 4; imprenta mínimo = SERIE+capacity+4 dígitos, siempre > 4)
         if (empty($qrCode) || strlen($qrCode) < 4) {
             throw new Exception("Error al generar código QR válido");
         }
@@ -232,7 +242,12 @@ class Voucher {
         }
         
         // Generar código QR único
-        $qrCode = $this->generateUniqueQRCode($data['folio']);
+        $qrCode = $this->generateUniqueQRCode(
+            $data['folio'],
+            $data['serie'] ?? '',
+            $data['capacity'] ?? 0,
+            $data['voucher_type'] ?? 'standard'
+        );
         
         // Última validación antes de insertar
         if (empty($qrCode) || $qrCode === '-' || strlen($qrCode) < 4) {
