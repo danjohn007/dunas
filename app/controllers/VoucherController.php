@@ -268,8 +268,8 @@ class VoucherController extends BaseController {
             return;
         }
         
-        // Verificar si el folio inicial ya existe y ajustar al siguiente disponible
-        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startPin);
+        // Verificar si el folio inicial ya existe para esta capacidad y ajustar al siguiente disponible
+        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startPin, $capacity);
         if ($nextAvailable != $startPin) {
             if (($nextAvailable + $quantity - 1) > 9999) {
                 $this->setFlash('error', 'El folio ' . str_pad((string)$startPin, 4, '0', STR_PAD_LEFT) . ' ya existe. El siguiente disponible (' . str_pad((string)$nextAvailable, 4, '0', STR_PAD_LEFT) . ') más la cantidad solicitada excede el límite de 9999.');

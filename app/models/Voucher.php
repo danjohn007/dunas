@@ -129,40 +129,55 @@ class Voucher {
     }
     
     /**
-     * Verifica si una combinación serie+folio ya existe
+     * Verifica si una combinación serie+folio ya existe.
+     * Cuando se proporciona $capacity, la verificación se limita a esa
+     * capacidad, permitiendo el mismo folio para distintas capacidades.
      */
-    public function seriesFolioExists($serie, $folio) {
-        $sql = "SELECT COUNT(*) as count FROM vouchers WHERE serie = ? AND folio = ?";
-        $result = $this->db->fetchOne($sql, [$serie, $folio]);
+    public function seriesFolioExists($serie, $folio, $capacity = null) {
+        if ($capacity !== null) {
+            $sql = "SELECT COUNT(*) as count FROM vouchers WHERE serie = ? AND folio = ? AND capacity = ?";
+            $result = $this->db->fetchOne($sql, [$serie, $folio, (int)$capacity]);
+        } else {
+            $sql = "SELECT COUNT(*) as count FROM vouchers WHERE serie = ? AND folio = ?";
+            $result = $this->db->fetchOne($sql, [$serie, $folio]);
+        }
         return $result['count'] > 0;
     }
     
     /**
-     * Obtiene el siguiente folio disponible para una serie
+     * Obtiene el siguiente folio disponible para una serie.
+     * Cuando se proporciona $capacity, la búsqueda se limita a esa
+     * capacidad: si el folio solicitado no existe para esa capacidad se
+     * respeta sin importar los folios de otras capacidades.
      */
-    public function getNextAvailableFolio($serie, $startFrom = 1) {
+    public function getNextAvailableFolio($serie, $startFrom = 1, $capacity = null) {
         // Constante para límite de búsqueda de huecos en folios
         $MAX_GAP_SEARCH = 100;
         
-        // Buscar el folio más alto en la serie
-        $sql = "SELECT MAX(folio) as max_folio FROM vouchers WHERE serie = ?";
-        $result = $this->db->fetchOne($sql, [$serie]);
+        // Buscar el folio más alto en la serie (restringido por capacidad si se indica)
+        if ($capacity !== null) {
+            $sql = "SELECT MAX(folio) as max_folio FROM vouchers WHERE serie = ? AND capacity = ?";
+            $result = $this->db->fetchOne($sql, [$serie, (int)$capacity]);
+        } else {
+            $sql = "SELECT MAX(folio) as max_folio FROM vouchers WHERE serie = ?";
+            $result = $this->db->fetchOne($sql, [$serie]);
+        }
         
         $maxFolio = $result['max_folio'] ?? 0;
         
-        // Si no hay folios, empezar desde startFrom
+        // Si no hay folios para esta combinación, empezar desde startFrom
         if ($maxFolio === 0) {
             return $startFrom;
         }
         
-        // Si el folio solicitado es mayor que el máximo, usarlo
+        // Si el folio solicitado es mayor que el máximo, usarlo directamente
         if ($startFrom > $maxFolio) {
             return $startFrom;
         }
         
         // Buscar el primer folio disponible desde startFrom
         for ($i = $startFrom; $i <= $maxFolio + $MAX_GAP_SEARCH; $i++) {
-            if (!$this->seriesFolioExists($serie, $i)) {
+            if (!$this->seriesFolioExists($serie, $i, $capacity)) {
                 return $i;
             }
         }
@@ -224,9 +239,9 @@ class Voucher {
             throw new Exception("El usuario creador es requerido");
         }
         
-        // Validar que serie+folio no existan
-        if ($this->seriesFolioExists($data['serie'], $data['folio'])) {
-            throw new Exception("Ya existe un vale con la serie {$data['serie']} y folio {$data['folio']}");
+        // Validar que serie+folio+capacity no existan (la unicidad incluye capacidad)
+        if ($this->seriesFolioExists($data['serie'], $data['folio'], $data['capacity'])) {
+            throw new Exception("Ya existe un vale con la serie {$data['serie']}, folio {$data['folio']} y capacidad {$data['capacity']}L");
         }
         
         $status = $data['status'] ?? 'active';
