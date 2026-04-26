@@ -162,10 +162,10 @@ class VoucherController extends BaseController {
         
         // Verificar si el folio inicial ya existe y ajustar
         $originalStartFolio = $startFolio;
-        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startFolio);
+        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startFolio, $capacity);
         
         if ($nextAvailable != $startFolio) {
-            $this->setFlash('warning', "El folio {$startFolio} ya existe para la serie {$serie}. Se iniciará desde el folio {$nextAvailable}.");
+            $this->setFlash('warning', "El folio {$startFolio} ya existe para la serie {$serie} con capacidad {$capacity} L. Se iniciará desde el folio {$nextAvailable}.");
             $startFolio = $nextAvailable;
         }
         
@@ -269,14 +269,14 @@ class VoucherController extends BaseController {
         }
         
         // Verificar si el folio inicial ya existe y ajustar al siguiente disponible
-        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startPin);
+        $nextAvailable = $this->voucherModel->getNextAvailableFolio($serie, $startPin, $capacity);
         if ($nextAvailable != $startPin) {
             if (($nextAvailable + $quantity - 1) > 9999) {
-                $this->setFlash('error', 'El folio ' . str_pad((string)$startPin, 4, '0', STR_PAD_LEFT) . ' ya existe. El siguiente disponible (' . str_pad((string)$nextAvailable, 4, '0', STR_PAD_LEFT) . ') más la cantidad solicitada excede el límite de 9999.');
+                $this->setFlash('error', 'El folio ' . str_pad((string)$startPin, 4, '0', STR_PAD_LEFT) . ' ya existe para la serie ' . $serie . ' con capacidad ' . number_format($capacity) . ' L. El siguiente disponible (' . str_pad((string)$nextAvailable, 4, '0', STR_PAD_LEFT) . ') más la cantidad solicitada excede el límite de 9999.');
                 $this->redirect('/vouchers/imprenta');
                 return;
             }
-            $this->setFlash('warning', 'El folio ' . str_pad((string)$startPin, 4, '0', STR_PAD_LEFT) . ' ya existe para la serie ' . $serie . '. Se iniciará desde el folio ' . str_pad((string)$nextAvailable, 4, '0', STR_PAD_LEFT) . '.');
+            $this->setFlash('warning', 'El folio ' . str_pad((string)$startPin, 4, '0', STR_PAD_LEFT) . ' ya existe para la serie ' . $serie . ' con capacidad ' . number_format($capacity) . ' L. Se iniciará desde el folio ' . str_pad((string)$nextAvailable, 4, '0', STR_PAD_LEFT) . '.');
             $startPin = $nextAvailable;
         }
         
