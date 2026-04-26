@@ -86,7 +86,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
+            justify-content: space-between;
         }
 
         .field-row {
