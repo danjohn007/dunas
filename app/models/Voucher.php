@@ -335,8 +335,15 @@ class Voucher {
 
     /**
      * Genera vales de imprenta (sin cliente y con PIN de 4 dígitos)
+     *
+     * @param string   $serie      Serie del vale (1-2 letras)
+     * @param int      $startPin   Folio inicial
+     * @param int      $quantity   Cantidad de vales a generar
+     * @param int      $capacity   Capacidad en litros
+     * @param int      $createdBy  ID del usuario creador
+     * @param float|null $cost     Costo del vale (si null se guarda null)
      */
-    public function generateImprentaBatch($serie, $startPin, $quantity, $capacity, $createdBy) {
+    public function generateImprentaBatch($serie, $startPin, $quantity, $capacity, $createdBy, $cost = null) {
         $createdVouchers = [];
         $errors = [];
         
@@ -350,7 +357,7 @@ class Voucher {
                     'capacity' => $capacity,
                     'created_by' => $createdBy,
                     'client_id' => null,
-                    'cost' => null,
+                    'cost' => $cost,
                     'payment_status' => 'pending',
                     'status' => 'pending_assignment',
                     'voucher_type' => 'imprenta',
