@@ -280,13 +280,19 @@ class VoucherController extends BaseController {
             $startPin = $nextAvailable;
         }
         
+        // Look up the cost for this capacity from system settings
+        require_once APP_PATH . '/models/CapacityCost.php';
+        $capacityCostModel = new CapacityCost();
+        $capacityCost = $capacityCostModel->getCostForCapacity($capacity);
+
         try {
             $result = $this->voucherModel->generateImprentaBatch(
                 $serie,
                 $startPin,
                 $quantity,
                 $capacity,
-                Auth::user()['id']
+                Auth::user()['id'],
+                $capacityCost
             );
             
             if ($result['total'] > 0) {
