@@ -372,9 +372,21 @@
     <?php endif; ?>
     
     <?php if ($errorMsg): ?>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline"><?php echo htmlspecialchars($errorMsg); ?></span>
+    <!-- Modal de Error -->
+    <div id="errorModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-exclamation-circle text-red-600 text-lg"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900">Error</h3>
+            </div>
+            <p class="text-gray-700 mb-6"><?php echo htmlspecialchars($errorMsg); ?></p>
+            <div class="flex justify-end">
+                <button onclick="document.getElementById('errorModal').remove()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg">
+                    Aceptar
+                </button>
+            </div>
         </div>
     </div>
     <?php endif; ?>
@@ -398,7 +410,7 @@
     
     <!-- Contenido Principal -->
     <main class="py-6">
-        <?php echo $content; ?>
+        <?php echo $content ?? ''; ?>
     </main>
     
     <!-- Botón Fijo: Registrar Acceso -->
