@@ -390,11 +390,12 @@ class Voucher {
     /**
      * Relaciona vales de imprenta con una empresa y los activa
      */
-    public function relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId) {
+    public function relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId, $capacity) {
         $sql = "UPDATE vouchers
                 SET client_id = ?, status = 'active'
                 WHERE serie = ?
                   AND folio BETWEEN ? AND ?
+                  AND capacity = ?
                   AND voucher_type = 'imprenta'
                   AND status = 'pending_assignment'
                   AND client_id IS NULL";
@@ -403,7 +404,8 @@ class Voucher {
             (int)$clientId,
             strtoupper(trim($serie)),
             (int)$folioStart,
-            (int)$folioEnd
+            (int)$folioEnd,
+            (int)$capacity
         ]);
         
         return $stmt->rowCount();
@@ -414,6 +416,19 @@ class Voucher {
      */
     public function getUniqueSeriesByType($voucherType) {
         $sql = "SELECT DISTINCT serie FROM vouchers WHERE voucher_type = ? ORDER BY serie ASC";
+        return $this->db->fetchAll($sql, [$voucherType]);
+    }
+
+    /**
+     * Obtiene combinaciones únicas de (serie, capacity) para vales pendientes de relación
+     */
+    public function getSeriesCapacitiesByType($voucherType) {
+        $sql = "SELECT DISTINCT serie, capacity
+                FROM vouchers
+                WHERE voucher_type = ?
+                  AND status = 'pending_assignment'
+                  AND client_id IS NULL
+                ORDER BY serie ASC, capacity ASC";
         return $this->db->fetchAll($sql, [$voucherType]);
     }
     

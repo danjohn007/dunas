@@ -536,6 +536,7 @@ class VoucherController extends BaseController {
             'title' => 'Relacionar Vales',
             'clients' => $clients,
             'series' => $this->voucherModel->getUniqueSeriesByType('imprenta'),
+            'seriesCapacities' => $this->voucherModel->getSeriesCapacitiesByType('imprenta'),
             'showNav' => true
         ];
         
@@ -554,7 +555,7 @@ class VoucherController extends BaseController {
             return;
         }
         
-        $required = ['client_id', 'serie', 'folio_start', 'folio_end'];
+        $required = ['client_id', 'serie', 'folio_start', 'folio_end', 'capacity'];
         foreach ($required as $field) {
             if (!isset($_POST[$field]) || trim((string)$_POST[$field]) === '') {
                 $this->setFlash('error', 'Todos los campos son requeridos para relacionar vales.');
@@ -567,9 +568,16 @@ class VoucherController extends BaseController {
         $serie = strtoupper(trim($_POST['serie']));
         $folioStart = (int)$_POST['folio_start'];
         $folioEnd = (int)$_POST['folio_end'];
+        $capacity = (int)$_POST['capacity'];
         
-        if (!preg_match('/^[A-Z]{1}$/', $serie)) {
-            $this->setFlash('error', 'La serie debe ser una sola letra (A-Z).');
+        if (!preg_match('/^[A-Z]{1,5}$/', $serie)) {
+            $this->setFlash('error', 'La serie debe ser de 1 a 5 letras (A-Z).');
+            $this->redirect('/vouchers/relate');
+            return;
+        }
+        
+        if ($capacity < 1) {
+            $this->setFlash('error', 'La capacidad debe ser mayor a 0 litros.');
             $this->redirect('/vouchers/relate');
             return;
         }
@@ -581,7 +589,7 @@ class VoucherController extends BaseController {
         }
         
         try {
-            $updated = $this->voucherModel->relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId);
+            $updated = $this->voucherModel->relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId, $capacity);
             
             if ((int)$updated > 0) {
                 $this->setFlash('success', "Se relacionaron {$updated} vales y quedaron activos.");

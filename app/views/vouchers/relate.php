@@ -32,6 +32,7 @@
                         Serie <span class="text-red-500">*</span>
                     </label>
                     <select name="serie"
+                            id="serie"
                             required
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="">-- Seleccione la serie --</option>
@@ -40,6 +41,18 @@
                             <?php echo htmlspecialchars($serie['serie']); ?>
                         </option>
                         <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Capacidad (Litros) <span class="text-red-500">*</span>
+                    </label>
+                    <select name="capacity"
+                            id="capacity"
+                            required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">-- Seleccione la capacidad --</option>
                     </select>
                 </div>
 
@@ -85,3 +98,32 @@
         </form>
     </div>
 </div>
+
+<script>
+(function () {
+    var seriesCapacities = <?php echo json_encode(array_values($seriesCapacities)); ?>;
+
+    var serieSelect    = document.getElementById('serie');
+    var capacitySelect = document.getElementById('capacity');
+
+    serieSelect.addEventListener('change', function () {
+        var selectedSerie = this.value;
+        var placeholder   = capacitySelect.options[0];
+
+        while (capacitySelect.options.length > 1) {
+            capacitySelect.remove(1);
+        }
+
+        capacitySelect.value = '';
+
+        seriesCapacities.forEach(function (row) {
+            if (row.serie === selectedSerie) {
+                var opt   = document.createElement('option');
+                opt.value = row.capacity;
+                opt.text  = Number(row.capacity).toLocaleString() + ' L';
+                capacitySelect.appendChild(opt);
+            }
+        });
+    });
+}());
+</script>
