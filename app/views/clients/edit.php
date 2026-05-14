@@ -52,7 +52,6 @@
                         Teléfono/WhatsApp
                     </label>
                     <input type="tel" id="phone" name="phone" maxlength="10"
-                           pattern="[0-9]{10}"
                            value="<?php echo htmlspecialchars($client['phone']); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="10 dígitos (opcional)">
