@@ -83,7 +83,7 @@ class ClientController extends BaseController {
                     $data = $_POST;
                     $data['rfc_curp'] = $data['rfc_curp'] ?? '';
                     $data['address'] = $data['address'] ?? '';
-                    $data['phone'] = $phone;
+                    $data['phone'] = $phone !== '' ? $phone : null;
                     $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
                     $data['client_type'] = $data['client_type'] ?: 'commercial';
                     
@@ -142,7 +142,7 @@ class ClientController extends BaseController {
                     $data = $_POST;
                     $data['rfc_curp'] = $data['rfc_curp'] ?? '';
                     $data['address'] = $data['address'] ?? '';
-                    $data['phone'] = $phone;
+                    $data['phone'] = $phone !== '' ? $phone : null;
                     $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
                     $data['client_type'] = $data['client_type'] ?: 'commercial';
                     
