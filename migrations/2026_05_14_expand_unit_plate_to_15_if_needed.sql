@@ -1,7 +1,7 @@
 -- Aumenta units.plate_number a 15 caracteres solo cuando la columna es menor a 15.
 -- Compatible con MySQL 5.7.
 
-SET @needs_alter := (
+SET @needs_alter := COALESCE((
     SELECT CASE
         WHEN CHARACTER_MAXIMUM_LENGTH < 15 THEN 1
         ELSE 0
@@ -11,7 +11,7 @@ SET @needs_alter := (
       AND TABLE_NAME = 'units'
       AND COLUMN_NAME = 'plate_number'
     LIMIT 1
-);
+), 0);
 
 SET @sql := IF(
     @needs_alter = 1,
