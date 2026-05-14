@@ -96,7 +96,7 @@
                     <input type="text" id="manualPlateInput" 
                            placeholder="Escriba la placa (ej: ABC1059) o código de vale (ej: B-500)"
                            class="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 uppercase"
-                           maxlength="10"
+                           maxlength="15"
                            autocomplete="off">
                     <!-- Autocomplete dropdown -->
                     <div id="plateAutocomplete" class="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden max-h-60 overflow-y-auto">
