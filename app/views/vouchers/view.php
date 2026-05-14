@@ -57,6 +57,15 @@
                         <?php echo htmlspecialchars($voucher['qr_code']); ?>
                     </p>
                 </div>
+
+                <?php if ($voucher['status'] === 'active'): ?>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Empresa</label>
+                    <p class="text-lg font-semibold text-gray-900">
+                        <?php echo htmlspecialchars($voucher['client_name'] ?? 'Sin empresa asignada'); ?>
+                    </p>
+                </div>
+                <?php endif; ?>
             </div>
             
             <div class="mt-6 pt-6 border-t border-gray-200">
