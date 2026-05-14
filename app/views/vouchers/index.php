@@ -121,6 +121,7 @@
         </form>
     </div>
 
+    <?php $showCompanyColumn = ($filters['status'] === 'active'); ?>
     <!-- Tabla de Vales -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="overflow-x-auto">
@@ -139,6 +140,11 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Estado
                         </th>
+                        <?php if ($showCompanyColumn): ?>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Empresa
+                        </th>
+                        <?php endif; ?>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Creado Por
                         </th>
@@ -153,7 +159,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     <?php if (empty($vouchers)): ?>
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="<?php echo $showCompanyColumn ? '8' : '7'; ?>" class="px-6 py-8 text-center text-gray-500">
                             <i class="fas fa-inbox text-4xl mb-3 text-gray-400"></i>
                             <p>No se encontraron vales</p>
                         </td>
@@ -199,6 +205,11 @@
                                 <?php echo $label; ?>
                             </span>
                         </td>
+                        <?php if ($showCompanyColumn): ?>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <?php echo !empty($voucher['client_name']) ? htmlspecialchars($voucher['client_name']) : 'Sin empresa'; ?>
+                        </td>
+                        <?php endif; ?>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <?php echo htmlspecialchars($voucher['created_by_name']); ?>
                         </td>
