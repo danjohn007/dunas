@@ -62,14 +62,14 @@ class ClientController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'business_name' => 'required',
-                'phone' => 'required|phone'
+                'phone' => 'phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
                     // Verificar que el teléfono no esté duplicado
-                    $phone = $_POST['phone'] ?? '';
-                    if ($this->clientModel->phoneExists($phone)) {
+                    $phone = trim($_POST['phone'] ?? '');
+                    if ($phone !== '' && $this->clientModel->phoneExists($phone)) {
                         $this->setFlash('error', 'El número de Teléfono/WhatsApp ya está registrado para otro cliente.');
                         $data = [
                             'title' => 'Nuevo Cliente',
@@ -83,6 +83,7 @@ class ClientController extends BaseController {
                     $data = $_POST;
                     $data['rfc_curp'] = $data['rfc_curp'] ?? '';
                     $data['address'] = $data['address'] ?? '';
+                    $data['phone'] = $phone;
                     $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
                     $data['client_type'] = $data['client_type'] ?: 'commercial';
                     
@@ -119,14 +120,14 @@ class ClientController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'business_name' => 'required',
-                'phone' => 'required|phone'
+                'phone' => 'phone'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
                     // Verificar que el teléfono no esté duplicado (excluyendo el cliente actual)
-                    $phone = $_POST['phone'] ?? '';
-                    if ($this->clientModel->phoneExists($phone, $id)) {
+                    $phone = trim($_POST['phone'] ?? '');
+                    if ($phone !== '' && $this->clientModel->phoneExists($phone, $id)) {
                         $this->setFlash('error', 'El número de Teléfono/WhatsApp ya está registrado para otro cliente.');
                         $data = [
                             'title' => 'Editar Cliente',
@@ -141,6 +142,7 @@ class ClientController extends BaseController {
                     $data = $_POST;
                     $data['rfc_curp'] = $data['rfc_curp'] ?? '';
                     $data['address'] = $data['address'] ?? '';
+                    $data['phone'] = $phone;
                     $data['email'] = $data['email'] ?: 'sin-email@dunas.com';
                     $data['client_type'] = $data['client_type'] ?: 'commercial';
                     
