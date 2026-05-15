@@ -217,9 +217,24 @@
     const unitHelpText = document.getElementById('unitHelpText');
     const driverHelpText = document.getElementById('driverHelpText');
     const baseUrl = "<?php echo BASE_URL; ?>";
-    const normalizedBaseUrl = new URL(baseUrl, window.location.origin);
-    normalizedBaseUrl.protocol = window.location.protocol;
-    const getByClientEndpoint = `${normalizedBaseUrl.toString().replace(/\/$/, '')}/api/get_by_client.php`;
+    const currentPath = window.location.pathname || '';
+    const publicSegment = '/public';
+    const publicIndex = currentPath.indexOf(`${publicSegment}/`);
+    let appBasePath = '';
+
+    if (publicIndex !== -1) {
+        appBasePath = currentPath.substring(0, publicIndex + publicSegment.length);
+    } else {
+        const normalizedBaseUrl = new URL(baseUrl, window.location.origin);
+        normalizedBaseUrl.protocol = window.location.protocol;
+        const basePath = normalizedBaseUrl.pathname.replace(/\/+$/, '');
+        const basePublicIndex = basePath.indexOf(publicSegment);
+        appBasePath = basePublicIndex !== -1
+            ? basePath.substring(0, basePublicIndex + publicSegment.length)
+            : basePath;
+    }
+
+    const getByClientEndpoint = `${window.location.origin}${appBasePath}/api/get_by_client.php`;
 
     function escapeHtml(value) {
         return String(value)
@@ -306,8 +321,26 @@
         }
         
         try {
-            const response = await fetch(`${getByClientEndpoint}?client_id=${encodeURIComponent(clientId)}&type=both`);
-            const data = await response.json();
+            const response = await fetch(`${getByClientEndpoint}?client_id=${encodeURIComponent(clientId)}&type=both`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                cache: 'no-cache'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const responseText = await response.text();
+            let data = null;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                throw new Error('Invalid JSON response');
+            }
             
             if (data.success) {
                 // Populate units
