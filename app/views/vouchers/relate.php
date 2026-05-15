@@ -126,7 +126,8 @@
         } else {
             clientResultsBox.innerHTML = matches.map(function (client) {
                 var name = escapeHtml(client.business_name || '');
-                return '<div class="p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0" data-id="' + client.id + '" data-name="' + name + '">' + name + '</div>';
+                var id = Number(client.id) || 0;
+                return '<div class="p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0" data-id="' + id + '" data-name="' + name + '">' + name + '</div>';
             }).join('');
 
             clientResultsBox.querySelectorAll('div[data-id]').forEach(function (item) {
