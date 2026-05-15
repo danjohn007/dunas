@@ -734,116 +734,112 @@ document.addEventListener('DOMContentLoaded', function() {
         manualRegistrationBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Buscando...';
         
         try {
-            // Determinar si es un código de vale (formato: SERIE-FOLIO como B-500 o ABC-123)
-            const isVoucherCode = /^[A-Z]+-\d+$/i.test(input);
+            // Intentar validar primero como vale (QR completo o formato SERIE-FOLIO)
+            const voucherResponse = await fetch(`<?php echo BASE_URL; ?>/vouchers/validateQR`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `qr_code=${encodeURIComponent(input.toUpperCase())}`
+            });
+            const voucherData = await voucherResponse.json();
             
-            if (isVoucherCode) {
-                // Es un código de vale - validar el vale
-                const voucherResponse = await fetch(`<?php echo BASE_URL; ?>/vouchers/validateQR`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `qr_code=${encodeURIComponent(input.toUpperCase())}`
-                });
-                const voucherData = await voucherResponse.json();
-                
-                if (voucherData.success && voucherData.voucher) {
-                    // Vale válido - procesar como entrada con vale
-                    const voucher = voucherData.voucher;
-                    const client = voucherData.client; // Datos del cliente si existen
+            if (voucherData.success && voucherData.voucher) {
+                // Es un vale válido - procesar como entrada con vale
+                const voucher = voucherData.voucher;
+                const client = voucherData.client; // Datos del cliente si existen
 
-                    if (!client || !client.id) {
-                        alert('El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
-                        return;
-                    }
-                    
-                    let infoHtml = `
-                        <div class="flex items-center text-blue-800">
-                            <i class="fas fa-ticket-alt text-2xl mr-3"></i>
-                            <div>
-                                <p class="font-semibold">Vale Válido</p>
-                                <p class="text-sm">Serie: ${voucher.serie} - Folio: ${voucher.folio}</p>
-                                <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>
-                                <p class="text-sm font-semibold text-purple-700">PIN de acceso: ${voucher.access_pin || String(voucher.folio).padStart(4, '0')}</p>`;
-                    
-                    if (client) {
-                        infoHtml += `
-                                <p class="text-sm mt-2 text-green-700"><i class="fas fa-check-circle"></i> Cliente: ${client.business_name}</p>`;
-                    }
-                    
-                    infoHtml += `
-                            </div>
-                        </div>
-                    `;
-                    
-                    searchResult.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg';
-                    searchResult.innerHTML = infoHtml;
-                    
-                    // Configurar formulario para registro con vale
-                    document.getElementById('plateNumber').value = 'VALE-' + voucher.serie + voucher.folio;
-                    ensureCapacityOption(voucher.capacity);
-                    document.getElementById('unitId').value = '';
-                    
-                    // Guardar ID del vale en un campo oculto para procesarlo después
-                    let voucherIdInput = document.getElementById('voucherId');
-                    if (!voucherIdInput) {
-                        voucherIdInput = document.createElement('input');
-                        voucherIdInput.type = 'hidden';
-                        voucherIdInput.id = 'voucherId';
-                        voucherIdInput.name = 'voucher_id';
-                        document.getElementById('registrationForm').appendChild(voucherIdInput);
-                    }
-                    voucherIdInput.value = voucher.id;
-                    
-                    // Mostrar campos para completar
-                    step2Unit.classList.add('hidden');
-                    step2Driver.classList.add('hidden');
-                    step3.classList.remove('hidden');
-                    step4.classList.remove('hidden');
-                    
-                    // Precargar cliente existente relacionado al vale
-                    document.getElementById('clientId').value = client.id;
-                    newClientCheck.checked = false;
-                    newClientFields.classList.add('hidden');
-                    document.getElementById('clientName').removeAttribute('required');
-                    document.getElementById('clientPhone').removeAttribute('required');
-                    showExistingClientData(client);
-                    
-                    // Campos del chofer ahora son opcionales cuando hay un vale válido
-                    newDriverCheck.checked = true;
-                    newDriverFields.classList.remove('hidden');
-                    
-                    // Hacer campos del chofer opcionales (remover asteriscos requeridos visualmente)
-                    const driverNameLabel = document.querySelector('label[for="driverName"]');
-                    const driverPhoneLabel = document.querySelector('label[for="driverPhone"]');
-                    if (driverNameLabel) {
-                        driverNameLabel.innerHTML = 'Nombre Completo';
-                    }
-                    if (driverPhoneLabel) {
-                        driverPhoneLabel.innerHTML = 'Teléfono/WhatsApp';
-                    }
-                    
-                    // Preseleccionar método de pago como vale
-                    document.getElementById('paymentMethod').value = 'voucher';
-                    paymentMethodSection.classList.remove('hidden');
-                    
-                    // Limpiar el input manual
-                    manualPlateInput.value = '';
-                    
-                    searchResult.classList.remove('hidden');
-                    registrationForm.classList.remove('hidden');
-                    actionButtons.classList.remove('hidden');
-                    
-                    // Scroll al formulario
-                    registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                    // Vale no válido o ya usado
-                    alert(voucherData.message || 'Vale no válido o ya utilizado');
-                    manualPlateInput.focus();
+                if (!client || !client.id) {
+                    alert('El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
+                    return;
                 }
+                
+                let infoHtml = `
+                    <div class="flex items-center text-blue-800">
+                        <i class="fas fa-ticket-alt text-2xl mr-3"></i>
+                        <div>
+                            <p class="font-semibold">Vale Válido</p>
+                            <p class="text-sm">Serie: ${voucher.serie} - Folio: ${voucher.folio}</p>
+                            <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>
+                            <p class="text-sm font-semibold text-purple-700">PIN de acceso: ${voucher.access_pin || String(voucher.folio).padStart(4, '0')}</p>`;
+                
+                if (client) {
+                    infoHtml += `
+                            <p class="text-sm mt-2 text-green-700"><i class="fas fa-check-circle"></i> Cliente: ${client.business_name}</p>`;
+                }
+                
+                infoHtml += `
+                        </div>
+                    </div>
+                `;
+                
+                searchResult.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg';
+                searchResult.innerHTML = infoHtml;
+                
+                // Configurar formulario para registro con vale
+                document.getElementById('plateNumber').value = 'VALE-' + voucher.serie + voucher.folio;
+                ensureCapacityOption(voucher.capacity);
+                document.getElementById('unitId').value = '';
+                
+                // Guardar ID del vale en un campo oculto para procesarlo después
+                let voucherIdInput = document.getElementById('voucherId');
+                if (!voucherIdInput) {
+                    voucherIdInput = document.createElement('input');
+                    voucherIdInput.type = 'hidden';
+                    voucherIdInput.id = 'voucherId';
+                    voucherIdInput.name = 'voucher_id';
+                    document.getElementById('registrationForm').appendChild(voucherIdInput);
+                }
+                voucherIdInput.value = voucher.id;
+                
+                // Mostrar campos para completar
+                step2Unit.classList.add('hidden');
+                step2Driver.classList.add('hidden');
+                step3.classList.remove('hidden');
+                step4.classList.remove('hidden');
+                
+                // Precargar cliente existente relacionado al vale
+                document.getElementById('clientId').value = client.id;
+                newClientCheck.checked = false;
+                newClientFields.classList.add('hidden');
+                document.getElementById('clientName').removeAttribute('required');
+                document.getElementById('clientPhone').removeAttribute('required');
+                showExistingClientData(client);
+                
+                // Campos del chofer ahora son opcionales cuando hay un vale válido
+                newDriverCheck.checked = true;
+                newDriverFields.classList.remove('hidden');
+                
+                // Hacer campos del chofer opcionales (remover asteriscos requeridos visualmente)
+                const driverNameLabel = document.querySelector('label[for="driverName"]');
+                const driverPhoneLabel = document.querySelector('label[for="driverPhone"]');
+                if (driverNameLabel) {
+                    driverNameLabel.innerHTML = 'Nombre Completo';
+                }
+                if (driverPhoneLabel) {
+                    driverPhoneLabel.innerHTML = 'Teléfono/WhatsApp';
+                }
+                
+                // Preseleccionar método de pago como vale
+                document.getElementById('paymentMethod').value = 'voucher';
+                paymentMethodSection.classList.remove('hidden');
+                
+                // Limpiar el input manual
+                manualPlateInput.value = '';
+                
+                searchResult.classList.remove('hidden');
+                registrationForm.classList.remove('hidden');
+                actionButtons.classList.remove('hidden');
+                
+                // Scroll al formulario
+                registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (voucherData.message && voucherData.message !== 'Vale no encontrado') {
+                // Si es un vale inválido/no relacionado/usado, bloquear y mostrar motivo
+                alert(voucherData.message);
+                manualPlateInput.focus();
+                return;
             } else {
-                // Es una placa normal - continuar con el flujo existente
+                // No es vale, tratar como placa normal
                 const plate = input;
                 
                 // Primero buscar si la placa existe en el sistema

@@ -454,6 +454,17 @@ class AccessController extends BaseController {
             $unitCapacityLiters = 0;
             $voucher = null;
             $isVoucherPayment = (($_POST['payment_method'] ?? 'cash') === 'voucher');
+
+            // Validación defensiva: si el código ingresado corresponde a un vale sin cliente,
+            // no permitir continuar aunque no hayan elegido método de pago "voucher".
+            if (!$isVoucherPayment && !empty($plateNumber)) {
+                $detectedVoucher = $this->voucherModel->getByCode($plateNumber);
+                if ($detectedVoucher && (empty($detectedVoucher['client_id']) || $detectedVoucher['status'] === 'pending_assignment')) {
+                    $this->setFlash('error', 'El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+            }
             
             if ($isVoucherPayment) {
                 if (empty($_POST['voucher_id'])) {
