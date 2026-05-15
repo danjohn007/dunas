@@ -48,11 +48,11 @@ class Unit {
         
         $params = [
             $data['client_id'],
-            $data['driver_id'],
-            $data['plate_number'],
+            !empty($data['driver_id']) ? (int)$data['driver_id'] : null,
+            !empty($data['plate_number']) ? $data['plate_number'] : null,
             $data['capacity_liters'],
-            $data['brand'],
-            $data['model'],
+            !empty($data['brand']) ? $data['brand'] : null,
+            !empty($data['model']) ? $data['model'] : null,
             $data['year'] ?? null,
             $data['serial_number'] ?? null,
             $data['photo'] ?? null,

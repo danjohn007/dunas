@@ -11,26 +11,26 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Cliente -->
                 <div class="md:col-span-2">
-                    <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="client_search" class="block text-sm font-medium text-gray-700 mb-1">
                         Cliente <span class="text-red-500">*</span>
                     </label>
-                    <select id="client_id" name="client_id" required
-                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Seleccione un cliente</option>
-                        <?php foreach ($data['clients'] as $client): ?>
-                            <option value="<?php echo $client['id']; ?>">
-                                <?php echo htmlspecialchars($client['business_name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="relative">
+                        <input type="text" id="client_search" autocomplete="off"
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               placeholder="Buscar cliente por nombre...">
+                        <input type="hidden" id="client_id" name="client_id">
+                        <div id="client_results"
+                             class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden"
+                             style="max-height:200px;overflow-y:auto;"></div>
+                    </div>
                 </div>
                 
                 <!-- Chofer -->
                 <div class="md:col-span-2">
                     <label for="driver_id" class="block text-sm font-medium text-gray-700 mb-1">
-                        Chofer <span class="text-red-500">*</span>
+                        Chofer
                     </label>
-                    <select id="driver_id" name="driver_id" required
+                    <select id="driver_id" name="driver_id"
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Seleccione un chofer</option>
                         <?php foreach ($data['drivers'] as $driver): ?>
@@ -47,9 +47,9 @@
                 <!-- Número de Placa -->
                 <div>
                     <label for="plate_number" class="block text-sm font-medium text-gray-700 mb-1">
-                        Número de Placa <span class="text-red-500">*</span>
+                        Número de Placa
                     </label>
-                    <input type="text" id="plate_number" name="plate_number" required
+                    <input type="text" id="plate_number" name="plate_number"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ej: ABC-123-XYZ">
                 </div>
@@ -87,9 +87,9 @@
                 <!-- Marca -->
                 <div>
                     <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">
-                        Marca <span class="text-red-500">*</span>
+                        Marca
                     </label>
-                    <input type="text" id="brand" name="brand" required
+                    <input type="text" id="brand" name="brand"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ej: Kenworth">
                 </div>
@@ -97,9 +97,9 @@
                 <!-- Modelo -->
                 <div>
                     <label for="model" class="block text-sm font-medium text-gray-700 mb-1">
-                        Modelo <span class="text-red-500">*</span>
+                        Modelo
                     </label>
-                    <input type="text" id="model" name="model" required
+                    <input type="text" id="model" name="model"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ej: T800">
                 </div>
@@ -162,3 +162,65 @@
         </form>
     </div>
 </div>
+
+<script>
+(function () {
+    var clientsData = <?php echo json_encode(array_values($data['clients']), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    var searchInput  = document.getElementById('client_search');
+    var hiddenInput  = document.getElementById('client_id');
+    var resultsBox   = document.getElementById('client_results');
+
+    function renderResults(matches) {
+        if (matches.length === 0) {
+            resultsBox.innerHTML = '<div class="p-3 text-gray-500 text-sm">No se encontraron clientes</div>';
+        } else {
+            resultsBox.innerHTML = matches.map(function (c) {
+                var name = c.business_name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                return '<div class="p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0" data-id="' + c.id + '" data-name="' + name + '">' + name + '</div>';
+            }).join('');
+
+            resultsBox.querySelectorAll('div[data-id]').forEach(function (item) {
+                item.addEventListener('click', function () {
+                    hiddenInput.value  = this.getAttribute('data-id');
+                    searchInput.value  = this.getAttribute('data-name');
+                    resultsBox.classList.add('hidden');
+                });
+            });
+        }
+        resultsBox.classList.remove('hidden');
+    }
+
+    searchInput.addEventListener('input', function () {
+        hiddenInput.value = '';
+        searchInput.classList.remove('border-red-500');
+        var q = this.value.toLowerCase().trim();
+        if (q.length === 0) { resultsBox.classList.add('hidden'); return; }
+        var matches = clientsData.filter(function (c) {
+            return c.business_name.toLowerCase().indexOf(q) !== -1;
+        });
+        renderResults(matches);
+    });
+
+    searchInput.addEventListener('focus', function () {
+        if (this.value.trim().length > 0 && !hiddenInput.value) {
+            searchInput.dispatchEvent(new Event('input'));
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+            resultsBox.classList.add('hidden');
+        }
+    });
+
+    // Validate client_id before submit
+    searchInput.closest('form').addEventListener('submit', function (e) {
+        if (!hiddenInput.value) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.classList.add('border-red-500');
+            alert('Por favor seleccione un cliente de la lista.');
+        }
+    });
+}());
+</script>

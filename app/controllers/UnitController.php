@@ -63,11 +63,8 @@ class UnitController extends BaseController {
             $validator = new Validator();
             $rules = [
                 'client_id' => 'required|integer',
-                'driver_id' => 'required|integer',
-                'plate_number' => 'required|unique:units,plate_number',
-                'capacity_liters' => 'required|integer',
-                'brand' => 'required',
-                'model' => 'required'
+                'plate_number' => 'unique:units,plate_number',
+                'capacity_liters' => 'required|integer'
             ];
             
             if ($validator->validate($_POST, $rules)) {
