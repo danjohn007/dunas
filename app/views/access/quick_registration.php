@@ -855,10 +855,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         step2Driver.classList.add('hidden');
                         step3.classList.remove('hidden');
                         step4.classList.remove('hidden');
-                        newClientCheck.checked = true;
-                        newClientFields.classList.remove('hidden');
-                        newDriverCheck.checked = true;
-                        newDriverFields.classList.remove('hidden');
+                        newClientCheck.checked = false;
+                        newClientFields.classList.add('hidden');
+                        document.getElementById('clientName').removeAttribute('required');
+                        document.getElementById('clientPhone').removeAttribute('required');
+                        newDriverCheck.checked = false;
+                        newDriverFields.classList.add('hidden');
+                        document.getElementById('driverName').removeAttribute('required');
+                        document.getElementById('driverPhone').removeAttribute('required');
                     }
                     
                     // Show payment method section
@@ -889,10 +893,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('capacityLiters').setAttribute('required', 'required');
                     
                     // Mostrar campos de registro nuevo
-                    newClientCheck.checked = true;
-                    newClientFields.classList.remove('hidden');
-                    newDriverCheck.checked = true;
-                    newDriverFields.classList.remove('hidden');
+                    newClientCheck.checked = false;
+                    newClientFields.classList.add('hidden');
+                    document.getElementById('clientName').removeAttribute('required');
+                    document.getElementById('clientPhone').removeAttribute('required');
+                    newDriverCheck.checked = false;
+                    newDriverFields.classList.add('hidden');
+                    document.getElementById('driverName').removeAttribute('required');
+                    document.getElementById('driverPhone').removeAttribute('required');
                     
                     // Show payment method section
                     paymentMethodSection.classList.remove('hidden');
