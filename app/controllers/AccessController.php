@@ -8,6 +8,7 @@ require_once APP_PATH . '/models/Driver.php';
 require_once APP_PATH . '/models/Unit.php';
 require_once APP_PATH . '/models/Client.php';
 require_once APP_PATH . '/models/Voucher.php';
+require_once APP_PATH . '/models/CapacityCost.php';
 require_once APP_PATH . '/helpers/HikvisionAPI.php';
 require_once APP_PATH . '/services/ShellyActionService.php';
 
@@ -18,6 +19,7 @@ class AccessController extends BaseController {
     private $unitModel;
     private $clientModel;
     private $voucherModel;
+    private $capacityCostModel;
     
     public function __construct() {
         $this->accessModel = new AccessLog();
@@ -25,6 +27,7 @@ class AccessController extends BaseController {
         $this->unitModel = new Unit();
         $this->clientModel = new Client();
         $this->voucherModel = new Voucher();
+        $this->capacityCostModel = new CapacityCost();
     }
     
     /**
@@ -373,6 +376,7 @@ class AccessController extends BaseController {
         
         $data = [
             'title' => 'Registro Rápido',
+            'capacities' => $this->capacityCostModel->getAll(true),
             'showNav' => true
         ];
         
@@ -448,27 +452,64 @@ class AccessController extends BaseController {
             $driverId = null;
             $unitId = null;
             $unitCapacityLiters = 0;
+            $voucher = null;
+            $isVoucherPayment = (($_POST['payment_method'] ?? 'cash') === 'voucher');
+
+            // Validación defensiva: si el código ingresado corresponde a un vale sin cliente,
+            // no permitir continuar aunque no hayan elegido método de pago "voucher".
+            if (!$isVoucherPayment && !empty($plateNumber)) {
+                $detectedVoucher = $this->voucherModel->getByCode($plateNumber);
+                if ($detectedVoucher && (empty($detectedVoucher['client_id']) || $detectedVoucher['status'] === 'pending_assignment')) {
+                    $this->setFlash('error', 'El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+            }
             
-            // Buscar o crear cliente
-            if (!empty($_POST['client_id'])) {
-                $clientId = $_POST['client_id'];
+            if ($isVoucherPayment) {
+                if (empty($_POST['voucher_id'])) {
+                    $this->setFlash('error', 'Debe validar un vale antes de continuar.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+                
+                // Verificar que el vale siga activo
+                $voucher = $this->voucherModel->getById($_POST['voucher_id']);
+                if (!$voucher || $voucher['status'] !== 'active') {
+                    $this->setFlash('error', 'El vale seleccionado ya no está disponible.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+                
+                if (empty($voucher['client_id'])) {
+                    $this->setFlash('error', 'El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+                
+                $clientId = (int)$voucher['client_id'];
             } else {
-                // Crear nuevo cliente
-                $clientData = [
-                    'business_name' => $_POST['client_name'],
-                    'rfc_curp' => $_POST['client_rfc'] ?? 'XAXX010101000',
-                    'address' => $_POST['client_address'] ?? 'Sin dirección',
-                    'phone' => $_POST['client_phone'],
-                    'email' => $_POST['client_email'] ?? 'sin-email@dunas.com',
-                    'client_type' => $_POST['client_type'] ?? 'commercial',
-                    'status' => 'active'
-                ];
-                $clientId = $this->clientModel->create($clientData);
+                // Buscar o crear cliente
+                if (!empty($_POST['client_id'])) {
+                    $clientId = $_POST['client_id'];
+                } else {
+                    // Crear nuevo cliente
+                    $clientData = [
+                        'business_name' => $_POST['client_name'],
+                        'rfc_curp' => $_POST['client_rfc'] ?? 'XAXX010101000',
+                        'address' => $_POST['client_address'] ?? 'Sin dirección',
+                        'phone' => $_POST['client_phone'],
+                        'email' => $_POST['client_email'] ?? 'sin-email@dunas.com',
+                        'client_type' => $_POST['client_type'] ?? 'commercial',
+                        'status' => 'active'
+                    ];
+                    $clientId = $this->clientModel->create($clientData);
+                }
             }
             
             // Buscar o crear chofer
             // Si hay un voucher_id, los datos del chofer son opcionales
-            $hasVoucher = !empty($_POST['voucher_id']);
+            $hasVoucher = $isVoucherPayment;
             
             if (!empty($_POST['driver_id'])) {
                 $driverId = $_POST['driver_id'];
@@ -514,23 +555,8 @@ class AccessController extends BaseController {
                 $unitId = $this->unitModel->create($unitData);
             }
             
-            $voucher = null;
             // Validar vale si el método de pago es 'voucher'
-            if ($_POST['payment_method'] === 'voucher') {
-                if (empty($_POST['voucher_id'])) {
-                    $this->setFlash('error', 'Debe validar un vale antes de continuar.');
-                    $this->redirect('/access/quickRegistration');
-                    return;
-                }
-                
-                // Verificar que el vale siga activo
-                $voucher = $this->voucherModel->getById($_POST['voucher_id']);
-                if (!$voucher || $voucher['status'] !== 'active') {
-                    $this->setFlash('error', 'El vale seleccionado ya no está disponible.');
-                    $this->redirect('/access/quickRegistration');
-                    return;
-                }
-
+            if ($isVoucherPayment) {
                 $voucherCapacityLiters = (float)($voucher['capacity'] ?? 0);
                 if ($unitCapacityLiters > $voucherCapacityLiters) {
                     $this->setFlash('error', 'La capacidad de la pipa no corresponde a los litros del vale.');
