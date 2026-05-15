@@ -30,7 +30,7 @@ El sistema de Registro Rápido permite registrar entradas y salidas de unidades 
   - ⚠️ **Unidad no encontrada:** Solicita datos para crear la unidad
 
 **Paso 2: Datos de la Unidad (si no existe)**
-- Capacidad en litros (obligatorio)
+- Capacidad en litros (obligatorio, seleccionando una opción existente)
 - Marca (opcional)
 - Modelo (opcional)
 - Año (opcional)
@@ -41,6 +41,7 @@ El sistema de Registro Rápido permite registrar entradas y salidas de unidades 
 - Teléfono (obligatorio)
 - RFC/CURP (opcional)
 - Tipo de cliente: Comercial, Residencial, Industrial
+- En flujo con vale: el vale debe estar relacionado a un cliente para continuar
 - Dirección (opcional)
 
 **Paso 4: Datos del Chofer**

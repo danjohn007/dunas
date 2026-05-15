@@ -172,9 +172,23 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Capacidad (Litros) <span class="text-red-500">*</span>
                     </label>
-                    <input type="number" name="capacity_liters" id="capacityLiters" 
-                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Ej: 20000">
+                    <select name="capacity_liters" id="capacityLiters"
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Seleccione una capacidad</option>
+                        <?php if (!empty($data['capacities'])): ?>
+                            <?php foreach ($data['capacities'] as $capacity): ?>
+                                <option value="<?php echo $capacity['capacity_liters']; ?>">
+                                    <?php echo number_format($capacity['capacity_liters']); ?> L
+                                </option>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <option value="5000">5,000 L</option>
+                            <option value="10000">10,000 L</option>
+                            <option value="12000">12,000 L</option>
+                            <option value="15000">15,000 L</option>
+                            <option value="20000">20,000 L</option>
+                        <?php endif; ?>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -245,6 +259,13 @@
                     <input type="checkbox" id="newClientCheck" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                     <span class="ml-2 text-sm text-gray-700">Registrar nuevo cliente</span>
                 </label>
+            </div>
+
+            <div id="existingClientData" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800 font-semibold mb-1">Cliente relacionado al vale</p>
+                <p class="text-sm text-blue-800" id="existingClientName"></p>
+                <p class="text-sm text-blue-800" id="existingClientPhone"></p>
+                <p class="text-sm text-blue-800" id="existingClientRfc"></p>
             </div>
             
             <div id="newClientFields" class="hidden">
@@ -387,6 +408,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const actionButtons = document.getElementById('actionButtons');
     const newClientCheck = document.getElementById('newClientCheck');
     const newClientFields = document.getElementById('newClientFields');
+    const existingClientData = document.getElementById('existingClientData');
+    const existingClientName = document.getElementById('existingClientName');
+    const existingClientPhone = document.getElementById('existingClientPhone');
+    const existingClientRfc = document.getElementById('existingClientRfc');
     const newDriverCheck = document.getElementById('newDriverCheck');
     const newDriverFields = document.getElementById('newDriverFields');
     const searchButtonContainer = document.getElementById('searchButtonContainer');
@@ -399,6 +424,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const manualPlateInput = document.getElementById('manualPlateInput');
     const plateAutocomplete = document.getElementById('plateAutocomplete');
     let autocompleteTimeout = null;
+
+    function ensureCapacityOption(value) {
+        const normalizedValue = String(parseInt(value || 0, 10));
+        if (!normalizedValue || normalizedValue === '0') {
+            return;
+        }
+
+        const capacitySelect = document.getElementById('capacityLiters');
+        const optionExists = Array.from(capacitySelect.options).some(option => option.value === normalizedValue);
+
+        if (!optionExists) {
+            const option = document.createElement('option');
+            option.value = normalizedValue;
+            option.textContent = `${parseInt(normalizedValue, 10).toLocaleString()} L`;
+            capacitySelect.appendChild(option);
+        }
+
+        capacitySelect.value = normalizedValue;
+    }
+
+    function hideExistingClientData() {
+        existingClientData.classList.add('hidden');
+        existingClientName.textContent = '';
+        existingClientPhone.textContent = '';
+        existingClientRfc.textContent = '';
+    }
+
+    function showExistingClientData(client) {
+        existingClientName.textContent = `Empresa: ${client.business_name || 'N/A'}`;
+        existingClientPhone.textContent = `Teléfono: ${client.phone || 'N/A'}`;
+        existingClientRfc.textContent = `RFC/CURP: ${client.rfc_curp || 'N/A'}`;
+        existingClientData.classList.remove('hidden');
+    }
     
     manualPlateInput.addEventListener('input', function() {
         const query = this.value.trim().toUpperCase();
@@ -471,6 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
     newClientCheck.addEventListener('change', function() {
         if (this.checked) {
             newClientFields.classList.remove('hidden');
+            hideExistingClientData();
             document.getElementById('clientName').setAttribute('required', 'required');
             document.getElementById('clientPhone').setAttribute('required', 'required');
             document.getElementById('clientId').value = '';
@@ -539,8 +598,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     searchResult.innerHTML = infoHtml;
                     
                     document.getElementById('unitId').value = data.unit.id;
-                    document.getElementById('capacityLiters').value = data.unit.capacity_liters;
+                    ensureCapacityOption(data.unit.capacity_liters);
                     step2Unit.classList.add('hidden');
+                    hideExistingClientData();
                     
                     // Precargar cliente del último registro
                     if (data.lastEntry && data.lastEntry.client_id) {
@@ -607,6 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     step3.classList.remove('hidden');
                     step4.classList.remove('hidden');
                     document.getElementById('capacityLiters').setAttribute('required', 'required');
+                    hideExistingClientData();
                     
                     // Mostrar campos de registro
                     newClientCheck.checked = true;
@@ -682,6 +743,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Vale válido - procesar como entrada con vale
                     const voucher = voucherData.voucher;
                     const client = voucherData.client; // Datos del cliente si existen
+
+                    if (!client || !client.id) {
+                        alert('El vale no está relacionado a un cliente. Relaciónelo antes de registrar la entrada.');
+                        return;
+                    }
                     
                     let infoHtml = `
                         <div class="flex items-center text-blue-800">
@@ -707,7 +773,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Configurar formulario para registro con vale
                     document.getElementById('plateNumber').value = 'VALE-' + voucher.serie + voucher.folio;
-                    document.getElementById('capacityLiters').value = voucher.capacity;
+                    ensureCapacityOption(voucher.capacity);
                     document.getElementById('unitId').value = '';
                     
                     // Guardar ID del vale en un campo oculto para procesarlo después
@@ -727,24 +793,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     step3.classList.remove('hidden');
                     step4.classList.remove('hidden');
                     
-                    // Si hay datos del cliente, precargarlos
-                    if (client) {
-                        // Precargar cliente existente
-                        document.getElementById('clientId').value = client.id;
-                        document.getElementById('clientName').value = client.business_name || '';
-                        document.getElementById('clientPhone').value = client.phone || '';
-                        document.getElementById('clientRfc').value = client.rfc_curp || '';
-                        document.getElementById('clientAddress').value = client.address || '';
-                        document.getElementById('clientType').value = client.client_type || 'commercial';
-                        
-                        // Mostrar campos pre-rellenados pero no forzar nuevo registro
-                        newClientCheck.checked = true;
-                        newClientFields.classList.remove('hidden');
-                    } else {
-                        // No hay cliente, forzar registro nuevo
-                        newClientCheck.checked = true;
-                        newClientFields.classList.remove('hidden');
-                    }
+                    // Precargar cliente existente relacionado al vale
+                    document.getElementById('clientId').value = client.id;
+                    newClientCheck.checked = false;
+                    newClientFields.classList.add('hidden');
+                    document.getElementById('clientName').removeAttribute('required');
+                    document.getElementById('clientPhone').removeAttribute('required');
+                    showExistingClientData(client);
                     
                     // Campos del chofer ahora son opcionales cuando hay un vale válido
                     newDriverCheck.checked = true;
@@ -814,8 +869,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     searchResult.innerHTML = infoHtml;
                     
                     document.getElementById('unitId').value = data.unit.id;
-                    document.getElementById('capacityLiters').value = data.unit.capacity_liters;
+                    ensureCapacityOption(data.unit.capacity_liters);
                     step2Unit.classList.add('hidden');
+                    hideExistingClientData();
                     
                     // Precargar cliente del último registro
                     if (data.lastEntry && data.lastEntry.client_id) {
@@ -863,6 +919,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         newDriverFields.classList.add('hidden');
                         document.getElementById('driverName').removeAttribute('required');
                         document.getElementById('driverPhone').removeAttribute('required');
+                        hideExistingClientData();
                     }
                     
                     // Show payment method section
@@ -891,6 +948,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     step3.classList.remove('hidden');
                     step4.classList.remove('hidden');
                     document.getElementById('capacityLiters').setAttribute('required', 'required');
+                    hideExistingClientData();
                     
                     // Mostrar campos de registro nuevo
                     newClientCheck.checked = false;
@@ -1223,10 +1281,35 @@ window.CLEANUP_CONFIG = {
     const voucherIdInput = document.getElementById('voucherId');
     const quickForm = document.getElementById('registrationForm');
     const capacityLitersInput = document.getElementById('capacityLiters');
+    const clientIdInput = document.getElementById('clientId');
+    const newClientCheck = document.getElementById('newClientCheck');
+    const newClientFields = document.getElementById('newClientFields');
+    const existingClientData = document.getElementById('existingClientData');
+    const existingClientName = document.getElementById('existingClientName');
+    const existingClientPhone = document.getElementById('existingClientPhone');
+    const existingClientRfc = document.getElementById('existingClientRfc');
+    const step3 = document.getElementById('step3');
     const baseUrl = "<?php echo BASE_URL; ?>";
     
     let voucherValidated = false;
     let validatedVoucherCapacity = 0;
+
+    function ensureCapacityOption(value) {
+        const normalizedValue = String(parseInt(value || 0, 10));
+        if (!normalizedValue || normalizedValue === '0') {
+            return;
+        }
+
+        const optionExists = Array.from(capacityLitersInput.options).some(option => option.value === normalizedValue);
+        if (!optionExists) {
+            const option = document.createElement('option');
+            option.value = normalizedValue;
+            option.textContent = `${parseInt(normalizedValue, 10).toLocaleString()} L`;
+            capacityLitersInput.appendChild(option);
+        }
+
+        capacityLitersInput.value = normalizedValue;
+    }
     
     paymentMethodSelect.addEventListener('change', function() {
         if (this.value === 'voucher') {
@@ -1268,8 +1351,20 @@ window.CLEANUP_CONFIG = {
             const data = await response.json();
             
             if (data.success) {
+                if (!data.client || !data.client.id) {
+                    voucherValidated = false;
+                    validatedVoucherCapacity = 0;
+                    voucherIdInput.value = '';
+                    clientIdInput.value = '';
+                    existingClientData.classList.add('hidden');
+                    showVoucherResult('error', 'El vale no está relacionado a un cliente. Relaciónelo antes de registrar la entrada.');
+                    return;
+                }
+
                 const unitCapacity = parseFloat(capacityLitersInput.value || '0');
                 const voucherCapacity = parseFloat(data.voucher.capacity || '0');
+
+                ensureCapacityOption(voucherCapacity);
 
                 if (unitCapacity > voucherCapacity) {
                     voucherValidated = false;
@@ -1282,6 +1377,14 @@ window.CLEANUP_CONFIG = {
                 voucherValidated = true;
                 validatedVoucherCapacity = voucherCapacity;
                 voucherIdInput.value = data.voucher.id;
+                clientIdInput.value = data.client.id;
+                newClientCheck.checked = false;
+                newClientFields.classList.add('hidden');
+                step3.classList.remove('hidden');
+                existingClientName.textContent = `Empresa: ${data.client.business_name || 'N/A'}`;
+                existingClientPhone.textContent = `Teléfono: ${data.client.phone || 'N/A'}`;
+                existingClientRfc.textContent = `RFC/CURP: ${data.client.rfc_curp || 'N/A'}`;
+                existingClientData.classList.remove('hidden');
                 showVoucherResult('success', 
                     `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | ${parseInt(data.voucher.capacity).toLocaleString()} L | PIN: ${data.voucher.access_pin || String(data.voucher.folio).padStart(4, '0')}`
                 );
@@ -1330,6 +1433,12 @@ window.CLEANUP_CONFIG = {
         if (paymentMethodSelect.value === 'voucher' && !voucherValidated) {
             e.preventDefault();
             alert('Por favor valide el vale antes de continuar');
+            return false;
+        }
+
+        if (paymentMethodSelect.value === 'voucher' && !clientIdInput.value) {
+            e.preventDefault();
+            alert('El vale debe estar relacionado a un cliente para registrar la entrada.');
             return false;
         }
 
