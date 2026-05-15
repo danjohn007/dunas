@@ -242,6 +242,7 @@
                     var selectedId = this.getAttribute('data-id');
                     clientIdInput.value = selectedId;
                     clientSearchInput.value = this.getAttribute('data-name');
+                    clientSearchInput.classList.remove('border-red-500');
                     clientResultsBox.classList.add('hidden');
                     onClientSelected(selectedId);
                 });
