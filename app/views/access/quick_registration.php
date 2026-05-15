@@ -1221,22 +1221,26 @@ window.CLEANUP_CONFIG = {
     const validateVoucherBtn = document.getElementById('validateVoucherBtn');
     const voucherValidationResult = document.getElementById('voucherValidationResult');
     const voucherIdInput = document.getElementById('voucherId');
-    const quickForm = document.getElementById('quickAccessForm');
+    const quickForm = document.getElementById('registrationForm');
+    const capacityLitersInput = document.getElementById('capacityLiters');
     const baseUrl = "<?php echo BASE_URL; ?>";
     
     let voucherValidated = false;
+    let validatedVoucherCapacity = 0;
     
     paymentMethodSelect.addEventListener('change', function() {
         if (this.value === 'voucher') {
             voucherContainer.classList.remove('hidden');
             voucherQrCodeInput.setAttribute('required', 'required');
             voucherValidated = false;
+            validatedVoucherCapacity = 0;
             voucherIdInput.value = '';
             voucherValidationResult.classList.add('hidden');
         } else {
             voucherContainer.classList.add('hidden');
             voucherQrCodeInput.removeAttribute('required');
             voucherValidated = true;
+            validatedVoucherCapacity = 0;
             voucherIdInput.value = '';
         }
     });
@@ -1264,18 +1268,32 @@ window.CLEANUP_CONFIG = {
             const data = await response.json();
             
             if (data.success) {
+                const unitCapacity = parseFloat(capacityLitersInput.value || '0');
+                const voucherCapacity = parseFloat(data.voucher.capacity || '0');
+
+                if (unitCapacity > voucherCapacity) {
+                    voucherValidated = false;
+                    validatedVoucherCapacity = 0;
+                    voucherIdInput.value = '';
+                    showVoucherResult('error', 'La capacidad de la pipa no corresponde a los litros del vale.');
+                    return;
+                }
+
                 voucherValidated = true;
+                validatedVoucherCapacity = voucherCapacity;
                 voucherIdInput.value = data.voucher.id;
                 showVoucherResult('success', 
                     `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | ${parseInt(data.voucher.capacity).toLocaleString()} L | PIN: ${data.voucher.access_pin || String(data.voucher.folio).padStart(4, '0')}`
                 );
             } else {
                 voucherValidated = false;
+                validatedVoucherCapacity = 0;
                 voucherIdInput.value = '';
                 showVoucherResult('error', data.message);
             }
         } catch (error) {
             voucherValidated = false;
+            validatedVoucherCapacity = 0;
             voucherIdInput.value = '';
             showVoucherResult('error', 'Error: ' + error.message);
         }
@@ -1312,6 +1330,12 @@ window.CLEANUP_CONFIG = {
         if (paymentMethodSelect.value === 'voucher' && !voucherValidated) {
             e.preventDefault();
             alert('Por favor valide el vale antes de continuar');
+            return false;
+        }
+
+        if (paymentMethodSelect.value === 'voucher' && parseFloat(capacityLitersInput.value || '0') > validatedVoucherCapacity) {
+            e.preventDefault();
+            alert('La capacidad de la pipa no corresponde a los litros del vale.');
             return false;
         }
     }, true);
