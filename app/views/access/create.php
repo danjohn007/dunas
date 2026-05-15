@@ -217,11 +217,9 @@
     const unitHelpText = document.getElementById('unitHelpText');
     const driverHelpText = document.getElementById('driverHelpText');
     const baseUrl = "<?php echo BASE_URL; ?>";
-    const appRootMatch = window.location.pathname.match(/^(.*\/public)(?:\/|$)/);
-    const publicBasePath = appRootMatch
-        ? appRootMatch[1]
-        : new URL(baseUrl, window.location.origin).pathname.replace(/\/$/, '');
-    const getByClientEndpoint = `${window.location.origin}${publicBasePath}/api/get_by_client.php`;
+    const normalizedBaseUrl = new URL(baseUrl, window.location.origin);
+    normalizedBaseUrl.protocol = window.location.protocol;
+    const getByClientEndpoint = `${normalizedBaseUrl.toString().replace(/\/$/, '')}/api/get_by_client.php`;
 
     function escapeHtml(value) {
         return String(value)
