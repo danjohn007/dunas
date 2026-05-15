@@ -219,10 +219,14 @@
     const baseUrl = "<?php echo BASE_URL; ?>";
     const currentPath = window.location.pathname || '';
     const publicSegment = '/public';
-    const publicIndex = currentPath.indexOf(`${publicSegment}/`);
+    const publicIndex = currentPath.indexOf(publicSegment);
+    const hasPublicInPath = publicIndex !== -1 && (
+        currentPath.length === (publicIndex + publicSegment.length) ||
+        currentPath.charAt(publicIndex + publicSegment.length) === '/'
+    );
     let appBasePath = '';
 
-    if (publicIndex !== -1) {
+    if (hasPublicInPath) {
         appBasePath = currentPath.substring(0, publicIndex + publicSegment.length);
     } else {
         const normalizedBaseUrl = new URL(baseUrl, window.location.origin);
@@ -339,7 +343,7 @@
             try {
                 data = JSON.parse(responseText);
             } catch (parseError) {
-                throw new Error('Invalid JSON response');
+                throw new Error(`Invalid JSON response: ${parseError.message}`);
             }
             
             if (data.success) {
