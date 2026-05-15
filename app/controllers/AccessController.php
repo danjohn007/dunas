@@ -447,6 +447,7 @@ class AccessController extends BaseController {
             $clientId = null;
             $driverId = null;
             $unitId = null;
+            $unitCapacityLiters = 0;
             
             // Buscar o crear cliente
             if (!empty($_POST['client_id'])) {
@@ -495,8 +496,10 @@ class AccessController extends BaseController {
             
             if ($unit) {
                 $unitId = $unit['id'];
+                $unitCapacityLiters = (float)($unit['capacity_liters'] ?? 0);
             } else {
                 // Crear nueva unidad
+                $unitCapacityLiters = (float)($_POST['capacity_liters'] ?? 0);
                 $unitData = [
                     'client_id' => $clientId,
                     'driver_id' => $driverId,
@@ -524,6 +527,13 @@ class AccessController extends BaseController {
                 $voucher = $this->voucherModel->getById($_POST['voucher_id']);
                 if (!$voucher || $voucher['status'] !== 'active') {
                     $this->setFlash('error', 'El vale seleccionado ya no está disponible.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
+
+                $voucherCapacityLiters = (float)($voucher['capacity'] ?? 0);
+                if ($unitCapacityLiters > $voucherCapacityLiters) {
+                    $this->setFlash('error', 'La capacidad de la pipa no corresponde a los litros del vale.');
                     $this->redirect('/access/quickRegistration');
                     return;
                 }
