@@ -13,8 +13,8 @@ class AccessLog {
     public function countAll($filters = []) {
         $sql = "SELECT COUNT(*) as total
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE 1=1";
         $params = [];
@@ -55,8 +55,8 @@ class AccessLog {
     public function getAll($filters = []) {
         $sql = "SELECT al.*, d.full_name as driver_name, u.plate_number, c.business_name as client_name
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE 1=1";
         $params = [];
@@ -107,8 +107,8 @@ class AccessLog {
                 u.plate_number, u.capacity_liters,
                 c.business_name as client_name, c.phone as client_phone
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE al.id = ?";
         
@@ -118,8 +118,8 @@ class AccessLog {
     public function getByTicket($ticketCode) {
         $sql = "SELECT al.*, d.full_name as driver_name, u.plate_number, c.business_name as client_name
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE al.ticket_code = ?";
         
@@ -400,8 +400,8 @@ class AccessLog {
     public function getInProgress() {
         $sql = "SELECT al.*, d.full_name as driver_name, u.plate_number, c.business_name as client_name
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE al.status = 'in_progress'
                 ORDER BY al.entry_datetime DESC";
@@ -414,8 +414,8 @@ class AccessLog {
                 u.id as unit_id, u.plate_number, u.client_id, u.driver_id as unit_driver_id,
                 c.id as client_id, c.business_name as client_name
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE u.plate_number = ?
                 ORDER BY al.entry_datetime DESC
@@ -430,8 +430,8 @@ class AccessLog {
                 u.plate_number, u.capacity_liters,
                 c.business_name as client_name, c.phone as client_phone
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE al.plate_discrepancy = 1";
         $params = [];
@@ -464,8 +464,8 @@ class AccessLog {
                 dp.plate_text as detected_plate,
                 dp.is_match as detection_match
                 FROM access_logs al
-                JOIN drivers d ON al.driver_id = d.id
-                JOIN units u ON al.unit_id = u.id
+                LEFT JOIN drivers d ON al.driver_id = d.id
+                LEFT JOIN units u ON al.unit_id = u.id
                 JOIN clients c ON al.client_id = c.id
                 LEFT JOIN detected_plates dp ON u.plate_number = dp.plate_text
                 WHERE al.plate_discrepancy = 0
