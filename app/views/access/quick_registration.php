@@ -457,6 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
         existingClientRfc.textContent = `RFC/CURP: ${client.rfc_curp || 'N/A'}`;
         existingClientData.classList.remove('hidden');
     }
+
+    window.ensureCapacityOption = ensureCapacityOption;
+    window.showExistingClientData = showExistingClientData;
     
     manualPlateInput.addEventListener('input', function() {
         const query = this.value.trim().toUpperCase();
@@ -1294,23 +1297,6 @@ window.CLEANUP_CONFIG = {
     let voucherValidated = false;
     let validatedVoucherCapacity = 0;
 
-    function ensureCapacityOption(value) {
-        const normalizedValue = String(parseInt(value || 0, 10));
-        if (!normalizedValue || normalizedValue === '0') {
-            return;
-        }
-
-        const optionExists = Array.from(capacityLitersInput.options).some(option => option.value === normalizedValue);
-        if (!optionExists) {
-            const option = document.createElement('option');
-            option.value = normalizedValue;
-            option.textContent = `${parseInt(normalizedValue, 10).toLocaleString()} L`;
-            capacityLitersInput.appendChild(option);
-        }
-
-        capacityLitersInput.value = normalizedValue;
-    }
-    
     paymentMethodSelect.addEventListener('change', function() {
         if (this.value === 'voucher') {
             voucherContainer.classList.remove('hidden');
@@ -1364,7 +1350,9 @@ window.CLEANUP_CONFIG = {
                 const unitCapacity = parseFloat(capacityLitersInput.value || '0');
                 const voucherCapacity = parseFloat(data.voucher.capacity || '0');
 
-                ensureCapacityOption(voucherCapacity);
+                if (typeof window.ensureCapacityOption === 'function') {
+                    window.ensureCapacityOption(voucherCapacity);
+                }
 
                 if (unitCapacity > voucherCapacity) {
                     voucherValidated = false;
@@ -1381,10 +1369,9 @@ window.CLEANUP_CONFIG = {
                 newClientCheck.checked = false;
                 newClientFields.classList.add('hidden');
                 step3.classList.remove('hidden');
-                existingClientName.textContent = `Empresa: ${data.client.business_name || 'N/A'}`;
-                existingClientPhone.textContent = `Teléfono: ${data.client.phone || 'N/A'}`;
-                existingClientRfc.textContent = `RFC/CURP: ${data.client.rfc_curp || 'N/A'}`;
-                existingClientData.classList.remove('hidden');
+                if (typeof window.showExistingClientData === 'function') {
+                    window.showExistingClientData(data.client);
+                }
                 showVoucherResult('success', 
                     `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | ${parseInt(data.voucher.capacity).toLocaleString()} L | PIN: ${data.voucher.access_pin || String(data.voucher.folio).padStart(4, '0')}`
                 );
