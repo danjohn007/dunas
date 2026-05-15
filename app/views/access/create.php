@@ -217,6 +217,11 @@
     const unitHelpText = document.getElementById('unitHelpText');
     const driverHelpText = document.getElementById('driverHelpText');
     const baseUrl = "<?php echo BASE_URL; ?>";
+    const appRootMatch = window.location.pathname.match(/^(.*\/public)(?:\/|$)/);
+    const publicBasePath = appRootMatch
+        ? appRootMatch[1]
+        : new URL(baseUrl, window.location.origin).pathname.replace(/\/$/, '');
+    const getByClientEndpoint = `${window.location.origin}${publicBasePath}/api/get_by_client.php`;
 
     function escapeHtml(value) {
         return String(value)
@@ -303,7 +308,7 @@
         }
         
         try {
-            const response = await fetch(`${baseUrl}/api/get_by_client.php?client_id=${clientId}&type=both`);
+            const response = await fetch(`${getByClientEndpoint}?client_id=${encodeURIComponent(clientId)}&type=both`);
             const data = await response.json();
             
             if (data.success) {
