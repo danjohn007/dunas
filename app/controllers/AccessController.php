@@ -118,14 +118,18 @@ class AccessController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $validator = new Validator();
             $rules = [
-                'driver_id' => 'required|integer',
-                'unit_id' => 'required|integer',
+                'driver_id' => 'integer',
+                'unit_id' => 'integer',
                 'client_id' => 'required|integer'
             ];
             
             if ($validator->validate($_POST, $rules)) {
                 try {
                     $data = $_POST;
+                    
+                    // Convertir campos opcionales vacíos a NULL
+                    if (empty($data['unit_id'])) $data['unit_id'] = null;
+                    if (empty($data['driver_id'])) $data['driver_id'] = null;
                     
                     // Validar y marcar vale como usado si el método de pago es 'voucher'
                     if ($data['payment_method'] === 'voucher') {
@@ -150,7 +154,7 @@ class AccessController extends BaseController {
                     }
                     
                     // Obtener placa de la unidad seleccionada
-                    $unit = $this->unitModel->getById($data['unit_id']);
+                    $unit = !empty($data['unit_id']) ? $this->unitModel->getById($data['unit_id']) : null;
                     
                     if ($unit) {
                         // Buscar en detected_plates si hay una detección reciente que coincida con esta unidad

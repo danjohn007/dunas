@@ -12,24 +12,26 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Cliente <span class="text-red-500">*</span>
                 </label>
-                <select name="client_id" id="clientSelect" required
-                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">-- Seleccione un cliente --</option>
-                    <?php foreach ($clients as $client): ?>
-                        <option value="<?php echo $client['id']; ?>">
-                            <?php echo htmlspecialchars($client['business_name']); ?> 
-                            (<?php echo ucfirst($client['client_type']); ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="relative">
+                    <input type="text"
+                           id="clientSearch"
+                           autocomplete="off"
+                           required
+                           placeholder="-- Buscar cliente --"
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <input type="hidden" name="client_id" id="clientIdHidden">
+                    <div id="clientResults"
+                         class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden"
+                         style="max-height:200px;overflow-y:auto;"></div>
+                </div>
             </div>
             
             <!-- Selección de Unidad -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Unidad (Pipa) <span class="text-red-500">*</span>
+                    Unidad (Pipa)
                 </label>
-                <select name="unit_id" id="unitSelect" required disabled
+                <select name="unit_id" id="unitSelect" disabled
                         class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100">
                     <option value="">-- Seleccione una unidad --</option>
                 </select>
@@ -95,9 +97,9 @@
             <!-- Selección de Chofer -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Chofer <span class="text-red-500">*</span>
+                    Chofer
                 </label>
-                <select name="driver_id" id="driverSelect" required disabled
+                <select name="driver_id" id="driverSelect" disabled
                         class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100">
                     <option value="">-- Seleccione un chofer --</option>
                 </select>
@@ -205,18 +207,87 @@
 <!-- Script to handle client selection and filter units/drivers -->
 <script>
 (function(){
-    const clientSelect = document.getElementById('clientSelect');
+    var clientsData = <?php echo json_encode(array_values($clients), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+    var clientSearchInput = document.getElementById('clientSearch');
+    var clientIdInput     = document.getElementById('clientIdHidden');
+    var clientResultsBox  = document.getElementById('clientResults');
     const unitSelect = document.getElementById('unitSelect');
     const driverSelect = document.getElementById('driverSelect');
     const unitHelpText = document.getElementById('unitHelpText');
     const driverHelpText = document.getElementById('driverHelpText');
     const baseUrl = "<?php echo BASE_URL; ?>";
-    
-    // Handle client selection change
-    clientSelect.addEventListener('change', async function() {
-        const clientId = this.value;
-        
-        // Reset and disable selects
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function renderClientResults(matches) {
+        if (matches.length === 0) {
+            clientResultsBox.innerHTML = '<div class="p-3 text-gray-500 text-sm">No se encontraron clientes</div>';
+        } else {
+            clientResultsBox.innerHTML = matches.map(function (client) {
+                var name = escapeHtml(client.business_name || '');
+                var type = escapeHtml(client.client_type ? client.client_type.charAt(0).toUpperCase() + client.client_type.slice(1) : '');
+                var id = Number(client.id) || 0;
+                return '<div class="p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0" data-id="' + id + '" data-name="' + name + '">' + name + (type ? ' (' + type + ')' : '') + '</div>';
+            }).join('');
+
+            clientResultsBox.querySelectorAll('div[data-id]').forEach(function (item) {
+                item.addEventListener('click', function () {
+                    var selectedId = this.getAttribute('data-id');
+                    clientIdInput.value = selectedId;
+                    clientSearchInput.value = this.getAttribute('data-name');
+                    clientResultsBox.classList.add('hidden');
+                    onClientSelected(selectedId);
+                });
+            });
+        }
+        clientResultsBox.classList.remove('hidden');
+    }
+
+    clientSearchInput.addEventListener('input', function () {
+        var query = this.value.toLowerCase().trim();
+        clientIdInput.value = '';
+
+        // Reset unit and driver selects when search changes
+        unitSelect.innerHTML = '<option value="">-- Seleccione una unidad --</option>';
+        driverSelect.innerHTML = '<option value="">-- Seleccione un chofer --</option>';
+        unitSelect.disabled = true;
+        driverSelect.disabled = true;
+        unitHelpText.textContent = 'Primero seleccione un cliente para ver sus unidades';
+        driverHelpText.textContent = 'Primero seleccione un cliente para ver sus choferes';
+
+        if (query.length === 0) {
+            clientResultsBox.classList.add('hidden');
+            return;
+        }
+
+        var matches = clientsData.filter(function (client) {
+            return (client.business_name || '').toLowerCase().indexOf(query) !== -1;
+        });
+
+        renderClientResults(matches);
+    });
+
+    clientSearchInput.addEventListener('focus', function () {
+        if (this.value.trim().length > 0) {
+            clientSearchInput.dispatchEvent(new Event('input'));
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!clientSearchInput.contains(event.target) && !clientResultsBox.contains(event.target)) {
+            clientResultsBox.classList.add('hidden');
+        }
+    });
+
+    // Handle client selection change (load units & drivers)
+    async function onClientSelected(clientId) {
         unitSelect.innerHTML = '<option value="">-- Cargando unidades... --</option>';
         driverSelect.innerHTML = '<option value="">-- Cargando choferes... --</option>';
         unitSelect.disabled = true;
@@ -281,7 +352,17 @@
             unitHelpText.textContent = 'Error de conexión';
             driverHelpText.textContent = 'Error de conexión';
         }
-    });
+    }
+
+    // Validate client selection on form submit
+    document.getElementById('accessForm').addEventListener('submit', function (event) {
+        if (!clientIdInput.value) {
+            event.preventDefault();
+            clientSearchInput.focus();
+            clientSearchInput.classList.add('border-red-500');
+            alert('Por favor seleccione un cliente de la lista.');
+        }
+    }, true);
 })();
 </script>
 
