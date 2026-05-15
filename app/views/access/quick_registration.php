@@ -426,10 +426,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let autocompleteTimeout = null;
 
     function ensureCapacityOption(value) {
-        const normalizedValue = String(parseInt(value || 0, 10));
-        if (!normalizedValue || normalizedValue === '0') {
+        if (value === null || value === undefined || String(value).trim() === '') {
             return;
         }
+        
+        const parsedValue = parseInt(value, 10);
+        if (Number.isNaN(parsedValue)) {
+            return;
+        }
+        
+        const normalizedValue = String(parsedValue);
 
         const capacitySelect = document.getElementById('capacityLiters');
         const optionExists = Array.from(capacitySelect.options).some(option => option.value === normalizedValue);
@@ -748,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const client = voucherData.client; // Datos del cliente si existen
 
                     if (!client || !client.id) {
-                        alert('El vale no está relacionado a un cliente. Relaciónelo antes de registrar la entrada.');
+                        alert('El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
                         return;
                     }
                     
@@ -1343,7 +1349,7 @@ window.CLEANUP_CONFIG = {
                     voucherIdInput.value = '';
                     clientIdInput.value = '';
                     existingClientData.classList.add('hidden');
-                    showVoucherResult('error', 'El vale no está relacionado a un cliente. Relaciónelo antes de registrar la entrada.');
+                    showVoucherResult('error', 'El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
                     return;
                 }
 

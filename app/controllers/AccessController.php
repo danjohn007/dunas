@@ -471,7 +471,7 @@ class AccessController extends BaseController {
                 }
                 
                 if (empty($voucher['client_id'])) {
-                    $this->setFlash('error', 'El vale no está relacionado a un cliente. Relaciónelo antes de registrar la entrada.');
+                    $this->setFlash('error', 'El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
                     $this->redirect('/access/quickRegistration');
                     return;
                 }
