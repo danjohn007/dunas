@@ -16,6 +16,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placas</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca/Modelo</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -25,13 +26,16 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($units)): ?>
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">No se encontraron unidades</td>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No se encontraron unidades</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($units as $unit): ?>
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($unit['plate_number']); ?></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900"><?php echo htmlspecialchars($unit['client_name'] ?: 'Sin cliente'); ?></div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900"><?php echo htmlspecialchars($unit['brand'] . ' ' . $unit['model']); ?></div>
