@@ -806,9 +806,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('clientPhone').removeAttribute('required');
                 showExistingClientData(client);
                 
-                // Campos del chofer ahora son opcionales cuando hay un vale válido
-                newDriverCheck.checked = true;
-                newDriverFields.classList.remove('hidden');
+                // Campos del chofer son opcionales cuando hay un vale válido; la casilla queda desmarcada por defecto
+                newDriverCheck.checked = false;
                 
                 // Hacer campos del chofer opcionales (remover asteriscos requeridos visualmente)
                 const driverNameLabel = document.querySelector('label[for="driverName"]');
@@ -1419,7 +1418,12 @@ window.CLEANUP_CONFIG = {
     });
     
     quickForm.addEventListener('submit', function(e) {
-        if (paymentMethodSelect.value === 'voucher' && !voucherValidated) {
+        // voucherSelectedFromDropdown distinguishes between vouchers chosen by the
+        // user via the payment-method dropdown (container visible → must validate the
+        // QR code in the form) versus vouchers pre-loaded through the manual search
+        // input (container stays hidden → already validated; no re-entry needed).
+        const voucherSelectedFromDropdown = !voucherContainer.classList.contains('hidden');
+        if (paymentMethodSelect.value === 'voucher' && !voucherValidated && voucherSelectedFromDropdown) {
             e.preventDefault();
             alert('Por favor valide el vale antes de continuar');
             return false;
@@ -1431,7 +1435,11 @@ window.CLEANUP_CONFIG = {
             return false;
         }
 
-        if (paymentMethodSelect.value === 'voucher' && parseFloat(capacityLitersInput.value || '0') > validatedVoucherCapacity) {
+        // validatedVoucherCapacity is only populated (> 0) when the QR was validated
+        // via the in-form validator. Vouchers pre-loaded through the manual search have
+        // their capacity pre-set via ensureCapacityOption(), so no additional check is
+        // needed for that path; skipping avoids false positives when the variable is 0.
+        if (paymentMethodSelect.value === 'voucher' && validatedVoucherCapacity > 0 && parseFloat(capacityLitersInput.value || '0') > validatedVoucherCapacity) {
             e.preventDefault();
             alert('La capacidad de la pipa no corresponde a los litros del vale.');
             return false;
