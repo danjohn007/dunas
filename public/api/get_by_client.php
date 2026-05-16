@@ -4,11 +4,18 @@
  * 
  * GET /api/get_by_client.php?client_id=X&type=units|drivers|both
  */
+// Prevent PHP warnings/notices from corrupting the JSON response
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+ini_set('log_errors', '1');
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 
 try {
     require_once __DIR__ . '/../../config/config.php';
+    // Ensure display_errors remains off even after config.php enables it
+    ini_set('display_errors', '0');
     
     $db = Database::getInstance()->getConnection();
     
