@@ -6,6 +6,7 @@ require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Voucher.php';
 
 class VoucherController extends BaseController {
+    private const FOLIO_CODE_FORMAT_PATTERN = '/^([A-Z]{1,5})-(\d{4})$/';
     
     private $voucherModel;
     
@@ -445,6 +446,102 @@ class VoucherController extends BaseController {
         }
 
         $this->redirect('/vouchers');
+    }
+
+    public function unlinkBulk() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        $clients = $clientModel->getAll(['status' => 'active']);
+
+        $data = [
+            'title' => 'Quitar Relaciones de Vales',
+            'clients' => $clients,
+            'defaultSerie' => strtoupper(trim($_GET['serie'] ?? '')),
+            'showNav' => true
+        ];
+
+        $this->view('vouchers/unlink_bulk', $data);
+    }
+
+    public function unlinkBulkStore() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers?status=active');
+            return;
+        }
+
+        $clientId = (int)($_POST['client_id'] ?? 0);
+        $folioStartCode = strtoupper(trim($_POST['folio_start_code'] ?? ''));
+        $folioEndCode = strtoupper(trim($_POST['folio_end_code'] ?? ''));
+        $returnSerie = strtoupper(trim($_POST['return_serie'] ?? ''));
+        $redirectUrl = '/vouchers?status=active' . ($returnSerie !== '' ? '&serie=' . urlencode($returnSerie) : '');
+
+        if ($clientId < 1) {
+            $this->setFlash('error', 'Debe seleccionar una empresa válida.');
+            $this->redirect($redirectUrl);
+            return;
+        }
+
+        $useRange = ($folioStartCode !== '' || $folioEndCode !== '');
+        $serie = null;
+        $folioStart = null;
+        $folioEnd = null;
+
+        if ($useRange) {
+            if ($folioStartCode === '' || $folioEndCode === '') {
+                $this->setFlash('error', 'Debe capturar folio inicial y folio final, o dejar ambos vacíos para quitar todas las relaciones de la empresa.');
+                $this->redirect('/vouchers/unlinkBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : ''));
+                return;
+            }
+
+            if (!preg_match(self::FOLIO_CODE_FORMAT_PATTERN, $folioStartCode, $startMatches) ||
+                !preg_match(self::FOLIO_CODE_FORMAT_PATTERN, $folioEndCode, $endMatches)) {
+                $this->setFlash('error', 'Los folios deben tener formato SERIE-0000, por ejemplo AC-0026.');
+                $this->redirect('/vouchers/unlinkBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : ''));
+                return;
+            }
+
+            if ($startMatches[1] !== $endMatches[1]) {
+                $this->setFlash('error', 'El folio inicial y final deben pertenecer a la misma serie.');
+                $this->redirect('/vouchers/unlinkBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : ''));
+                return;
+            }
+
+            $serie = $startMatches[1];
+            $folioStart = (int)$startMatches[2];
+            $folioEnd = (int)$endMatches[2];
+
+            if ($folioEnd < $folioStart) {
+                $this->setFlash('error', 'El folio final no puede ser menor que el folio inicial.');
+                $this->redirect('/vouchers/unlinkBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : ''));
+                return;
+            }
+        }
+
+        try {
+            $updated = $this->voucherModel->unlinkActiveVouchersByClientIdAndRange($clientId, $serie, $folioStart, $folioEnd);
+
+            if ($updated > 0) {
+                $message = $useRange
+                    ? "Se quitaron {$updated} relaciones de vales en el rango {$folioStartCode} a {$folioEndCode}."
+                    : "Se quitaron {$updated} relaciones activas de la empresa seleccionada.";
+                $this->setFlash('success', $message);
+            } else {
+                $message = $useRange
+                    ? 'No se encontraron vales activos relacionados con la empresa en el rango indicado.'
+                    : 'No se encontraron vales activos relacionados con la empresa seleccionada.';
+                $this->setFlash('warning', $message);
+            }
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al quitar relaciones de vales: ' . $e->getMessage());
+        }
+
+        $this->redirect($redirectUrl);
     }
     
     /**

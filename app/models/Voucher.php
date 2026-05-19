@@ -435,6 +435,36 @@ class Voucher {
         return true;
     }
 
+    public function unlinkActiveVouchersByClientIdAndRange($clientId, $serie = null, $folioStart = null, $folioEnd = null) {
+        $hasPartialRange = ($serie !== null || $folioStart !== null || $folioEnd !== null)
+            && !($serie !== null && $folioStart !== null && $folioEnd !== null);
+
+        if ($hasPartialRange) {
+            throw new Exception("El rango de folios es inválido.");
+        }
+
+        $sql = "UPDATE vouchers
+                SET client_id = NULL, status = 'pending_assignment'
+                WHERE client_id = ?
+                  AND status = 'active'";
+        $params = [(int)$clientId];
+
+        if ($serie !== null && $folioStart !== null && $folioEnd !== null) {
+            $sql .= " AND serie = ?
+                      AND folio BETWEEN ? AND ?";
+            $params[] = strtoupper(trim($serie));
+            $params[] = (int)$folioStart;
+            $params[] = (int)$folioEnd;
+        }
+
+        $stmt = $this->db->execute($sql, $params);
+        if ($stmt === false) {
+            throw new Exception("Error de base de datos al desvincular los vales.");
+        }
+
+        return $stmt->rowCount();
+    }
+
     /**
      * Obtiene series únicas por tipo de vale
      */
