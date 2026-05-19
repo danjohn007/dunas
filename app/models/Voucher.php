@@ -435,7 +435,14 @@ class Voucher {
         return true;
     }
 
-    public function unlinkActiveVouchersByClientAndRange($clientId, $serie = null, $folioStart = null, $folioEnd = null) {
+    public function unlinkActiveVouchersByClientIdAndRange($clientId, $serie = null, $folioStart = null, $folioEnd = null) {
+        $hasPartialRange = ($serie !== null || $folioStart !== null || $folioEnd !== null)
+            && !($serie !== null && $folioStart !== null && $folioEnd !== null);
+
+        if ($hasPartialRange) {
+            throw new Exception("El rango de folios es inválido.");
+        }
+
         $sql = "UPDATE vouchers
                 SET client_id = NULL, status = 'pending_assignment'
                 WHERE client_id = ?

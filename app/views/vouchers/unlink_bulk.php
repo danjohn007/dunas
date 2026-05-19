@@ -92,30 +92,24 @@ $clientOptions = array_map(function ($client) {
     var clientIdInput = document.getElementById('client_id');
     var clientResultsBox = document.getElementById('client_results');
 
-    function escapeHtml(text) {
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
     function renderClientResults(matches) {
+        clientResultsBox.innerHTML = '';
+
         if (matches.length === 0) {
             clientResultsBox.innerHTML = '<div class="p-3 text-gray-500 text-sm">No se encontraron empresas</div>';
         } else {
-            clientResultsBox.innerHTML = matches.map(function (client) {
-                var name = escapeHtml(client.business_name || '');
-                var id = Number(client.id) || 0;
-                return '<div class="p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0" data-id="' + id + '" data-name="' + name + '">' + name + '</div>';
-            }).join('');
-
-            clientResultsBox.querySelectorAll('div[data-id]').forEach(function (item) {
+            matches.forEach(function (client) {
+                var item = document.createElement('div');
+                item.className = 'p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0';
+                item.dataset.id = String(Number(client.id) || 0);
+                item.dataset.name = String(client.business_name || '');
+                item.textContent = String(client.business_name || '');
                 item.addEventListener('click', function () {
-                    clientIdInput.value = this.getAttribute('data-id');
-                    clientSearchInput.value = this.getAttribute('data-name');
+                    clientIdInput.value = item.dataset.id;
+                    clientSearchInput.value = item.dataset.name;
                     clientResultsBox.classList.add('hidden');
                 });
+                clientResultsBox.appendChild(item);
             });
         }
 

@@ -524,7 +524,7 @@ class VoucherController extends BaseController {
         }
 
         try {
-            $updated = $this->voucherModel->unlinkActiveVouchersByClientAndRange($clientId, $serie, $folioStart, $folioEnd);
+            $updated = $this->voucherModel->unlinkActiveVouchersByClientIdAndRange($clientId, $serie, $folioStart, $folioEnd);
 
             if ($updated > 0) {
                 $message = $useRange
