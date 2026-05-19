@@ -572,8 +572,16 @@ class Voucher {
         $folioStart = (int)$folioStart;
         $folioEnd = (int)$folioEnd;
 
-        if ($serie === '' || $folioStart < 1 || $folioEnd < $folioStart) {
-            throw new Exception("El rango de vales a eliminar es inválido.");
+        if ($serie === '') {
+            throw new Exception("La serie es requerida para eliminar vales.");
+        }
+
+        if ($folioStart < 1) {
+            throw new Exception("El folio inicial debe ser mayor a 0.");
+        }
+
+        if ($folioEnd < $folioStart) {
+            throw new Exception("El folio final no puede ser menor que el folio inicial.");
         }
 
         $summary = $this->db->fetchOne(

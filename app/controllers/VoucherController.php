@@ -504,6 +504,8 @@ class VoucherController extends BaseController {
 
         $folioStart = (int)$folioStart;
         $folioEnd = (int)$folioEnd;
+        $formattedFolioStart = str_pad((string)$folioStart, 4, '0', STR_PAD_LEFT);
+        $formattedFolioEnd = str_pad((string)$folioEnd, 4, '0', STR_PAD_LEFT);
 
         if ($folioStart < 1 || $folioEnd < 1) {
             $this->setFlash('error', 'Los folios deben ser mayores a 0.');
@@ -522,11 +524,11 @@ class VoucherController extends BaseController {
 
             if ($result['deleted_count'] > 0) {
                 $message = sprintf(
-                    'Se eliminaron %d vales de la serie %s del folio %04d al %04d.',
+                    'Se eliminaron %d vales de la serie %s del folio %s al %s.',
                     $result['deleted_count'],
                     $serie,
-                    $folioStart,
-                    $folioEnd
+                    $formattedFolioStart,
+                    $formattedFolioEnd
                 );
 
                 if ($result['protected_count'] > 0) {
