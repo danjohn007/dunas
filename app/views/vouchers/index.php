@@ -224,7 +224,6 @@
                             <?php if (
                                 $voucher['status'] === 'active' &&
                                 !empty($voucher['client_id']) &&
-                                ($voucher['voucher_type'] ?? '') === 'imprenta' &&
                                 Auth::hasRole(['admin', 'supervisor'])
                             ): ?>
                             <button onclick="confirmUnlink(<?php echo (int)$voucher['id']; ?>)"

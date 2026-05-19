@@ -412,13 +412,12 @@ class Voucher {
     }
 
     /**
-     * Quita la relación empresa-vale en vales de imprenta activos
+     * Quita la relación empresa-vale en vales activos
      */
     public function unlinkImprentaVoucher($id) {
         $sql = "UPDATE vouchers
                 SET client_id = NULL, status = 'pending_assignment'
                 WHERE id = ?
-                  AND voucher_type = 'imprenta'
                   AND status = 'active'
                   AND client_id IS NOT NULL";
 
