@@ -221,6 +221,19 @@
                                class="text-blue-600 hover:text-blue-900 mr-3">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            <?php if (
+                                $voucher['status'] === 'active' &&
+                                !empty($voucher['client_id']) &&
+                                ($voucher['voucher_type'] ?? '') === 'imprenta' &&
+                                Auth::hasRole(['admin', 'supervisor'])
+                            ): ?>
+                            <button onclick="confirmUnlink(<?php echo (int)$voucher['id']; ?>)"
+                                    class="text-amber-600 hover:text-amber-900 mr-3"
+                                    title="Quitar relación con empresa"
+                                    aria-label="Quitar relación con empresa">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <?php endif; ?>
                             <?php if ($voucher['status'] === 'active' && Auth::hasRole(['admin', 'supervisor'])): ?>
                             <button onclick="confirmCancel(<?php echo $voucher['id']; ?>)" 
                                     class="text-red-600 hover:text-red-900">
@@ -303,6 +316,16 @@ function confirmCancel(voucherId) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '<?php echo BASE_URL; ?>/vouchers/cancel/' + voucherId;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function confirmUnlink(voucherId) {
+    if (confirm('¿Desea quitar la relación de este vale con la empresa? El vale pasará a "Pendiente de Relación".')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?php echo BASE_URL; ?>/vouchers/unlink/' + voucherId;
         document.body.appendChild(form);
         form.submit();
     }

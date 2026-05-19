@@ -412,6 +412,31 @@ class Voucher {
     }
 
     /**
+     * Quita la relación empresa-vale en vales de imprenta activos
+     */
+    public function unlinkImprentaVoucher($id) {
+        $sql = "UPDATE vouchers
+                SET client_id = NULL, status = 'pending_assignment'
+                WHERE id = ?
+                  AND voucher_type = 'imprenta'
+                  AND status = 'active'
+                  AND client_id IS NOT NULL";
+
+        $stmt = $this->db->execute($sql, [(int)$id]);
+        if ($stmt === false) {
+            throw new Exception("Error de base de datos al desvincular el vale.");
+        }
+
+        $affectedRows = (is_object($stmt) && method_exists($stmt, 'rowCount')) ? $stmt->rowCount() : 0;
+
+        if ($affectedRows === 0) {
+            throw new Exception("No se pudo desvincular el vale. Verifique que esté activo y relacionado.");
+        }
+
+        return true;
+    }
+
+    /**
      * Obtiene series únicas por tipo de vale
      */
     public function getUniqueSeriesByType($voucherType) {

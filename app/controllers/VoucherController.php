@@ -424,6 +424,28 @@ class VoucherController extends BaseController {
         
         $this->redirect('/vouchers');
     }
+
+    /**
+     * Quita la relación de empresa de un vale de imprenta
+     */
+    public function unlink($id) {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers');
+            return;
+        }
+
+        try {
+            $this->voucherModel->unlinkImprentaVoucher($id);
+            $this->setFlash('success', 'Relación eliminada. El vale quedó pendiente de asignación.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al desvincular el vale: ' . $e->getMessage());
+        }
+
+        $this->redirect('/vouchers');
+    }
     
     /**
      * API: Valida un vale por código QR
