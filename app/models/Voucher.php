@@ -565,6 +565,53 @@ class Voucher {
     }
 
     /**
+     * Elimina vales por serie y rango de folios, conservando los usados/registrados
+     */
+    public function deleteBySerieAndRange($serie, $folioStart, $folioEnd) {
+        $serie = strtoupper(trim($serie));
+        $folioStart = (int)$folioStart;
+        $folioEnd = (int)$folioEnd;
+
+        if ($serie === '') {
+            throw new Exception("La serie es requerida para eliminar vales.");
+        }
+
+        if ($folioStart < 1) {
+            throw new Exception("El folio inicial debe ser mayor a 0.");
+        }
+
+        if ($folioEnd < $folioStart) {
+            throw new Exception("El folio final no puede ser menor que el folio inicial.");
+        }
+
+        $summary = $this->db->fetchOne(
+            "SELECT COUNT(*) as protected_count
+             FROM vouchers
+             WHERE serie = ?
+               AND folio BETWEEN ? AND ?
+               AND status IN ('used', 'registered')",
+            [$serie, $folioStart, $folioEnd]
+        );
+
+        $stmt = $this->db->execute(
+            "DELETE FROM vouchers
+             WHERE serie = ?
+               AND folio BETWEEN ? AND ?
+               AND status NOT IN ('used', 'registered')",
+            [$serie, $folioStart, $folioEnd]
+        );
+
+        if ($stmt === false) {
+            throw new Exception("Error de base de datos al eliminar los vales.");
+        }
+
+        return [
+            'protected_count' => (int)($summary['protected_count'] ?? 0),
+            'deleted_count' => $stmt->rowCount()
+        ];
+    }
+
+    /**
      * Actualiza el estado de un vale
      */
     public function updateStatus($id, $status) {

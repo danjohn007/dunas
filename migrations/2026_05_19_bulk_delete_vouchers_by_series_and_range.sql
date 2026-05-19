@@ -1,0 +1,3 @@
+-- No se requieren cambios de esquema para habilitar la eliminación masiva de vales.
+-- La funcionalidad se implementa en la capa de aplicación y respeta la lógica actual
+-- que impide eliminar vales con estado "used" o "registered".

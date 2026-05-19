@@ -7,6 +7,7 @@ require_once APP_PATH . '/models/Voucher.php';
 
 class VoucherController extends BaseController {
     private const FOLIO_CODE_FORMAT_PATTERN = '/^([A-Z]{1,5})-(\d{4})$/';
+    private const FOLIO_DISPLAY_LENGTH = 4;
     
     private $voucherModel;
     
@@ -446,6 +447,111 @@ class VoucherController extends BaseController {
         }
 
         $this->redirect('/vouchers');
+    }
+
+    /**
+     * Muestra formulario para eliminar varios vales por serie y rango
+     */
+    public function deleteBulk() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        $data = [
+            'title' => 'Eliminar Vales',
+            'series' => $this->voucherModel->getUniqueSeries(),
+            'defaultSerie' => strtoupper(trim($_GET['serie'] ?? '')),
+            'showNav' => true
+        ];
+
+        $this->view('vouchers/delete_bulk', $data);
+    }
+
+    /**
+     * Elimina varios vales por serie y rango
+     */
+    public function deleteBulkStore() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers');
+            return;
+        }
+
+        $serie = strtoupper(trim($_POST['serie'] ?? ''));
+        $folioStart = trim((string)($_POST['folio_start'] ?? ''));
+        $folioEnd = trim((string)($_POST['folio_end'] ?? ''));
+        $returnSerie = strtoupper(trim($_POST['return_serie'] ?? ''));
+        $redirectFormUrl = '/vouchers/deleteBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : '');
+        $redirectListUrl = '/vouchers' . ($serie !== '' ? '?serie=' . urlencode($serie) : '');
+
+        if (!preg_match('/^[A-Z]{1,10}$/', $serie)) {
+            $this->setFlash('error', 'Debe seleccionar una serie válida.');
+            $this->redirect($redirectFormUrl);
+            return;
+        }
+
+        if ($folioStart === '' || $folioEnd === '') {
+            $this->setFlash('error', 'Debe capturar folio inicial y folio final.');
+            $this->redirect('/vouchers/deleteBulk?serie=' . urlencode($serie));
+            return;
+        }
+
+        if (!ctype_digit($folioStart) || !ctype_digit($folioEnd)) {
+            $this->setFlash('error', 'Los folios deben ser números enteros positivos.');
+            $this->redirect('/vouchers/deleteBulk?serie=' . urlencode($serie));
+            return;
+        }
+
+        $folioStart = (int)$folioStart;
+        $folioEnd = (int)$folioEnd;
+        $formattedFolioStart = str_pad((string)$folioStart, self::FOLIO_DISPLAY_LENGTH, '0', STR_PAD_LEFT);
+        $formattedFolioEnd = str_pad((string)$folioEnd, self::FOLIO_DISPLAY_LENGTH, '0', STR_PAD_LEFT);
+
+        if ($folioStart < 1 || $folioEnd < 1) {
+            $this->setFlash('error', 'Los folios deben ser mayores a 0.');
+            $this->redirect('/vouchers/deleteBulk?serie=' . urlencode($serie));
+            return;
+        }
+
+        if ($folioEnd < $folioStart) {
+            $this->setFlash('error', 'El folio final no puede ser menor que el folio inicial.');
+            $this->redirect('/vouchers/deleteBulk?serie=' . urlencode($serie));
+            return;
+        }
+
+        try {
+            $result = $this->voucherModel->deleteBySerieAndRange($serie, $folioStart, $folioEnd);
+
+            if ($result['deleted_count'] > 0) {
+                $message = sprintf(
+                    'Se eliminaron %d vales de la serie %s del folio %s al %s.',
+                    $result['deleted_count'],
+                    $serie,
+                    $formattedFolioStart,
+                    $formattedFolioEnd
+                );
+
+                if ($result['protected_count'] > 0) {
+                    $message .= ' ' . sprintf(
+                        'Se conservaron %d vales porque están usados o registrados.',
+                        $result['protected_count']
+                    );
+                }
+
+                $this->setFlash('success', $message);
+            } elseif ($result['protected_count'] > 0) {
+                $this->setFlash('warning', 'No se eliminó ningún vale porque todos los encontrados en el rango están usados o registrados.');
+            } else {
+                $this->setFlash('warning', 'No se encontraron vales para eliminar en el rango indicado.');
+            }
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al eliminar vales: ' . $e->getMessage());
+            $this->redirect('/vouchers/deleteBulk?serie=' . urlencode($serie));
+            return;
+        }
+
+        $this->redirect($redirectListUrl);
     }
 
     /**
