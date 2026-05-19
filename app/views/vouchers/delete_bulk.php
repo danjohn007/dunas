@@ -71,6 +71,7 @@
                 </a>
                 <button type="submit"
                         onclick="return confirm('¿Está seguro de eliminar los vales del rango indicado?');"
+                        aria-label="Eliminar los vales del rango seleccionado"
                         class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors inline-flex items-center">
                     <i class="fas fa-trash-alt mr-2"></i>
                     Eliminar Vales

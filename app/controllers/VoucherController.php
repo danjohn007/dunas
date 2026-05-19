@@ -7,6 +7,7 @@ require_once APP_PATH . '/models/Voucher.php';
 
 class VoucherController extends BaseController {
     private const FOLIO_CODE_FORMAT_PATTERN = '/^([A-Z]{1,5})-(\d{4})$/';
+    private const FOLIO_DISPLAY_LENGTH = 4;
     
     private $voucherModel;
     
@@ -504,8 +505,8 @@ class VoucherController extends BaseController {
 
         $folioStart = (int)$folioStart;
         $folioEnd = (int)$folioEnd;
-        $formattedFolioStart = str_pad((string)$folioStart, 4, '0', STR_PAD_LEFT);
-        $formattedFolioEnd = str_pad((string)$folioEnd, 4, '0', STR_PAD_LEFT);
+        $formattedFolioStart = str_pad((string)$folioStart, self::FOLIO_DISPLAY_LENGTH, '0', STR_PAD_LEFT);
+        $formattedFolioEnd = str_pad((string)$folioEnd, self::FOLIO_DISPLAY_LENGTH, '0', STR_PAD_LEFT);
 
         if ($folioStart < 1 || $folioEnd < 1) {
             $this->setFlash('error', 'Los folios deben ser mayores a 0.');

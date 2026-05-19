@@ -585,12 +585,11 @@ class Voucher {
         }
 
         $summary = $this->db->fetchOne(
-            "SELECT 
-                COUNT(*) as total_matching,
-                SUM(CASE WHEN status IN ('used', 'registered') THEN 1 ELSE 0 END) as protected_count
+            "SELECT COUNT(*) as protected_count
              FROM vouchers
              WHERE serie = ?
-               AND folio BETWEEN ? AND ?",
+               AND folio BETWEEN ? AND ?
+               AND status IN ('used', 'registered')",
             [$serie, $folioStart, $folioEnd]
         );
 
@@ -607,7 +606,6 @@ class Voucher {
         }
 
         return [
-            'total_matching' => (int)($summary['total_matching'] ?? 0),
             'protected_count' => (int)($summary['protected_count'] ?? 0),
             'deleted_count' => $stmt->rowCount()
         ];
