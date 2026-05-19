@@ -490,7 +490,7 @@ class VoucherController extends BaseController {
         $serie = null;
         $folioStart = null;
         $folioEnd = null;
-        $folioPattern = '/^([A-Z]{1,5})-(\d{1,4})$/';
+        $folioPattern = '/^([A-Z]{1,5})-(\d{4})$/';
 
         if ($useRange) {
             if ($folioStartCode === '' || $folioEndCode === '') {

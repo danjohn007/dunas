@@ -75,7 +75,12 @@
 
 <script>
 (function () {
-    var clientsData = <?php echo json_encode(array_values($clients), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    var clientsData = <?php echo json_encode(array_map(function ($client) {
+        return [
+            'id' => (int)($client['id'] ?? 0),
+            'business_name' => (string)($client['business_name'] ?? '')
+        ];
+    }, array_values($clients)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var clientSearchInput = document.getElementById('client_search');
     var clientIdInput = document.getElementById('client_id');
     var clientResultsBox = document.getElementById('client_results');
