@@ -227,9 +227,10 @@
                                 ($voucher['voucher_type'] ?? '') === 'imprenta' &&
                                 Auth::hasRole(['admin', 'supervisor'])
                             ): ?>
-                            <button onclick="confirmUnlink(<?php echo $voucher['id']; ?>)"
+                            <button onclick="confirmUnlink(<?php echo (int)$voucher['id']; ?>)"
                                     class="text-amber-600 hover:text-amber-900 mr-3"
-                                    title="Quitar relación con empresa">
+                                    title="Quitar relación con empresa"
+                                    aria-label="Quitar relación con empresa">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                             <?php endif; ?>

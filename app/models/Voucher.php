@@ -422,7 +422,12 @@ class Voucher {
                   AND status = 'active'
                   AND client_id IS NOT NULL";
 
-        $affectedRows = $this->db->execute($sql, [(int)$id])->rowCount();
+        $stmt = $this->db->execute($sql, [(int)$id]);
+        if ($stmt === false) {
+            throw new Exception("Error de base de datos al desvincular el vale.");
+        }
+
+        $affectedRows = (is_object($stmt) && method_exists($stmt, 'rowCount')) ? $stmt->rowCount() : 0;
 
         if ($affectedRows === 0) {
             throw new Exception("No se pudo desvincular el vale. Verifique que esté activo y relacionado.");

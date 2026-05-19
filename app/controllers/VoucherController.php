@@ -439,7 +439,7 @@ class VoucherController extends BaseController {
 
         try {
             $this->voucherModel->unlinkImprentaVoucher($id);
-            $this->setFlash('success', 'Relación eliminada. El vale quedó pendiente de relación.');
+            $this->setFlash('success', 'Relación eliminada. El vale quedó pendiente de asignación.');
         } catch (Exception $e) {
             $this->setFlash('error', 'Error al desvincular el vale: ' . $e->getMessage());
         }
