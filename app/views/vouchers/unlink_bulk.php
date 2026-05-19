@@ -148,7 +148,7 @@ $clientOptions = array_map(function ($client) {
     });
 
     clientSearchInput.closest('form').addEventListener('submit', function (event) {
-        if (!clientIdInput.value) {
+        if (clientIdInput.value === '') {
             event.preventDefault();
             clientSearchInput.focus();
             clientSearchInput.classList.add('border-red-500');
