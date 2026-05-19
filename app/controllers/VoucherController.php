@@ -427,6 +427,57 @@ class VoucherController extends BaseController {
     }
 
     /**
+     * Elimina un vale
+     */
+    public function delete($id) {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers');
+            return;
+        }
+
+        try {
+            $this->voucherModel->delete($id);
+            $this->setFlash('success', 'Vale eliminado exitosamente.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al eliminar el vale: ' . $e->getMessage());
+        }
+
+        $this->redirect('/vouchers');
+    }
+
+    /**
+     * Actualiza el estado de un vale
+     */
+    public function updateStatus($id) {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers');
+            return;
+        }
+
+        $newStatus = trim($_POST['status'] ?? '');
+        if ($newStatus === '') {
+            $this->setFlash('error', 'Debe seleccionar un estado válido.');
+            $this->redirect('/vouchers');
+            return;
+        }
+
+        try {
+            $this->voucherModel->updateStatus($id, $newStatus);
+            $this->setFlash('success', 'Estado del vale actualizado exitosamente.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Error al actualizar estado del vale: ' . $e->getMessage());
+        }
+
+        $this->redirect('/vouchers');
+    }
+
+    /**
      * Quita la relación de empresa de un vale de imprenta
      */
     public function unlink($id) {

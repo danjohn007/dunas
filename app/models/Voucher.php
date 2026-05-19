@@ -540,6 +540,46 @@ class Voucher {
         
         return true;
     }
+
+    /**
+     * Elimina un vale por ID
+     */
+    public function delete($id) {
+        $sql = "DELETE FROM vouchers WHERE id = ?";
+        $affectedRows = $this->db->execute($sql, [$id])->rowCount();
+
+        if ($affectedRows === 0) {
+            throw new Exception("No se pudo eliminar el vale. El vale puede no existir.");
+        }
+
+        return true;
+    }
+
+    /**
+     * Actualiza el estado de un vale
+     */
+    public function updateStatus($id, $status) {
+        $allowedStatus = ['active', 'used', 'cancelled', 'registered', 'pending_assignment'];
+        if (!in_array($status, $allowedStatus, true)) {
+            throw new Exception("Estado de vale no válido");
+        }
+
+        $voucher = $this->db->fetchOne("SELECT id, status FROM vouchers WHERE id = ?", [$id]);
+        if (!$voucher) {
+            throw new Exception("Vale no encontrado.");
+        }
+
+        if ($voucher['status'] === $status) {
+            return true;
+        }
+
+        $this->db->execute(
+            "UPDATE vouchers SET status = ? WHERE id = ?",
+            [$status, $id]
+        );
+
+        return true;
+    }
     
     /**
      * Obtiene el conteo total de vales según filtros

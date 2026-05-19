@@ -228,6 +228,20 @@
                                class="text-blue-600 hover:text-blue-900 mr-3">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
+                            <button onclick="editVoucherStatus(<?php echo (int)$voucher['id']; ?>, '<?php echo htmlspecialchars($voucher['status'], ENT_QUOTES, 'UTF-8'); ?>')"
+                                    class="text-indigo-600 hover:text-indigo-900 mr-3"
+                                    title="Editar estado del vale"
+                                    aria-label="Editar estado del vale">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="confirmDelete(<?php echo (int)$voucher['id']; ?>)"
+                                    class="text-red-600 hover:text-red-900 mr-3"
+                                    title="Eliminar vale"
+                                    aria-label="Eliminar vale">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <?php endif; ?>
                             <?php if (
                                 $voucher['status'] === 'active' &&
                                 !empty($voucher['client_id']) &&
@@ -335,5 +349,67 @@ function confirmUnlink(voucherId) {
         document.body.appendChild(form);
         form.submit();
     }
+}
+
+function confirmDelete(voucherId) {
+    if (confirm('¿Está seguro de que desea eliminar este vale? Esta acción no se puede deshacer.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?php echo BASE_URL; ?>/vouchers/delete/' + voucherId;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function editVoucherStatus(voucherId, currentStatus) {
+    const statusOptions = {
+        active: 'Activo',
+        pending_assignment: 'Pendiente de Relación',
+        registered: 'Registrado',
+        used: 'Usado',
+        cancelled: 'Cancelado'
+    };
+
+    const optionKeys = Object.keys(statusOptions);
+    let promptMessage = 'Seleccione el nuevo estado del vale (escriba número o clave):';
+    optionKeys.forEach((key, index) => {
+        promptMessage += '\n' + (index + 1) + '. ' + statusOptions[key] + ' (' + key + ')';
+    });
+
+    let selected = prompt(promptMessage, currentStatus);
+    if (selected === null) {
+        return;
+    }
+
+    selected = selected.trim().toLowerCase();
+    if (/^[1-5]$/.test(selected)) {
+        selected = optionKeys[parseInt(selected, 10) - 1];
+    }
+
+    if (!statusOptions[selected]) {
+        alert('Estado no válido. Debe elegir una opción de la lista.');
+        return;
+    }
+
+    if (selected === currentStatus) {
+        return;
+    }
+
+    if (!confirm('¿Desea cambiar el estado del vale a "' + statusOptions[selected] + '"?')) {
+        return;
+    }
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?php echo BASE_URL; ?>/vouchers/updateStatus/' + voucherId;
+
+    const statusInput = document.createElement('input');
+    statusInput.type = 'hidden';
+    statusInput.name = 'status';
+    statusInput.value = selected;
+    form.appendChild(statusInput);
+
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
