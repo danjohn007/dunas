@@ -85,8 +85,8 @@
     var clientIdInput = document.getElementById('client_id');
     var clientResultsBox = document.getElementById('client_results');
 
-    function escapeHtml(value) {
-        return String(value)
+    function escapeHtml(text) {
+        return String(text)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
