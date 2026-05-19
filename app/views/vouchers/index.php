@@ -16,6 +16,11 @@
                 <i class="fas fa-print mr-2"></i>
                 Imprenta
             </a>
+            <a href="<?php echo BASE_URL; ?>/vouchers/deleteBulk<?php echo !empty($filters['serie']) ? '?serie=' . urlencode($filters['serie']) : ''; ?>" 
+               class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
+                <i class="fas fa-trash-alt mr-2"></i>
+                Eliminar Vales
+            </a>
             <a href="<?php echo BASE_URL; ?>/vouchers/relate" 
                class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors">
                 <i class="fas fa-link mr-2"></i>

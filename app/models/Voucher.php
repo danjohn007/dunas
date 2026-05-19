@@ -565,6 +565,47 @@ class Voucher {
     }
 
     /**
+     * Elimina vales por serie y rango de folios, conservando los usados/registrados
+     */
+    public function deleteBySerieAndRange($serie, $folioStart, $folioEnd) {
+        $serie = strtoupper(trim($serie));
+        $folioStart = (int)$folioStart;
+        $folioEnd = (int)$folioEnd;
+
+        if ($serie === '' || $folioStart < 1 || $folioEnd < $folioStart) {
+            throw new Exception("El rango de vales a eliminar es inválido.");
+        }
+
+        $summary = $this->db->fetchOne(
+            "SELECT 
+                COUNT(*) as total_matching,
+                SUM(CASE WHEN status IN ('used', 'registered') THEN 1 ELSE 0 END) as protected_count
+             FROM vouchers
+             WHERE serie = ?
+               AND folio BETWEEN ? AND ?",
+            [$serie, $folioStart, $folioEnd]
+        );
+
+        $stmt = $this->db->execute(
+            "DELETE FROM vouchers
+             WHERE serie = ?
+               AND folio BETWEEN ? AND ?
+               AND status NOT IN ('used', 'registered')",
+            [$serie, $folioStart, $folioEnd]
+        );
+
+        if ($stmt === false) {
+            throw new Exception("Error de base de datos al eliminar los vales.");
+        }
+
+        return [
+            'total_matching' => (int)($summary['total_matching'] ?? 0),
+            'protected_count' => (int)($summary['protected_count'] ?? 0),
+            'deleted_count' => $stmt->rowCount()
+        ];
+    }
+
+    /**
      * Actualiza el estado de un vale
      */
     public function updateStatus($id, $status) {
