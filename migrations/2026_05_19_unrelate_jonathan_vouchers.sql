@@ -3,8 +3,8 @@
 -- Fecha: 2026-05-19
 -- MySQL: 5.7+
 -- Descripción:
---   - Solo afecta vales de imprenta actualmente relacionados con
---     la empresa "jonathan".
+--   - Solo afecta vales de imprenta de la serie AC actualmente
+--     relacionados con la empresa "jonathan".
 --   - Revierte su estado a pendiente de relación.
 --   - No elimina ningún registro.
 -- =====================================================================
@@ -18,6 +18,7 @@ SET
     v.status = 'pending_assignment',
     v.updated_at = NOW()
 WHERE v.voucher_type = 'imprenta'
+  AND v.serie = 'AC'
   AND v.status = 'active'
   AND v.used_by_access_log_id IS NULL
   AND LOWER(TRIM(c.business_name)) = 'jonathan';
