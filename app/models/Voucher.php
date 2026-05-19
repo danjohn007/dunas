@@ -545,11 +545,20 @@ class Voucher {
      * Elimina un vale por ID
      */
     public function delete($id) {
+        $voucher = $this->db->fetchOne("SELECT id, status FROM vouchers WHERE id = ?", [$id]);
+        if (!$voucher) {
+            throw new Exception("No se pudo eliminar el vale. El vale puede no existir.");
+        }
+
+        if (in_array($voucher['status'], ['used', 'registered'], true)) {
+            throw new Exception("No se puede eliminar un vale utilizado o registrado.");
+        }
+
         $sql = "DELETE FROM vouchers WHERE id = ?";
         $affectedRows = $this->db->execute($sql, [$id])->rowCount();
 
         if ($affectedRows === 0) {
-            throw new Exception("No se pudo eliminar el vale. El vale puede no existir.");
+            throw new Exception("No se pudo eliminar el vale. Intente nuevamente.");
         }
 
         return true;
@@ -573,10 +582,14 @@ class Voucher {
             return true;
         }
 
-        $this->db->execute(
+        $affectedRows = $this->db->execute(
             "UPDATE vouchers SET status = ? WHERE id = ?",
             [$status, $id]
-        );
+        )->rowCount();
+
+        if ($affectedRows === 0) {
+            throw new Exception("No se pudo actualizar el estado del vale.");
+        }
 
         return true;
     }

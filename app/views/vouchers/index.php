@@ -235,12 +235,14 @@
                                     aria-label="Editar estado del vale">
                                 <i class="fas fa-edit"></i>
                             </button>
+                            <?php if (!in_array($voucher['status'], ['used', 'registered'], true)): ?>
                             <button onclick="confirmDelete(<?php echo (int)$voucher['id']; ?>)"
                                     class="text-red-600 hover:text-red-900 mr-3"
                                     title="Eliminar vale"
                                     aria-label="Eliminar vale">
                                 <i class="fas fa-times"></i>
                             </button>
+                            <?php endif; ?>
                             <?php endif; ?>
                             <?php if (
                                 $voucher['status'] === 'active' &&
@@ -382,8 +384,9 @@ function editVoucherStatus(voucherId, currentStatus) {
     }
 
     selected = selected.trim().toLowerCase();
-    if (/^[1-5]$/.test(selected)) {
-        selected = optionKeys[parseInt(selected, 10) - 1];
+    const selectedNumber = parseInt(selected, 10);
+    if (!Number.isNaN(selectedNumber) && selectedNumber >= 1 && selectedNumber <= optionKeys.length) {
+        selected = optionKeys[selectedNumber - 1];
     }
 
     if (!statusOptions[selected]) {
