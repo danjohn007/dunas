@@ -21,6 +21,13 @@
                 <i class="fas fa-link mr-2"></i>
                 RELACIONAR VALES
             </a>
+            <?php if (($filters['status'] ?? '') === 'active'): ?>
+            <a href="<?php echo BASE_URL; ?>/vouchers/unlinkBulk<?php echo !empty($filters['serie']) ? '?serie=' . urlencode($filters['serie']) : ''; ?>" 
+               class="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors">
+                <i class="fas fa-unlink mr-2"></i>
+                QUITAR RELACIONES
+            </a>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
     </div>

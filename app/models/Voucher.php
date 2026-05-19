@@ -435,6 +435,29 @@ class Voucher {
         return true;
     }
 
+    public function unlinkActiveVouchersByClientAndRange($clientId, $serie = null, $folioStart = null, $folioEnd = null) {
+        $sql = "UPDATE vouchers
+                SET client_id = NULL, status = 'pending_assignment'
+                WHERE client_id = ?
+                  AND status = 'active'";
+        $params = [(int)$clientId];
+
+        if ($serie !== null && $folioStart !== null && $folioEnd !== null) {
+            $sql .= " AND serie = ?
+                      AND folio BETWEEN ? AND ?";
+            $params[] = strtoupper(trim($serie));
+            $params[] = (int)$folioStart;
+            $params[] = (int)$folioEnd;
+        }
+
+        $stmt = $this->db->execute($sql, $params);
+        if ($stmt === false) {
+            throw new Exception("Error de base de datos al desvincular los vales.");
+        }
+
+        return (is_object($stmt) && method_exists($stmt, 'rowCount')) ? $stmt->rowCount() : 0;
+    }
+
     /**
      * Obtiene series únicas por tipo de vale
      */
