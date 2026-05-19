@@ -6,7 +6,7 @@ require_once APP_PATH . '/controllers/BaseController.php';
 require_once APP_PATH . '/models/Voucher.php';
 
 class VoucherController extends BaseController {
-    private const FOLIO_CODE_PATTERN_4_DIGITS = '/^([A-Z]{1,5})-(\d{4})$/';
+    private const FOLIO_CODE_FORMAT_PATTERN = '/^([A-Z]{1,5})-(\d{4})$/';
     
     private $voucherModel;
     
@@ -499,8 +499,8 @@ class VoucherController extends BaseController {
                 return;
             }
 
-            if (!preg_match(self::FOLIO_CODE_PATTERN_4_DIGITS, $folioStartCode, $startMatches) ||
-                !preg_match(self::FOLIO_CODE_PATTERN_4_DIGITS, $folioEndCode, $endMatches)) {
+            if (!preg_match(self::FOLIO_CODE_FORMAT_PATTERN, $folioStartCode, $startMatches) ||
+                !preg_match(self::FOLIO_CODE_FORMAT_PATTERN, $folioEndCode, $endMatches)) {
                 $this->setFlash('error', 'Los folios deben tener formato SERIE-0000, por ejemplo AC-0026.');
                 $this->redirect('/vouchers/unlinkBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : ''));
                 return;

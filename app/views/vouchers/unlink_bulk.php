@@ -46,6 +46,8 @@ $clientOptions = array_map(function ($client) {
                         <input type="text"
                                name="folio_start_code"
                                maxlength="10"
+                               pattern="[A-Z]{1,5}-[0-9]{4}"
+                               title="Formato SERIE-0000"
                                placeholder="<?php echo $defaultSerie !== '' ? htmlspecialchars($defaultSerie) . '-0001' : 'AC-0026'; ?>"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     </div>
@@ -56,6 +58,8 @@ $clientOptions = array_map(function ($client) {
                         <input type="text"
                                name="folio_end_code"
                                maxlength="10"
+                               pattern="[A-Z]{1,5}-[0-9]{4}"
+                               title="Formato SERIE-0000"
                                placeholder="<?php echo $defaultSerie !== '' ? htmlspecialchars($defaultSerie) . '-9999' : 'AC-0030'; ?>"
                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     </div>

@@ -455,7 +455,7 @@ class Voucher {
             throw new Exception("Error de base de datos al desvincular los vales.");
         }
 
-        return (is_object($stmt) && method_exists($stmt, 'rowCount')) ? $stmt->rowCount() : 0;
+        return $stmt->rowCount();
     }
 
     /**
