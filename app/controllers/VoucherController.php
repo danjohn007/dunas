@@ -530,7 +530,10 @@ class VoucherController extends BaseController {
                 );
 
                 if ($result['protected_count'] > 0) {
-                    $message .= ' ' . $result['protected_count'] . ' no se eliminaron porque están usados o registrados.';
+                    $message .= ' ' . sprintf(
+                        'Se conservaron %d vales porque están usados o registrados.',
+                        $result['protected_count']
+                    );
                 }
 
                 $this->setFlash('success', $message);
