@@ -5,7 +5,7 @@
             Volver a Vales Activos
         </a>
         <h1 class="text-3xl font-bold text-gray-900">Quitar Relación de Vales</h1>
-        <p class="text-gray-600">Quita varias o todas las relaciones activas de una empresa por rango de folios</p>
+        <p class="text-gray-600">Quita varias o todas las relaciones activas de una empresa por rango de folios.</p>
     </div>
 
     <div class="bg-white rounded-lg shadow-md p-6">

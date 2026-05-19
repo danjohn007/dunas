@@ -490,6 +490,7 @@ class VoucherController extends BaseController {
         $serie = null;
         $folioStart = null;
         $folioEnd = null;
+        $folioPattern = '/^([A-Z]{1,5})-(\d{1,4})$/';
 
         if ($useRange) {
             if ($folioStartCode === '' || $folioEndCode === '') {
@@ -498,8 +499,8 @@ class VoucherController extends BaseController {
                 return;
             }
 
-            if (!preg_match('/^([A-Z]{1,5})-(\d{1,4})$/', $folioStartCode, $startMatches) ||
-                !preg_match('/^([A-Z]{1,5})-(\d{1,4})$/', $folioEndCode, $endMatches)) {
+            if (!preg_match($folioPattern, $folioStartCode, $startMatches) ||
+                !preg_match($folioPattern, $folioEndCode, $endMatches)) {
                 $this->setFlash('error', 'Los folios deben tener formato SERIE-0000, por ejemplo AC-0026.');
                 $this->redirect('/vouchers/unlinkBulk' . ($returnSerie !== '' ? '?serie=' . urlencode($returnSerie) : ''));
                 return;

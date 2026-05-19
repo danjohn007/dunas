@@ -16,9 +16,10 @@ START TRANSACTION;
 -- Reemplace estas variables antes de ejecutar el script.
 -- Puede dejar @folio_start_code y @folio_end_code en NULL para desvincular
 -- todos los vales activos de la empresa indicada.
-SET @company_name := 'Jonathan';
-SET @folio_start_code := 'AC-0026';
-SET @folio_end_code := 'AC-0030';
+-- Ejemplo: @company_name = 'Jonathan', @folio_start_code = 'AC-0026', @folio_end_code = 'AC-0030'
+SET @company_name := 'REEMPLAZAR_EMPRESA';
+SET @folio_start_code := NULL;
+SET @folio_end_code := NULL;
 
 SET @serie := NULL;
 SET @serie_end := NULL;
