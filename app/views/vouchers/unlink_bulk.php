@@ -1,3 +1,11 @@
+<?php
+$clientOptions = array_map(function ($client) {
+    return [
+        'id' => (int)($client['id'] ?? 0),
+        'business_name' => (string)($client['business_name'] ?? '')
+    ];
+}, array_values($clients));
+?>
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6">
         <a href="<?php echo BASE_URL; ?>/vouchers?status=active<?php echo $defaultSerie !== '' ? '&serie=' . urlencode($defaultSerie) : ''; ?>" class="text-blue-600 hover:text-blue-800 inline-flex items-center mb-4">
@@ -75,12 +83,7 @@
 
 <script>
 (function () {
-    var clientsData = <?php echo json_encode(array_map(function ($client) {
-        return [
-            'id' => (int)($client['id'] ?? 0),
-            'business_name' => (string)($client['business_name'] ?? '')
-        ];
-    }, array_values($clients)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    var clientsData = <?php echo json_encode($clientOptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var clientSearchInput = document.getElementById('client_search');
     var clientIdInput = document.getElementById('client_id');
     var clientResultsBox = document.getElementById('client_results');
