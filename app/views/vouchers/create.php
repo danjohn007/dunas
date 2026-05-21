@@ -14,24 +14,36 @@
             <div class="space-y-6">
                 <!-- Cliente -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2" for="client_search">
                         Seleccionar Cliente <span class="text-red-500">*</span>
                     </label>
-                    <select name="client_id" 
-                            id="client_id"
-                            required
-                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">-- Seleccione un cliente --</option>
-                        <?php foreach ($clients as $client): ?>
-                        <option value="<?php echo $client['id']; ?>"
-                                <?php echo (isset($_POST['client_id']) && $_POST['client_id'] == $client['id']) ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($client['business_name']); ?>
-                            <?php if (!empty($client['phone'])): ?>
-                                - <?php echo htmlspecialchars($client['phone']); ?>
-                            <?php endif; ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php
+                    $selectedClientId = isset($_POST['client_id']) ? (int) $_POST['client_id'] : 0;
+                    $selectedClientName = '';
+
+                    foreach ($clients as $client) {
+                        if ((int) $client['id'] === $selectedClientId) {
+                            $selectedClientName = $client['business_name'];
+                            if (!empty($client['phone'])) {
+                                $selectedClientName .= ' - ' . $client['phone'];
+                            }
+                            break;
+                        }
+                    }
+                    ?>
+                    <div class="relative">
+                        <input type="text"
+                               id="client_search"
+                               autocomplete="off"
+                               required
+                               placeholder="Buscar cliente por nombre o teléfono..."
+                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                               value="<?php echo htmlspecialchars($selectedClientName); ?>">
+                        <input type="hidden" name="client_id" id="client_id" value="<?php echo $selectedClientId > 0 ? $selectedClientId : ''; ?>">
+                        <div id="client_results"
+                             class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden"
+                             style="max-height:200px;overflow-y:auto;"></div>
+                    </div>
                     <p class="mt-1 text-sm text-gray-500">
                         <i class="fas fa-info-circle"></i>
                         Cliente al que se asignarán los vales generados
@@ -202,6 +214,87 @@
 </div>
 
 <script>
+var clientsData = <?php echo json_encode(array_values($clients), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+var clientSearchInput = document.getElementById('client_search');
+var clientIdInput = document.getElementById('client_id');
+var clientResultsBox = document.getElementById('client_results');
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderClientResults(matches) {
+    if (matches.length === 0) {
+        clientResultsBox.innerHTML = '<div class="p-3 text-gray-500 text-sm">No se encontraron clientes</div>';
+    } else {
+        clientResultsBox.innerHTML = matches.map(function (client) {
+            var id = Number(client.id) || 0;
+            var name = escapeHtml(client.business_name || '');
+            var phone = escapeHtml(client.phone || '');
+            var label = phone ? name + ' - ' + phone : name;
+
+            return '<div class="p-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0" data-id="' + id + '" data-name="' + label + '">' + label + '</div>';
+        }).join('');
+
+        clientResultsBox.querySelectorAll('div[data-id]').forEach(function (item) {
+            item.addEventListener('click', function () {
+                clientIdInput.value = this.getAttribute('data-id');
+                clientSearchInput.value = this.getAttribute('data-name');
+                clientSearchInput.classList.remove('border-red-500');
+                clientResultsBox.classList.add('hidden');
+            });
+        });
+    }
+
+    clientResultsBox.classList.remove('hidden');
+}
+
+clientSearchInput.addEventListener('input', function () {
+    var query = this.value.toLowerCase().trim();
+
+    clientIdInput.value = '';
+    clientSearchInput.classList.remove('border-red-500');
+
+    if (query.length === 0) {
+        clientResultsBox.classList.add('hidden');
+        return;
+    }
+
+    var matches = clientsData.filter(function (client) {
+        var businessName = (client.business_name || '').toLowerCase();
+        var phone = (client.phone || '').toLowerCase();
+
+        return businessName.indexOf(query) !== -1 || phone.indexOf(query) !== -1;
+    });
+
+    renderClientResults(matches);
+});
+
+clientSearchInput.addEventListener('focus', function () {
+    if (this.value.trim().length > 0 && !clientIdInput.value) {
+        clientSearchInput.dispatchEvent(new Event('input'));
+    }
+});
+
+document.addEventListener('click', function (event) {
+    if (!clientSearchInput.contains(event.target) && !clientResultsBox.contains(event.target)) {
+        clientResultsBox.classList.add('hidden');
+    }
+});
+
+document.getElementById('generateVouchersForm').addEventListener('submit', function (event) {
+    if (!clientIdInput.value) {
+        event.preventDefault();
+        clientSearchInput.focus();
+        clientSearchInput.classList.add('border-red-500');
+        alert('Por favor seleccione un cliente de la lista.');
+    }
+});
+
 // Update preview when form inputs change
 function updatePreview() {
     const serie = document.getElementById('serie').value.toUpperCase() || '-';
