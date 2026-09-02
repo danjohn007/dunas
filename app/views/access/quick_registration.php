@@ -693,8 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div>
                             <p class="font-semibold">Vale Válido</p>
                             <p class="text-sm">Serie: ${voucher.serie} - Folio: ${voucher.folio}</p>
-                            <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>
-                            <p class="text-sm font-semibold text-purple-700">PIN de acceso: ${voucher.access_pin || String(voucher.folio).padStart(4, '0')}</p>`;
+                            <p class="text-sm">Capacidad: ${parseInt(voucher.capacity).toLocaleString()} L</p>`;
                 
                 if (client) {
                     infoHtml += `
@@ -1307,7 +1306,7 @@ window.CLEANUP_CONFIG = {
                     window.showExistingClientData(data.client);
                 }
                 showVoucherResult('success', 
-                    `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | ${parseInt(data.voucher.capacity).toLocaleString()} L | PIN: ${data.voucher.access_pin || String(data.voucher.folio).padStart(4, '0')}`
+                    `✓ Vale válido: ${data.voucher.serie}-${String(data.voucher.folio).padStart(4, '0')} | ${parseInt(data.voucher.capacity).toLocaleString()} L`
                 );
             } else {
                 voucherValidated = false;

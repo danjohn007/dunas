@@ -768,8 +768,7 @@ class VoucherController extends BaseController {
                     'capacity' => $voucher['capacity'],
                     'qr_code' => $voucher['qr_code'],
                     'status' => $voucher['status'],
-                    'voucher_type' => $voucher['voucher_type'] ?? 'standard',
-                    'access_pin' => $this->voucherModel->formatAccessPin($voucher['folio'])
+                    'voucher_type' => $voucher['voucher_type'] ?? 'standard'
                 ]
             ];
             
