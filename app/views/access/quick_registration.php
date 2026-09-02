@@ -85,32 +85,22 @@
             </button>
         </div>
         
-        <!-- Sección de Registro Manual (siempre visible) -->
-        <div id="manualRegistrationContainer" class="mt-6 border-t border-gray-200 pt-6">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3">
-                <i class="fas fa-keyboard text-gray-600 mr-2"></i>Registro Manual (Si la cámara no detecta)
-            </h3>
-            
-            <div class="flex gap-3">
-                <div class="flex-1 relative">
-                    <input type="text" id="manualPlateInput" 
-                           placeholder="Escriba la placa (ej: ABC1059) o código de vale (ej: B-500)"
-                           class="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 uppercase"
-                           maxlength="15"
-                           autocomplete="off">
-                    <!-- Autocomplete dropdown -->
-                    <div id="plateAutocomplete" class="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden max-h-60 overflow-y-auto">
-                    </div>
-                </div>
-                <button type="button" id="manualRegistrationBtn" 
-                        class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-6 rounded-lg whitespace-nowrap">
-                    <i class="fas fa-edit mr-2"></i>Registrar
-                </button>
-            </div>
+        <!-- Entrada para lectores QR: el lector escribe el código y finaliza con Enter. -->
+        <div class="mt-6 border-t border-gray-200 pt-6">
+            <label for="manualPlateInput" class="block text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-qrcode text-gray-600 mr-2"></i>Escanear código QR del vale
+            </label>
+            <input type="text" id="manualPlateInput"
+                   placeholder="Escanee el código QR"
+                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 uppercase"
+                   maxlength="100"
+                   autocomplete="off"
+                   autofocus>
             <p class="mt-2 text-xs text-gray-500">
-                <i class="fas fa-info-circle mr-1"></i>Use esta opción solo si la cámara no detecta la placa automáticamente
+                <i class="fas fa-info-circle mr-1"></i>El acceso se registrará y se abrirá la vista de impresión automáticamente.
             </p>
         </div>
+        <div id="manualRegistrationBtn" hidden aria-hidden="true"></div>
         
         <div id="searchResult" class="mt-4 hidden"></div>
     </div>
@@ -420,10 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variable global para almacenar la última placa detectada
     window.lastDetectedPlate = null;
     
-    // Autocomplete para placas
     const manualPlateInput = document.getElementById('manualPlateInput');
-    const plateAutocomplete = document.getElementById('plateAutocomplete');
-    let autocompleteTimeout = null;
 
     function ensureCapacityOption(value) {
         if (value === null || value === undefined || String(value).trim() === '') {
@@ -468,70 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showExistingClientData = showExistingClientData;
     
     manualPlateInput.addEventListener('input', function() {
-        const query = this.value.trim().toUpperCase();
-        this.value = query;
-        
-        // Clear previous timeout
-        if (autocompleteTimeout) {
-            clearTimeout(autocompleteTimeout);
-        }
-        
-        if (query.length < 2) {
-            plateAutocomplete.classList.add('hidden');
-            plateAutocomplete.innerHTML = '';
-            return;
-        }
-        
-        // Debounce the search
-        autocompleteTimeout = setTimeout(async () => {
-            try {
-                const response = await fetch(`<?php echo BASE_URL; ?>/access/searchPlates?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                
-                if (data.success && data.plates && data.plates.length > 0) {
-                    plateAutocomplete.innerHTML = data.plates.map(plate => `
-                        <div class="autocomplete-item px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                             data-plate="${plate.plate_number}"
-                             data-unit-id="${plate.id}">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="font-mono font-semibold text-gray-900">${plate.plate_number}</span>
-                                    <span class="text-sm text-gray-500 ml-2">${plate.brand || ''} ${plate.model || ''}</span>
-                                </div>
-                                <span class="text-xs text-gray-400">${parseInt(plate.capacity_liters || 0).toLocaleString()} L</span>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                <i class="fas fa-building mr-1"></i>${plate.client_name || 'Sin cliente'}
-                            </div>
-                        </div>
-                    `).join('');
-                    
-                    // Add click handlers
-                    plateAutocomplete.querySelectorAll('.autocomplete-item').forEach(item => {
-                        item.addEventListener('click', function() {
-                            manualPlateInput.value = this.dataset.plate;
-                            plateAutocomplete.classList.add('hidden');
-                            // Trigger the registration button click
-                            document.getElementById('manualRegistrationBtn').click();
-                        });
-                    });
-                    
-                    plateAutocomplete.classList.remove('hidden');
-                } else {
-                    plateAutocomplete.classList.add('hidden');
-                }
-            } catch (error) {
-                console.error('Autocomplete error:', error);
-                plateAutocomplete.classList.add('hidden');
-            }
-        }, 300);
-    });
-    
-    // Hide autocomplete when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!manualPlateInput.contains(e.target) && !plateAutocomplete.contains(e.target)) {
-            plateAutocomplete.classList.add('hidden');
-        }
+        this.value = this.value.toUpperCase();
     });
     
     // Toggle para nuevo cliente
@@ -700,12 +624,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Evento para el botón de registro manual
+    // Punto interno que conserva el flujo existente de validación del QR.
     const manualRegistrationBtn = document.getElementById('manualRegistrationBtn');
-    
-    // Convertir a mayúsculas mientras escribe
+
+    // Los lectores QR actúan como teclado; se procesa al pausar o al recibir Enter.
+    let qrScanTimeout = null;
+    function processQrScan() {
+        if (!manualRegistrationBtn.disabled) {
+            manualRegistrationBtn.dispatchEvent(new Event('click'));
+        }
+    }
+
     manualPlateInput.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
+        clearTimeout(qrScanTimeout);
+        if (this.value.trim().length >= 4) {
+            qrScanTimeout = setTimeout(processQrScan, 500);
+        }
+    });
+
+    manualPlateInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(qrScanTimeout);
+            processQrScan();
+        }
     });
     
     manualRegistrationBtn.addEventListener('click', async function() {
@@ -830,8 +772,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 registrationForm.classList.remove('hidden');
                 actionButtons.classList.remove('hidden');
                 
-                // Scroll al formulario
-                registrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Un vale QR válido no requiere captura adicional: registrar y mostrar impresión.
+                registrationForm.requestSubmit();
             } else if (voucherData.message && voucherData.message !== 'Vale no encontrado') {
                 // Si es un vale inválido/no relacionado/usado, bloquear y mostrar motivo
                 alert(voucherData.message);
