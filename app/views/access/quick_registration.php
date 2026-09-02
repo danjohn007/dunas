@@ -85,21 +85,7 @@
             </button>
         </div>
         
-        <!-- Entrada para lectores QR: el lector escribe el código y finaliza con Enter. -->
-        <div class="mt-6 border-t border-gray-200 pt-6">
-            <label for="manualPlateInput" class="block text-sm font-semibold text-gray-700 mb-3">
-                <i class="fas fa-qrcode text-gray-600 mr-2"></i>Escanear código QR del vale
-            </label>
-            <input type="text" id="manualPlateInput"
-                   placeholder="Escanee el código QR"
-                   class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 uppercase"
-                   maxlength="100"
-                   autocomplete="off"
-                   autofocus>
-            <p class="mt-2 text-xs text-gray-500">
-                <i class="fas fa-info-circle mr-1"></i>El acceso se registrará y se abrirá la vista de impresión automáticamente.
-            </p>
-        </div>
+        <input type="hidden" id="manualPlateInput">
         <div id="manualRegistrationBtn" hidden aria-hidden="true"></div>
         
         <div id="searchResult" class="mt-4 hidden"></div>
@@ -454,10 +440,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.ensureCapacityOption = ensureCapacityOption;
     window.showExistingClientData = showExistingClientData;
     
-    manualPlateInput.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
-    });
-    
     // Toggle para nuevo cliente
     newClientCheck.addEventListener('change', function() {
         if (this.checked) {
@@ -624,32 +606,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Punto interno que conserva el flujo existente de validación del QR.
     const manualRegistrationBtn = document.getElementById('manualRegistrationBtn');
-
-    // Los lectores QR actúan como teclado; se procesa al pausar o al recibir Enter.
     let qrScanTimeout = null;
+    let qrScanBuffer = '';
+
     function processQrScan() {
-        if (!manualRegistrationBtn.disabled) {
+        if (qrScanBuffer.trim().length >= 4 && !manualRegistrationBtn.disabled) {
+            manualPlateInput.value = qrScanBuffer.trim().toUpperCase();
+            qrScanBuffer = '';
             manualRegistrationBtn.dispatchEvent(new Event('click'));
         }
     }
 
-    manualPlateInput.addEventListener('input', function() {
-        clearTimeout(qrScanTimeout);
-        if (this.value.trim().length >= 4) {
-            qrScanTimeout = setTimeout(processQrScan, 500);
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey || event.altKey || event.metaKey) {
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            if (qrScanBuffer.trim().length >= 4) {
+                event.preventDefault();
+                clearTimeout(qrScanTimeout);
+                processQrScan();
+            }
+            return;
+        }
+
+        if (event.key.length === 1) {
+            qrScanBuffer += event.key;
+            clearTimeout(qrScanTimeout);
+            if (qrScanBuffer.trim().length >= 4) {
+                qrScanTimeout = setTimeout(processQrScan, 500);
+            }
         }
     });
 
-    manualPlateInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            clearTimeout(qrScanTimeout);
-            processQrScan();
-        }
-    });
-    
     manualRegistrationBtn.addEventListener('click', async function() {
         // Usar placa manual o placa detectada
         let input = manualPlateInput.value.trim();
