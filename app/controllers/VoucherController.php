@@ -31,6 +31,7 @@ class VoucherController extends BaseController {
             'serie' => $_GET['serie'] ?? '',
             'status' => $_GET['status'] ?? '',
             'search' => $_GET['search'] ?? '',
+            'date' => $_GET['date'] ?? '',
             'limit' => $perPage,
             'offset' => $offset
         ];

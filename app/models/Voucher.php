@@ -34,6 +34,11 @@ class Voucher {
             $sql .= " AND v.status = ?";
             $params[] = $filters['status'];
         }
+
+        if (!empty($filters['date'])) {
+            $sql .= " AND DATE(v.created_at) = ?";
+            $params[] = $filters['date'];
+        }
         
         if (!empty($filters['search'])) {
             $sql .= " AND (v.serie LIKE ? OR v.folio LIKE ? OR v.qr_code LIKE ?)";
@@ -660,6 +665,11 @@ class Voucher {
         if (!empty($filters['status'])) {
             $sql .= " AND v.status = ?";
             $params[] = $filters['status'];
+        }
+
+        if (!empty($filters['date'])) {
+            $sql .= " AND DATE(v.created_at) = ?";
+            $params[] = $filters['date'];
         }
         
         if (!empty($filters['search'])) {
