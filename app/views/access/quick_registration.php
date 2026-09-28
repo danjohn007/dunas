@@ -1287,7 +1287,7 @@ window.CLEANUP_CONFIG = {
                     window.ensureCapacityOption(voucherCapacity);
                 }
 
-                if (unitCapacity > voucherCapacity) {
+                if (unitCapacity < voucherCapacity) {
                     voucherValidated = false;
                     validatedVoucherCapacity = 0;
                     voucherIdInput.value = '';
@@ -1371,7 +1371,7 @@ window.CLEANUP_CONFIG = {
         // via the in-form validator. Vouchers pre-loaded through the manual search have
         // their capacity pre-set via ensureCapacityOption(), so no additional check is
         // needed for that path; skipping avoids false positives when the variable is 0.
-        if (paymentMethodSelect.value === 'voucher' && validatedVoucherCapacity > 0 && parseFloat(capacityLitersInput.value || '0') > validatedVoucherCapacity) {
+        if (paymentMethodSelect.value === 'voucher' && validatedVoucherCapacity > 0 && parseFloat(capacityLitersInput.value || '0') < validatedVoucherCapacity) {
             e.preventDefault();
             alert('La capacidad de la pipa no corresponde a los litros del vale.');
             return false;

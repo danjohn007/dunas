@@ -558,7 +558,7 @@ class AccessController extends BaseController {
             // Validar vale si el método de pago es 'voucher'
             if ($isVoucherPayment) {
                 $voucherCapacityLiters = (float)($voucher['capacity'] ?? 0);
-                if ($unitCapacityLiters > $voucherCapacityLiters) {
+                if ($unitCapacityLiters < $voucherCapacityLiters) {
                     $this->setFlash('error', 'La capacidad de la pipa no corresponde a los litros del vale.');
                     $this->redirect('/access/quickRegistration');
                     return;
