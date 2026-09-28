@@ -27,6 +27,11 @@ class Unit {
             $sql .= " AND u.client_id = ?";
             $params[] = $filters['client_id'];
         }
+
+        if (!empty($filters['plate'])) {
+            $sql .= " AND u.plate_number LIKE ?";
+            $params[] = '%' . $filters['plate'] . '%';
+        }
         
         $sql .= " ORDER BY u.created_at DESC";
         

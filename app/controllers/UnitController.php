@@ -19,7 +19,8 @@ class UnitController extends BaseController {
         Auth::requireLogin();
         
         $filters = [
-            'status' => $_GET['status'] ?? ''
+            'status' => $_GET['status'] ?? '',
+            'plate' => trim($_GET['plate'] ?? '')
         ];
         
         $units = $this->unitModel->getAll($filters);

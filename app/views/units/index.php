@@ -10,6 +10,25 @@
         </a>
         <?php endif; ?>
     </div>
+
+    <form method="GET" action="<?php echo BASE_URL; ?>/units" class="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-col sm:flex-row gap-3">
+        <label for="plateSearch" class="sr-only">Buscar por placa</label>
+        <div class="relative flex-1">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input id="plateSearch" type="search" name="plate"
+                   value="<?php echo htmlspecialchars($filters['plate']); ?>"
+                   placeholder="Buscar placa..."
+                   class="w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500">
+        </div>
+        <button type="submit" class="inline-flex items-center justify-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">
+            Buscar
+        </button>
+        <?php if (!empty($filters['plate'])): ?>
+        <a href="<?php echo BASE_URL; ?>/units" class="inline-flex items-center justify-center px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg">
+            Limpiar
+        </a>
+        <?php endif; ?>
+    </form>
     
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
