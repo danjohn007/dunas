@@ -125,9 +125,7 @@ class UnitController extends BaseController {
                 'client_id' => 'required|integer',
                 'driver_id' => 'required|integer',
                 'plate_number' => 'required',
-                'capacity_liters' => 'required|integer',
-                'brand' => 'required',
-                'model' => 'required'
+                'capacity_liters' => 'required|integer'
             ];
             
             if ($validator->validate($_POST, $rules)) {

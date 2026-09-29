@@ -91,9 +91,9 @@
                 <!-- Marca -->
                 <div>
                     <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">
-                        Marca <span class="text-red-500">*</span>
+                        Marca
                     </label>
-                    <input type="text" id="brand" name="brand" required
+                    <input type="text" id="brand" name="brand"
                            value="<?php echo htmlspecialchars($unit['brand']); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ej: Kenworth">
@@ -102,9 +102,9 @@
                 <!-- Modelo -->
                 <div>
                     <label for="model" class="block text-sm font-medium text-gray-700 mb-1">
-                        Modelo <span class="text-red-500">*</span>
+                        Modelo
                     </label>
-                    <input type="text" id="model" name="model" required
+                    <input type="text" id="model" name="model"
                            value="<?php echo htmlspecialchars($unit['model']); ?>"
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Ej: T800">
