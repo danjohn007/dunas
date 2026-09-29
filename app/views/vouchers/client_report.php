@@ -129,13 +129,14 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código QR</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacidad</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha de relación</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha de registro</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
                         <?php if (empty($vouchers)): ?>
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">Este cliente no tiene vales relacionados.</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">Este cliente no tiene vales relacionados.</td>
                         </tr>
                         <?php else: ?>
                             <?php foreach ($vouchers as $voucher): ?>
@@ -158,6 +159,9 @@
                                     ];
                                     echo htmlspecialchars($statusLabels[$voucher['status']] ?? $voucher['status']);
                                     ?>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                                    <?php echo !empty($voucher['related_at']) ? date('d/m/Y H:i', strtotime($voucher['related_at'])) : 'No disponible'; ?>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                                     <?php echo $voucher['status'] === 'registered' && !empty($voucher['used_at']) ? date('d/m/Y H:i', strtotime($voucher['used_at'])) : '—'; ?>

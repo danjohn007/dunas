@@ -83,10 +83,16 @@
                     </div>
                     <?php if (!empty($voucher['client_id'])): ?>
                     <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Registro del Vale</label>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Relación</label>
                         <p class="text-gray-900">
-                            <?php echo !empty($voucher['used_at']) ? date('d/m/Y H:i:s', strtotime($voucher['used_at'])) : 'Aún no registrado'; ?>
+                            <?php echo !empty($voucher['related_at']) ? date('d/m/Y H:i:s', strtotime($voucher['related_at'])) : 'No disponible para este vale'; ?>
                         </p>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($voucher['used_at']) && in_array($voucher['status'], ['registered', 'used'], true)): ?>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Registro del Vale</label>
+                        <p class="text-gray-900"><?php echo date('d/m/Y H:i:s', strtotime($voucher['used_at'])); ?></p>
                     </div>
                     <?php endif; ?>
                 </div>
