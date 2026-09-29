@@ -21,6 +21,80 @@
         </div>
     </form>
 
+    <?php if (!$selectedClient): ?>
+    <section class="mb-8">
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">Resumen global de clientes</h2>
+            <p class="text-sm text-gray-600">Vales actualmente relacionados, agrupados por cliente.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm font-medium text-gray-600">Clientes con vales</p>
+                <p class="text-2xl font-bold text-blue-700"><?php echo number_format($globalVoucherTotals['clients_with_vouchers']); ?></p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm font-medium text-gray-600">Total de vales</p>
+                <p class="text-2xl font-bold text-gray-900"><?php echo number_format($globalVoucherTotals['total_vouchers']); ?></p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm font-medium text-gray-600">Registrados</p>
+                <p class="text-2xl font-bold text-green-600"><?php echo number_format($globalVoucherTotals['registered']); ?></p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5">
+                <p class="text-sm font-medium text-gray-600">Aún no registrados</p>
+                <p class="text-2xl font-bold text-amber-600"><?php echo number_format($globalVoucherTotals['not_registered']); ?></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <section class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Registro global de vales</h3>
+                <div class="relative h-72">
+                    <canvas id="globalVoucherRegistrationChart" aria-label="Gráfica global de vales registrados y no registrados"></canvas>
+                </div>
+            </section>
+
+            <section class="lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Registrados</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">No registrados</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            <?php if (empty($clientVoucherSummary)): ?>
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">No hay clientes para mostrar.</td>
+                            </tr>
+                            <?php else: ?>
+                                <?php foreach ($clientVoucherSummary as $summary): ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900"><?php echo htmlspecialchars($summary['client_name']); ?></td>
+                                    <td class="px-4 py-3 text-sm text-right text-gray-700"><?php echo number_format($summary['total_vouchers']); ?></td>
+                                    <td class="px-4 py-3 text-sm text-right text-green-700"><?php echo number_format($summary['registered_count']); ?></td>
+                                    <td class="px-4 py-3 text-sm text-right text-amber-700"><?php echo number_format($summary['not_registered_count']); ?></td>
+                                    <td class="px-4 py-3 text-right">
+                                        <a class="text-blue-600 hover:text-blue-800" title="Consultar vales del cliente" aria-label="Consultar vales del cliente" href="<?php echo BASE_URL; ?>/vouchers/clientReport?client_id=<?php echo (int)$summary['client_id']; ?>">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </section>
+    <?php endif; ?>
+
     <?php if ($selectedClient): ?>
     <div class="mb-4">
         <h2 class="text-xl font-semibold text-gray-900"><?php echo htmlspecialchars($selectedClient['business_name']); ?></h2>
@@ -100,6 +174,33 @@
     <p class="text-red-600">No se encontró el cliente seleccionado.</p>
     <?php endif; ?>
 </div>
+
+<?php if (!$selectedClient): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartCanvas = document.getElementById('globalVoucherRegistrationChart');
+    if (!chartCanvas || typeof Chart === 'undefined') return;
+
+    new Chart(chartCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Registrados', 'Aún no registrados'],
+            datasets: [{
+                data: [<?php echo (int)$globalVoucherTotals['registered']; ?>, <?php echo (int)$globalVoucherTotals['not_registered']; ?>],
+                backgroundColor: ['#16a34a', '#f59e0b'],
+                borderColor: '#ffffff',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+});
+</script>
+<?php endif; ?>
 
 <?php if ($selectedClient): ?>
 <script>

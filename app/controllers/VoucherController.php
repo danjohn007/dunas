@@ -70,6 +70,22 @@ class VoucherController extends BaseController {
         $clients = $clientModel->getAll();
         $clientId = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;
         $client = $clientId > 0 ? $clientModel->getById($clientId) : null;
+        $clientVoucherSummary = $this->voucherModel->getVoucherRegistrationSummaryByClient();
+        $globalVoucherTotals = [
+            'clients_with_vouchers' => 0,
+            'total_vouchers' => 0,
+            'registered' => 0,
+            'not_registered' => 0
+        ];
+
+        foreach ($clientVoucherSummary as $summary) {
+            $total = (int)$summary['total_vouchers'];
+            $globalVoucherTotals['clients_with_vouchers'] += $total > 0 ? 1 : 0;
+            $globalVoucherTotals['total_vouchers'] += $total;
+            $globalVoucherTotals['registered'] += (int)$summary['registered_count'];
+            $globalVoucherTotals['not_registered'] += (int)$summary['not_registered_count'];
+        }
+
         $vouchers = $client ? $this->voucherModel->getVoucherDetailsByCompany($clientId) : [];
         $registeredCount = 0;
 
@@ -83,6 +99,8 @@ class VoucherController extends BaseController {
             'title' => 'Informe por Cliente',
             'clients' => $clients,
             'selectedClient' => $client,
+            'clientVoucherSummary' => $clientVoucherSummary,
+            'globalVoucherTotals' => $globalVoucherTotals,
             'vouchers' => $vouchers,
             'registeredCount' => $registeredCount,
             'notRegisteredCount' => count($vouchers) - $registeredCount,

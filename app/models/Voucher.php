@@ -800,6 +800,21 @@ class Voucher {
         
         return $this->db->fetchAll($sql, $params);
     }
+
+    public function getVoucherRegistrationSummaryByClient() {
+        $sql = "SELECT
+                    c.id as client_id,
+                    c.business_name as client_name,
+                    COUNT(v.id) as total_vouchers,
+                    SUM(CASE WHEN v.status = 'registered' THEN 1 ELSE 0 END) as registered_count,
+                    SUM(CASE WHEN v.id IS NOT NULL AND v.status <> 'registered' THEN 1 ELSE 0 END) as not_registered_count
+                FROM clients c
+                LEFT JOIN vouchers v ON v.client_id = c.id
+                GROUP BY c.id, c.business_name
+                ORDER BY c.business_name ASC";
+
+        return $this->db->fetchAll($sql);
+    }
     
     /**
      * Obtiene el detalle de vales por empresa
