@@ -31,7 +31,8 @@ class VoucherController extends BaseController {
             'serie' => $_GET['serie'] ?? '',
             'status' => $_GET['status'] ?? '',
             'search' => $_GET['search'] ?? '',
-            'date' => $_GET['date'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
             'limit' => $perPage,
             'offset' => $offset
         ];
@@ -58,6 +59,37 @@ class VoucherController extends BaseController {
         ];
         
         $this->view('vouchers/index', $data);
+    }
+
+    public function clientReport() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+
+        require_once APP_PATH . '/models/Client.php';
+        $clientModel = new Client();
+        $clients = $clientModel->getAll();
+        $clientId = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;
+        $client = $clientId > 0 ? $clientModel->getById($clientId) : null;
+        $vouchers = $client ? $this->voucherModel->getVoucherDetailsByCompany($clientId) : [];
+        $registeredCount = 0;
+
+        foreach ($vouchers as $voucher) {
+            if ($voucher['status'] === 'registered') {
+                $registeredCount++;
+            }
+        }
+
+        $data = [
+            'title' => 'Informe por Cliente',
+            'clients' => $clients,
+            'selectedClient' => $client,
+            'vouchers' => $vouchers,
+            'registeredCount' => $registeredCount,
+            'notRegisteredCount' => count($vouchers) - $registeredCount,
+            'showNav' => true
+        ];
+
+        $this->view('vouchers/client_report', $data);
     }
     
     /**

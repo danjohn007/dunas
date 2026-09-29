@@ -81,6 +81,14 @@
                         <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Creación</label>
                         <p class="text-gray-900"><?php echo date('d/m/Y H:i:s', strtotime($voucher['created_at'])); ?></p>
                     </div>
+                    <?php if (!empty($voucher['client_id'])): ?>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Relación con el Cliente</label>
+                        <p class="text-gray-900">
+                            <?php echo !empty($voucher['related_at']) ? date('d/m/Y H:i:s', strtotime($voucher['related_at'])) : 'No disponible'; ?>
+                        </p>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
             

@@ -35,9 +35,14 @@ class Voucher {
             $params[] = $filters['status'];
         }
 
-        if (!empty($filters['date'])) {
-            $sql .= " AND DATE(v.created_at) = ?";
-            $params[] = $filters['date'];
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND v.created_at >= ?";
+            $params[] = $filters['date_from'] . ' 00:00:00';
+        }
+
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND v.created_at <= ?";
+            $params[] = $filters['date_to'] . ' 23:59:59';
         }
         
         if (!empty($filters['search'])) {
@@ -269,8 +274,8 @@ class Voucher {
             throw new Exception("Error crítico: código QR generado inválido");
         }
         
-        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status, voucher_type) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status, voucher_type, related_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END)";
         
         $params = [
             strtoupper(trim($data['serie'])),
@@ -282,7 +287,8 @@ class Voucher {
             $data['created_by'],
             $data['client_id'] ?? null,
             $status,
-            $voucherType
+            $voucherType,
+            $data['client_id'] ?? null
         ];
         
         $this->db->execute($sql, $params);
@@ -397,7 +403,7 @@ class Voucher {
      */
     public function relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId, $capacity) {
         $sql = "UPDATE vouchers
-                SET client_id = ?, status = 'active'
+                SET client_id = ?, status = 'active', related_at = CURRENT_TIMESTAMP
                 WHERE serie = ?
                   AND folio BETWEEN ? AND ?
                   AND capacity = ?
@@ -421,7 +427,7 @@ class Voucher {
      */
     public function unlinkImprentaVoucher($id) {
         $sql = "UPDATE vouchers
-                SET client_id = NULL, status = 'pending_assignment'
+                SET client_id = NULL, status = 'pending_assignment', related_at = NULL
                 WHERE id = ?
                   AND status = 'active'
                   AND client_id IS NOT NULL";
@@ -449,7 +455,7 @@ class Voucher {
         }
 
         $sql = "UPDATE vouchers
-                SET client_id = NULL, status = 'pending_assignment'
+                SET client_id = NULL, status = 'pending_assignment', related_at = NULL
                 WHERE client_id = ?
                   AND status = 'active'";
         $params = [(int)$clientId];
@@ -667,9 +673,14 @@ class Voucher {
             $params[] = $filters['status'];
         }
 
-        if (!empty($filters['date'])) {
-            $sql .= " AND DATE(v.created_at) = ?";
-            $params[] = $filters['date'];
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND v.created_at >= ?";
+            $params[] = $filters['date_from'] . ' 00:00:00';
+        }
+
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND v.created_at <= ?";
+            $params[] = $filters['date_to'] . ' 23:59:59';
         }
         
         if (!empty($filters['search'])) {

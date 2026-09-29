@@ -38,7 +38,7 @@
     </div>
 
     <!-- Estadísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -75,22 +75,11 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Capacidad Activa</p>
-                    <p class="text-2xl font-bold text-blue-600"><?php echo number_format($stats['total_active_capacity']); ?> L</p>
-                </div>
-                <div class="p-3 bg-blue-100 rounded-full">
-                    <i class="fas fa-tint text-blue-600 text-xl"></i>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <form method="GET" action="<?php echo BASE_URL; ?>/vouchers" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <form method="GET" action="<?php echo BASE_URL; ?>/vouchers" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Serie</label>
                 <select name="serie" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
@@ -117,9 +106,16 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de creación</label>
-                <input type="date" name="date"
-                       value="<?php echo htmlspecialchars($filters['date']); ?>"
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha desde</label>
+                  <input type="date" name="date_from"
+                      value="<?php echo htmlspecialchars($filters['date_from']); ?>"
+                      class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                 </div>
+
+                 <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha hasta</label>
+                  <input type="date" name="date_to"
+                      value="<?php echo htmlspecialchars($filters['date_to']); ?>"
                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
 

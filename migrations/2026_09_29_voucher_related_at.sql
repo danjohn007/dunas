@@ -1,0 +1,2 @@
+ALTER TABLE `vouchers`
+ADD COLUMN `related_at` DATETIME NULL DEFAULT NULL AFTER `client_id`;

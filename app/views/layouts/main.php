@@ -212,6 +212,12 @@
                                 <i class="fas fa-list w-5 mr-3"></i>Gestión de Vales
                             </a>
                         </li>
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/vouchers/clientReport"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-chart-pie w-5 mr-3"></i>Informe por cliente
+                            </a>
+                        </li>
                         <?php if (Auth::hasRole(['admin', 'supervisor'])): ?>
                         <li>
                             <a href="<?php echo BASE_URL; ?>/vouchers/imprenta"
