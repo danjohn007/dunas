@@ -274,8 +274,8 @@ class Voucher {
             throw new Exception("Error crítico: código QR generado inválido");
         }
         
-        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status, voucher_type, related_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END)";
+        $sql = "INSERT INTO vouchers (serie, folio, qr_code, capacity, cost, payment_status, created_by, client_id, status, voucher_type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             strtoupper(trim($data['serie'])),
@@ -287,8 +287,7 @@ class Voucher {
             $data['created_by'],
             $data['client_id'] ?? null,
             $status,
-            $voucherType,
-            $data['client_id'] ?? null
+            $voucherType
         ];
         
         $this->db->execute($sql, $params);
@@ -403,7 +402,7 @@ class Voucher {
      */
     public function relateImprentaVouchers($serie, $folioStart, $folioEnd, $clientId, $capacity) {
         $sql = "UPDATE vouchers
-                SET client_id = ?, status = 'active', related_at = CURRENT_TIMESTAMP
+                SET client_id = ?, status = 'active'
                 WHERE serie = ?
                   AND folio BETWEEN ? AND ?
                   AND capacity = ?
@@ -427,7 +426,7 @@ class Voucher {
      */
     public function unlinkImprentaVoucher($id) {
         $sql = "UPDATE vouchers
-                SET client_id = NULL, status = 'pending_assignment', related_at = NULL
+                SET client_id = NULL, status = 'pending_assignment'
                 WHERE id = ?
                   AND status = 'active'
                   AND client_id IS NOT NULL";
@@ -455,7 +454,7 @@ class Voucher {
         }
 
         $sql = "UPDATE vouchers
-                SET client_id = NULL, status = 'pending_assignment', related_at = NULL
+                SET client_id = NULL, status = 'pending_assignment'
                 WHERE client_id = ?
                   AND status = 'active'";
         $params = [(int)$clientId];

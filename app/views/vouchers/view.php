@@ -83,9 +83,9 @@
                     </div>
                     <?php if (!empty($voucher['client_id'])): ?>
                     <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Relación con el Cliente</label>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Registro del Vale</label>
                         <p class="text-gray-900">
-                            <?php echo !empty($voucher['related_at']) ? date('d/m/Y H:i:s', strtotime($voucher['related_at'])) : 'No disponible'; ?>
+                            <?php echo !empty($voucher['used_at']) ? date('d/m/Y H:i:s', strtotime($voucher['used_at'])) : 'Aún no registrado'; ?>
                         </p>
                     </div>
                     <?php endif; ?>
