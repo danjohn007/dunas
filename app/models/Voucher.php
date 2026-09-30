@@ -10,6 +10,21 @@ class Voucher {
         $this->db = Database::getInstance();
     }
 
+    private function shouldFilterByRegistrationDate($filters) {
+        if (empty($filters['date_from']) && empty($filters['date_to'])) {
+            return false;
+        }
+
+        $result = $this->db->fetchOne("SELECT DATE(MAX(created_at)) as latest_created_date FROM vouchers");
+        $latestCreatedDate = $result['latest_created_date'] ?? null;
+        if (!$latestCreatedDate) {
+            return false;
+        }
+
+        return (!empty($filters['date_from']) && $filters['date_from'] > $latestCreatedDate)
+            || (!empty($filters['date_to']) && $filters['date_to'] > $latestCreatedDate);
+    }
+
     public function formatAccessPin($folio) {
         return str_pad((string)$folio, 4, '0', STR_PAD_LEFT);
     }
@@ -18,6 +33,7 @@ class Voucher {
      * Obtiene todos los vales con filtros opcionales
      */
     public function getAll($filters = []) {
+        $dateColumn = $this->shouldFilterByRegistrationDate($filters) ? 'v.used_at' : 'v.created_at';
         $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id 
@@ -36,12 +52,12 @@ class Voucher {
         }
 
         if (!empty($filters['date_from'])) {
-            $sql .= " AND v.created_at >= ?";
+            $sql .= " AND {$dateColumn} >= ?";
             $params[] = $filters['date_from'] . ' 00:00:00';
         }
 
         if (!empty($filters['date_to'])) {
-            $sql .= " AND v.created_at <= ?";
+            $sql .= " AND {$dateColumn} <= ?";
             $params[] = $filters['date_to'] . ' 23:59:59';
         }
         
@@ -656,6 +672,7 @@ class Voucher {
      * Obtiene el conteo total de vales según filtros
      */
     public function getTotalCount($filters = []) {
+        $dateColumn = $this->shouldFilterByRegistrationDate($filters) ? 'v.used_at' : 'v.created_at';
         $sql = "SELECT COUNT(*) as total 
                 FROM vouchers v 
                 LEFT JOIN users u ON v.created_by = u.id 
@@ -674,12 +691,12 @@ class Voucher {
         }
 
         if (!empty($filters['date_from'])) {
-            $sql .= " AND v.created_at >= ?";
+            $sql .= " AND {$dateColumn} >= ?";
             $params[] = $filters['date_from'] . ' 00:00:00';
         }
 
         if (!empty($filters['date_to'])) {
-            $sql .= " AND v.created_at <= ?";
+            $sql .= " AND {$dateColumn} <= ?";
             $params[] = $filters['date_to'] . ' 23:59:59';
         }
         

@@ -166,6 +166,9 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Fecha Creación
                         </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fecha Registro
+                        </th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Acciones
                         </th>
@@ -174,7 +177,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     <?php if (empty($vouchers)): ?>
                     <tr>
-                        <td colspan="<?php echo $showCompanyColumn ? '8' : '7'; ?>" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="<?php echo $showCompanyColumn ? '9' : '8'; ?>" class="px-6 py-8 text-center text-gray-500">
                             <i class="fas fa-inbox text-4xl mb-3 text-gray-400"></i>
                             <p>No se encontraron vales</p>
                         </td>
@@ -230,6 +233,9 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <?php echo date('d/m/Y H:i', strtotime($voucher['created_at'])); ?>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <?php echo !empty($voucher['used_at']) ? date('d/m/Y H:i', strtotime($voucher['used_at'])) : ''; ?>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <a href="<?php echo BASE_URL; ?>/vouchers/detail/<?php echo $voucher['id']; ?>" 
