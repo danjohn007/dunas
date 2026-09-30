@@ -451,7 +451,6 @@ class AccessController extends BaseController {
             $clientId = null;
             $driverId = null;
             $unitId = null;
-            $unitCapacityLiters = 0;
             $voucher = null;
             $isVoucherPayment = (($_POST['payment_method'] ?? 'cash') === 'voucher');
 
@@ -537,10 +536,8 @@ class AccessController extends BaseController {
             
             if ($unit) {
                 $unitId = $unit['id'];
-                $unitCapacityLiters = (float)($unit['capacity_liters'] ?? 0);
             } else {
                 // Crear nueva unidad
-                $unitCapacityLiters = (float)($_POST['capacity_liters'] ?? 0);
                 $unitData = [
                     'client_id' => $clientId,
                     'driver_id' => $driverId,
@@ -553,16 +550,6 @@ class AccessController extends BaseController {
                     'status' => 'active'
                 ];
                 $unitId = $this->unitModel->create($unitData);
-            }
-            
-            // Validar vale si el método de pago es 'voucher'
-            if ($isVoucherPayment) {
-                $voucherCapacityLiters = (float)($voucher['capacity'] ?? 0);
-                if ($unitCapacityLiters < $voucherCapacityLiters) {
-                    $this->setFlash('error', 'La capacidad de la pipa no corresponde a los litros del vale.');
-                    $this->redirect('/access/quickRegistration');
-                    return;
-                }
             }
             
             // Registrar entrada

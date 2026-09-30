@@ -66,11 +66,11 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Usados</p>
-                    <p class="text-2xl font-bold text-gray-600"><?php echo number_format($stats['used']); ?></p>
+                    <p class="text-sm font-medium text-gray-600">Registrados</p>
+                    <p class="text-2xl font-bold text-gray-600"><?php echo number_format($stats['registered']); ?></p>
                 </div>
                 <div class="p-3 bg-gray-100 rounded-full">
-                    <i class="fas fa-times-circle text-gray-600 text-xl"></i>
+                    <i class="fas fa-clipboard-check text-gray-600 text-xl"></i>
                 </div>
             </div>
         </div>

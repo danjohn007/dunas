@@ -1216,7 +1216,6 @@ window.CLEANUP_CONFIG = {
     const voucherValidationResult = document.getElementById('voucherValidationResult');
     const voucherIdInput = document.getElementById('voucherId');
     const quickForm = document.getElementById('registrationForm');
-    const capacityLitersInput = document.getElementById('capacityLiters');
     const clientIdInput = document.getElementById('clientId');
     const newClientCheck = document.getElementById('newClientCheck');
     const newClientFields = document.getElementById('newClientFields');
@@ -1228,21 +1227,18 @@ window.CLEANUP_CONFIG = {
     const baseUrl = "<?php echo BASE_URL; ?>";
     
     let voucherValidated = false;
-    let validatedVoucherCapacity = 0;
 
     paymentMethodSelect.addEventListener('change', function() {
         if (this.value === 'voucher') {
             voucherContainer.classList.remove('hidden');
             voucherQrCodeInput.setAttribute('required', 'required');
             voucherValidated = false;
-            validatedVoucherCapacity = 0;
             voucherIdInput.value = '';
             voucherValidationResult.classList.add('hidden');
         } else {
             voucherContainer.classList.add('hidden');
             voucherQrCodeInput.removeAttribute('required');
             voucherValidated = true;
-            validatedVoucherCapacity = 0;
             voucherIdInput.value = '';
         }
     });
@@ -1272,7 +1268,6 @@ window.CLEANUP_CONFIG = {
             if (data.success) {
                 if (!data.client || !data.client.id) {
                     voucherValidated = false;
-                    validatedVoucherCapacity = 0;
                     voucherIdInput.value = '';
                     clientIdInput.value = '';
                     existingClientData.classList.add('hidden');
@@ -1280,23 +1275,13 @@ window.CLEANUP_CONFIG = {
                     return;
                 }
 
-                const unitCapacity = parseFloat(capacityLitersInput.value || '0');
                 const voucherCapacity = parseFloat(data.voucher.capacity || '0');
 
                 if (typeof window.ensureCapacityOption === 'function') {
                     window.ensureCapacityOption(voucherCapacity);
                 }
 
-                if (unitCapacity < voucherCapacity) {
-                    voucherValidated = false;
-                    validatedVoucherCapacity = 0;
-                    voucherIdInput.value = '';
-                    showVoucherResult('error', 'La capacidad de la pipa no corresponde a los litros del vale.');
-                    return;
-                }
-
                 voucherValidated = true;
-                validatedVoucherCapacity = voucherCapacity;
                 voucherIdInput.value = data.voucher.id;
                 clientIdInput.value = data.client.id;
                 newClientCheck.checked = false;
@@ -1310,13 +1295,11 @@ window.CLEANUP_CONFIG = {
                 );
             } else {
                 voucherValidated = false;
-                validatedVoucherCapacity = 0;
                 voucherIdInput.value = '';
                 showVoucherResult('error', data.message);
             }
         } catch (error) {
             voucherValidated = false;
-            validatedVoucherCapacity = 0;
             voucherIdInput.value = '';
             showVoucherResult('error', 'Error: ' + error.message);
         }
@@ -1367,15 +1350,6 @@ window.CLEANUP_CONFIG = {
             return false;
         }
 
-        // validatedVoucherCapacity is only populated (> 0) when the QR was validated
-        // via the in-form validator. Vouchers pre-loaded through the manual search have
-        // their capacity pre-set via ensureCapacityOption(), so no additional check is
-        // needed for that path; skipping avoids false positives when the variable is 0.
-        if (paymentMethodSelect.value === 'voucher' && validatedVoucherCapacity > 0 && parseFloat(capacityLitersInput.value || '0') < validatedVoucherCapacity) {
-            e.preventDefault();
-            alert('La capacidad de la pipa no corresponde a los litros del vale.');
-            return false;
-        }
     }, true);
 })();
 </script>
