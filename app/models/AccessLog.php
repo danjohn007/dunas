@@ -105,7 +105,7 @@ class AccessLog {
     public function getById($id) {
         $sql = "SELECT al.*, d.full_name as driver_name, d.phone as driver_phone,
                 u.plate_number, u.capacity_liters,
-                v.capacity as voucher_capacity,
+                v.capacity as voucher_capacity, v.serie as voucher_serie, v.folio as voucher_folio,
                 c.business_name as client_name, c.phone as client_phone
                 FROM access_logs al
                 LEFT JOIN drivers d ON al.driver_id = d.id

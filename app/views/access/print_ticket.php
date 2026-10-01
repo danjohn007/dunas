@@ -91,6 +91,12 @@
                     <span class="font-semibold text-gray-700">Unidad:</span>
                     <span class="text-gray-900"><?php echo htmlspecialchars($access['plate_number']); ?></span>
                 </div>
+                <?php if (!empty($access['voucher_serie']) && isset($access['voucher_folio'])): ?>
+                <div class="flex justify-between">
+                    <span class="font-semibold text-gray-700">Folio:</span>
+                    <span class="text-gray-900"><?php echo htmlspecialchars($access['voucher_serie'] . '-' . str_pad((string)$access['voucher_folio'], 4, '0', STR_PAD_LEFT)); ?></span>
+                </div>
+                <?php endif; ?>
                 <div class="flex justify-between">
                     <span class="font-semibold text-gray-700">Capacidad:</span>
                     <span class="text-gray-900"><?php echo number_format(!empty($access['voucher_capacity']) ? $access['voucher_capacity'] : $access['capacity_liters'], 0); ?> L</span>
