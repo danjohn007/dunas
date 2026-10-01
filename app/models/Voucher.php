@@ -15,6 +15,14 @@ class Voucher {
             return false;
         }
 
+        if (in_array($filters['status'] ?? '', ['registered', 'used'], true)) {
+            return true;
+        }
+
+        if (!empty($filters['status'])) {
+            return false;
+        }
+
         $result = $this->db->fetchOne("SELECT DATE(MAX(created_at)) as latest_created_date FROM vouchers");
         $latestCreatedDate = $result['latest_created_date'] ?? null;
         if (!$latestCreatedDate) {
