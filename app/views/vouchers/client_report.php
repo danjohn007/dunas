@@ -121,57 +121,78 @@
         </section>
 
         <section class="lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie - Folio</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código QR</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacidad</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha de relación</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha de registro</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        <?php if (empty($vouchers)): ?>
-                        <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">Este cliente no tiene vales relacionados.</td>
-                        </tr>
-                        <?php else: ?>
-                            <?php foreach ($vouchers as $voucher): ?>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    <a class="text-blue-600 hover:text-blue-800" href="<?php echo BASE_URL; ?>/vouchers/detail/<?php echo (int)$voucher['id']; ?>">
-                                        <?php echo htmlspecialchars($voucher['serie']); ?>-<?php echo str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT); ?>
-                                    </a>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-700"><?php echo htmlspecialchars($voucher['qr_code']); ?></td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700"><?php echo number_format($voucher['capacity']); ?> L</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                                    <?php
-                                    $statusLabels = [
-                                        'active' => 'Activo',
-                                        'registered' => 'Registrado',
-                                        'used' => 'Usado',
-                                        'cancelled' => 'Cancelado',
-                                        'pending_assignment' => 'Pendiente de relación'
-                                    ];
-                                    echo htmlspecialchars($statusLabels[$voucher['status']] ?? $voucher['status']);
-                                    ?>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                                    <?php echo !empty($voucher['related_at']) ? date('d/m/Y H:i', strtotime($voucher['related_at'])) : 'No disponible'; ?>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                                    <?php echo $voucher['status'] === 'registered' && !empty($voucher['used_at']) ? date('d/m/Y H:i', strtotime($voucher['used_at'])) : '—'; ?>
-                                </td>
+            <form method="POST" action="<?php echo BASE_URL; ?>/vouchers/registerSelectedForClient" id="registerSelectedVouchersForm">
+                <input type="hidden" name="client_id" value="<?php echo (int)$selectedClient['id']; ?>">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-gray-200">
+                    <p class="text-sm text-gray-600" aria-live="polite">
+                        <span id="selectedVoucherCount">0</span> vales seleccionados
+                    </p>
+                    <button type="submit" id="registerSelectedVouchersButton" disabled class="inline-flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors">
+                        <i class="fas fa-check mr-2"></i>Marcar como Registrado
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    <input type="checkbox" id="selectAllActiveVouchers" aria-label="Seleccionar todos los vales activos" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie - Folio</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código QR</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacidad</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha de relación</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha de registro</th>
                             </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            <?php if (empty($vouchers)): ?>
+                            <tr>
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">Este cliente no tiene vales relacionados.</td>
+                            </tr>
+                            <?php else: ?>
+                                <?php foreach ($vouchers as $voucher): ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <?php if ($voucher['status'] === 'active'): ?>
+                                        <input type="checkbox" name="voucher_ids[]" value="<?php echo (int)$voucher['id']; ?>" class="voucher-selection rounded border-gray-300 text-blue-600 focus:ring-blue-500" aria-label="Seleccionar vale <?php echo htmlspecialchars($voucher['serie'] . '-' . str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT)); ?>">
+                                        <?php else: ?>
+                                        <span class="text-gray-300" aria-hidden="true">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <a class="text-blue-600 hover:text-blue-800" href="<?php echo BASE_URL; ?>/vouchers/detail/<?php echo (int)$voucher['id']; ?>">
+                                            <?php echo htmlspecialchars($voucher['serie']); ?>-<?php echo str_pad((string)$voucher['folio'], 4, '0', STR_PAD_LEFT); ?>
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-700"><?php echo htmlspecialchars($voucher['qr_code']); ?></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700"><?php echo number_format($voucher['capacity']); ?> L</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                                        <?php
+                                        $statusLabels = [
+                                            'active' => 'Activo',
+                                            'registered' => 'Registrado',
+                                            'used' => 'Usado',
+                                            'cancelled' => 'Cancelado',
+                                            'pending_assignment' => 'Pendiente de relación'
+                                        ];
+                                        echo htmlspecialchars($statusLabels[$voucher['status']] ?? $voucher['status']);
+                                        ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                                        <?php echo !empty($voucher['related_at']) ? date('d/m/Y H:i', strtotime($voucher['related_at'])) : 'No disponible'; ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                                        <?php echo $voucher['status'] === 'registered' && !empty($voucher['used_at']) ? date('d/m/Y H:i', strtotime($voucher['used_at'])) : '—'; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </section>
     </div>
     <?php elseif (isset($_GET['client_id'])): ?>
@@ -209,6 +230,40 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php if ($selectedClient): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const selectionForm = document.getElementById('registerSelectedVouchersForm');
+    if (selectionForm) {
+        const selectAll = document.getElementById('selectAllActiveVouchers');
+        const voucherCheckboxes = Array.from(selectionForm.querySelectorAll('.voucher-selection'));
+        const selectedCount = document.getElementById('selectedVoucherCount');
+        const submitButton = document.getElementById('registerSelectedVouchersButton');
+
+        function updateSelection() {
+            const checkedCount = voucherCheckboxes.filter(function (checkbox) {
+                return checkbox.checked;
+            }).length;
+            selectedCount.textContent = checkedCount;
+            submitButton.disabled = checkedCount === 0;
+            selectAll.checked = voucherCheckboxes.length > 0 && checkedCount === voucherCheckboxes.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < voucherCheckboxes.length;
+        }
+
+        selectAll.addEventListener('change', function () {
+            voucherCheckboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+            updateSelection();
+        });
+        voucherCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', updateSelection);
+        });
+        selectionForm.addEventListener('submit', function (event) {
+            if (!confirm('¿Desea cambiar el estado de los vales seleccionados a "Registrado"?')) {
+                event.preventDefault();
+            }
+        });
+        updateSelection();
+    }
+
     const chartCanvas = document.getElementById('voucherRegistrationChart');
     if (!chartCanvas || typeof Chart === 'undefined') return;
 

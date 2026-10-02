@@ -109,6 +109,35 @@ class VoucherController extends BaseController {
 
         $this->view('vouchers/client_report', $data);
     }
+
+    public function registerSelectedForClient() {
+        Auth::requireLogin();
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers/clientReport');
+            return;
+        }
+
+        $clientId = filter_var($_POST['client_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $voucherIds = $_POST['voucher_ids'] ?? [];
+        $reportUrl = $clientId ? '/vouchers/clientReport?client_id=' . (int)$clientId : '/vouchers/clientReport';
+
+        if ($clientId === false || !is_array($voucherIds) || empty($voucherIds)) {
+            $this->setFlash('error', 'Seleccione al menos un vale activo para registrar.');
+            $this->redirect($reportUrl);
+            return;
+        }
+
+        try {
+            $registeredCount = $this->voucherModel->registerSelectedForClient($clientId, $voucherIds);
+            $this->setFlash('success', sprintf('%d vale(s) actualizado(s) a Registrado.', $registeredCount));
+        } catch (Exception $e) {
+            $this->setFlash('error', 'No se pudieron registrar los vales seleccionados: ' . $e->getMessage());
+        }
+
+        $this->redirect($reportUrl);
+    }
     
     /**
      * Muestra el formulario de creación de vales en lote

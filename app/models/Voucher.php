@@ -558,6 +558,64 @@ class Voucher {
         
         return true;
     }
+
+    /**
+     * Registra vales activos pertenecientes al cliente indicado.
+     */
+    public function registerSelectedForClient($clientId, $voucherIds) {
+        $clientId = (int)$clientId;
+        if ($clientId < 1 || !is_array($voucherIds) || empty($voucherIds)) {
+            throw new Exception("Debe seleccionar al menos un vale válido.");
+        }
+
+        $ids = [];
+        foreach ($voucherIds as $voucherId) {
+            $validatedId = filter_var($voucherId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($validatedId === false) {
+                throw new Exception("La selección contiene un vale no válido.");
+            }
+            $ids[] = (int)$validatedId;
+        }
+        $ids = array_values(array_unique($ids));
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $this->db->beginTransaction();
+
+        try {
+            $selectedVouchers = $this->db->fetchAll(
+                "SELECT id
+                 FROM vouchers
+                 WHERE client_id = ?
+                   AND status = 'active'
+                   AND id IN ($placeholders)
+                 FOR UPDATE",
+                array_merge([$clientId], $ids)
+            );
+
+            if (count($selectedVouchers) !== count($ids)) {
+                throw new Exception("Todos los vales seleccionados deben estar activos y relacionados con este cliente.");
+            }
+
+            $stmt = $this->db->execute(
+                "UPDATE vouchers
+                 SET status = 'registered', used_at = NOW()
+                 WHERE client_id = ?
+                   AND status = 'active'
+                   AND id IN ($placeholders)",
+                array_merge([$clientId], $ids)
+            );
+
+            if ($stmt->rowCount() !== count($ids)) {
+                throw new Exception("No se pudieron registrar todos los vales seleccionados.");
+            }
+
+            $this->db->commit();
+            return count($ids);
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
     
     /**
      * Cancela un vale
