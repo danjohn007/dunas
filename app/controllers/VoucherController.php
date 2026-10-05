@@ -69,6 +69,24 @@ class VoucherController extends BaseController {
         $clientModel = new Client();
         $clients = $clientModel->getAll();
         $clientId = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;
+        $dateFromInput = $_GET['date_from'] ?? '';
+        $dateToInput = $_GET['date_to'] ?? '';
+        $dateFrom = is_string($dateFromInput) ? trim($dateFromInput) : '';
+        $dateTo = is_string($dateToInput) ? trim($dateToInput) : '';
+
+        if (
+            (!is_string($dateFromInput))
+            || (!is_string($dateToInput))
+            || (!$this->isValidClientReportDate($dateFrom))
+            || (!$this->isValidClientReportDate($dateTo))
+            || ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo)
+        ) {
+            $this->setFlash('error', 'El rango de fechas no es válido.');
+            $query = $clientId > 0 ? '?client_id=' . $clientId : '';
+            $this->redirect('/vouchers/clientReport' . $query);
+            return;
+        }
+
         $client = $clientId > 0 ? $clientModel->getById($clientId) : null;
         $clientVoucherSummary = $this->voucherModel->getVoucherRegistrationSummaryByClient();
         $globalVoucherTotals = [
@@ -86,7 +104,9 @@ class VoucherController extends BaseController {
             $globalVoucherTotals['not_registered'] += (int)$summary['not_registered_count'];
         }
 
-        $vouchers = $client ? $this->voucherModel->getVoucherDetailsByCompany($clientId) : [];
+        $vouchers = $client
+            ? $this->voucherModel->getVoucherDetailsByCompany($clientId, $dateFrom ?: null, $dateTo ?: null)
+            : [];
         $registeredCount = 0;
 
         foreach ($vouchers as $voucher) {
@@ -102,12 +122,23 @@ class VoucherController extends BaseController {
             'clientVoucherSummary' => $clientVoucherSummary,
             'globalVoucherTotals' => $globalVoucherTotals,
             'vouchers' => $vouchers,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
             'registeredCount' => $registeredCount,
             'notRegisteredCount' => count($vouchers) - $registeredCount,
             'showNav' => true
         ];
 
         $this->view('vouchers/client_report', $data);
+    }
+
+    private function isValidClientReportDate($date) {
+        if ($date === '') {
+            return true;
+        }
+
+        $parsedDate = DateTime::createFromFormat('!Y-m-d', $date);
+        return $parsedDate && $parsedDate->format('Y-m-d') === $date;
     }
 
     public function registerSelectedForClient() {
@@ -121,7 +152,18 @@ class VoucherController extends BaseController {
 
         $clientId = filter_var($_POST['client_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $voucherIds = $_POST['voucher_ids'] ?? [];
-        $reportUrl = $clientId ? '/vouchers/clientReport?client_id=' . (int)$clientId : '/vouchers/clientReport';
+        $reportFilters = ['client_id' => $clientId ? (int)$clientId : null];
+        foreach (['date_from', 'date_to'] as $dateFilter) {
+            $dateInput = $_POST[$dateFilter] ?? '';
+            $dateValue = is_string($dateInput) ? trim($dateInput) : '';
+            if ($dateValue !== '') {
+                $reportFilters[$dateFilter] = $dateValue;
+            }
+        }
+        $reportFilters = array_filter($reportFilters, function ($value) {
+            return $value !== null;
+        });
+        $reportUrl = '/vouchers/clientReport' . (!empty($reportFilters) ? '?' . http_build_query($reportFilters) : '');
 
         if ($clientId === false || !is_array($voucherIds) || empty($voucherIds)) {
             $this->setFlash('error', 'Seleccione al menos un vale activo para registrar.');

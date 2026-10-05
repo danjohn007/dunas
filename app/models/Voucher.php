@@ -914,7 +914,7 @@ class Voucher {
                     v.payment_status,
                     v.status,
                     v.created_at,
-                    v.related_at,
+                    COALESCE(v.related_at, v.updated_at, v.created_at) AS related_at,
                     v.used_at,
                     c.business_name as client_name,
                     c.id as client_id
@@ -930,12 +930,12 @@ class Voucher {
         }
         
         if ($dateFrom) {
-            $sql .= " AND v.created_at >= ?";
+            $sql .= " AND COALESCE(v.related_at, v.updated_at, v.created_at) >= ?";
             $params[] = $dateFrom . ' 00:00:00';
         }
         
         if ($dateTo) {
-            $sql .= " AND v.created_at <= ?";
+            $sql .= " AND COALESCE(v.related_at, v.updated_at, v.created_at) <= ?";
             $params[] = $dateTo . ' 23:59:59';
         }
         
