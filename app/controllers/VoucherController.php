@@ -97,7 +97,14 @@ class VoucherController extends BaseController {
         }
 
         $client = $clientId > 0 ? $clientModel->getById($clientId) : null;
-        $clientVoucherSummary = $this->voucherModel->getVoucherRegistrationSummaryByClient();
+        $clientVoucherSummary = $this->voucherModel->getVoucherRegistrationSummaryByClient(
+            $dateFrom ?: null,
+            $dateTo ?: null,
+            [
+                'registered_date_from' => $registeredDateFrom ?: null,
+                'registered_date_to' => $registeredDateTo ?: null
+            ]
+        );
         $globalVoucherTotals = [
             'clients_with_vouchers' => 0,
             'total_vouchers' => 0,

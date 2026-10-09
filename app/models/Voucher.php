@@ -885,7 +885,36 @@ class Voucher {
         return $this->db->fetchAll($sql, $params);
     }
 
-    public function getVoucherRegistrationSummaryByClient() {
+    public function getVoucherRegistrationSummaryByClient($dateFrom = null, $dateTo = null, $filters = []) {
+        $join = "LEFT JOIN vouchers v ON v.client_id = c.id";
+        $params = [];
+
+        if ($dateFrom) {
+            $join .= " AND COALESCE(v.related_at, v.updated_at, v.created_at) >= ?";
+            $params[] = $dateFrom . ' 00:00:00';
+        }
+
+        if ($dateTo) {
+            $join .= " AND COALESCE(v.related_at, v.updated_at, v.created_at) <= ?";
+            $params[] = $dateTo . ' 23:59:59';
+        }
+
+        $registeredDateFrom = $filters['registered_date_from'] ?? null;
+        $registeredDateTo = $filters['registered_date_to'] ?? null;
+        if ($registeredDateFrom || $registeredDateTo) {
+            $join .= " AND v.status = 'registered'";
+
+            if ($registeredDateFrom) {
+                $join .= " AND v.used_at >= ?";
+                $params[] = $registeredDateFrom . ' 00:00:00';
+            }
+
+            if ($registeredDateTo) {
+                $join .= " AND v.used_at <= ?";
+                $params[] = $registeredDateTo . ' 23:59:59';
+            }
+        }
+
         $sql = "SELECT
                     c.id as client_id,
                     c.business_name as client_name,
@@ -893,11 +922,11 @@ class Voucher {
                     SUM(CASE WHEN v.status = 'registered' THEN 1 ELSE 0 END) as registered_count,
                     SUM(CASE WHEN v.id IS NOT NULL AND v.status <> 'registered' THEN 1 ELSE 0 END) as not_registered_count
                 FROM clients c
-                LEFT JOIN vouchers v ON v.client_id = c.id
+                {$join}
                 GROUP BY c.id, c.business_name
                 ORDER BY c.business_name ASC";
 
-        return $this->db->fetchAll($sql);
+        return $this->db->fetchAll($sql, $params);
     }
     
     /**

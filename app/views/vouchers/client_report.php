@@ -1,3 +1,13 @@
+<?php
+$reportFilters = array_filter([
+    'date_from' => $dateFrom ?? '',
+    'date_to' => $dateTo ?? '',
+    'registered_date_from' => $registeredDateFrom ?? '',
+    'registered_date_to' => $registeredDateTo ?? ''
+]);
+$clearFiltersUrl = BASE_URL . '/vouchers/clientReport'
+    . ($selectedClient ? '?' . http_build_query(['client_id' => (int)$selectedClient['id']]) : '');
+?>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Informe por cliente</h1>
@@ -8,7 +18,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))_auto] gap-4 items-end">
             <div class="md:col-span-2 xl:col-span-1">
                 <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
-                <select id="client_id" name="client_id" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <select id="client_id" name="client_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Seleccione un cliente</option>
                     <?php foreach ($clients as $client): ?>
                     <option value="<?php echo (int)$client['id']; ?>" <?php echo ($selectedClient && (int)$selectedClient['id'] === (int)$client['id']) ? 'selected' : ''; ?>>
@@ -37,8 +47,8 @@
                 <button type="submit" aria-label="Consultar" title="Consultar" class="inline-flex h-12 w-12 flex-none items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                     <i class="fas fa-search" aria-hidden="true"></i>
                 </button>
-                <?php if ($selectedClient && ($dateFrom || $dateTo || $registeredDateFrom || $registeredDateTo)): ?>
-                <a href="<?php echo BASE_URL; ?>/vouchers/clientReport?client_id=<?php echo (int)$selectedClient['id']; ?>" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-colors">
+                <?php if ($reportFilters): ?>
+                <a href="<?php echo htmlspecialchars($clearFiltersUrl, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-colors">
                     Limpiar fechas
                 </a>
                 <?php endif; ?>
@@ -51,7 +61,7 @@
     <section class="mb-8">
         <div class="mb-4">
             <h2 class="text-xl font-semibold text-gray-900">Resumen global de clientes</h2>
-            <p class="text-sm text-gray-600">Vales actualmente relacionados, agrupados por cliente.</p>
+            <p class="text-sm text-gray-600">Vales que coinciden con los filtros, agrupados por cliente.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
@@ -106,7 +116,7 @@
                                     <td class="px-4 py-3 text-sm text-right text-green-700"><?php echo number_format($summary['registered_count']); ?></td>
                                     <td class="px-4 py-3 text-sm text-right text-amber-700"><?php echo number_format($summary['not_registered_count']); ?></td>
                                     <td class="px-4 py-3 text-right">
-                                        <a class="text-blue-600 hover:text-blue-800" title="Consultar vales del cliente" aria-label="Consultar vales del cliente" href="<?php echo BASE_URL; ?>/vouchers/clientReport?client_id=<?php echo (int)$summary['client_id']; ?>">
+                                        <a class="text-blue-600 hover:text-blue-800" title="Consultar vales del cliente" aria-label="Consultar vales del cliente" href="<?php echo BASE_URL; ?>/vouchers/clientReport?<?php echo htmlspecialchars(http_build_query(array_merge(['client_id' => (int)$summary['client_id']], $reportFilters)), ENT_QUOTES, 'UTF-8'); ?>">
                                             <i class="fas fa-arrow-right"></i>
                                         </a>
                                     </td>
