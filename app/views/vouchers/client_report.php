@@ -34,8 +34,8 @@
                 <input type="date" id="registered_date_to" name="registered_date_to" value="<?php echo htmlspecialchars($registeredDateTo ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div class="flex gap-3">
-                <button type="submit" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                    <i class="fas fa-search mr-2"></i>Consultar
+                <button type="submit" aria-label="Consultar" title="Consultar" class="inline-flex h-12 w-12 flex-none items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-search" aria-hidden="true"></i>
                 </button>
                 <?php if ($selectedClient && ($dateFrom || $dateTo || $registeredDateFrom || $registeredDateTo)): ?>
                 <a href="<?php echo BASE_URL; ?>/vouchers/clientReport?client_id=<?php echo (int)$selectedClient['id']; ?>" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-colors">
