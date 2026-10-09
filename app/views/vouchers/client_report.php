@@ -6,7 +6,7 @@
 
     <form method="GET" action="<?php echo BASE_URL; ?>/vouchers/clientReport" class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))_auto] gap-4 items-end">
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-1">
                 <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
                 <select id="client_id" name="client_id" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Seleccione un cliente</option>
