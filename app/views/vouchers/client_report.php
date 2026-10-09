@@ -5,8 +5,8 @@
     </div>
 
     <form method="GET" action="<?php echo BASE_URL; ?>/vouchers/clientReport" class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 items-end">
-            <div class="md:col-span-2 xl:col-span-1">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-2 xl:col-span-2">
                 <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
                 <select id="client_id" name="client_id" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <option value="">Seleccione un cliente</option>
@@ -17,23 +17,23 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div>
+            <div class="xl:col-span-2">
                 <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">Fecha de relación desde</label>
                 <input type="date" id="date_from" name="date_from" value="<?php echo htmlspecialchars($dateFrom ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
-            <div>
+            <div class="xl:col-span-2">
                 <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">Fecha de relación hasta</label>
                 <input type="date" id="date_to" name="date_to" value="<?php echo htmlspecialchars($dateTo ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
-            <div>
+            <div class="xl:col-span-2">
                 <label for="registered_date_from" class="block text-sm font-medium text-gray-700 mb-2">Fecha de registro desde</label>
                 <input type="date" id="registered_date_from" name="registered_date_from" value="<?php echo htmlspecialchars($registeredDateFrom ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
-            <div>
+            <div class="xl:col-span-2">
                 <label for="registered_date_to" class="block text-sm font-medium text-gray-700 mb-2">Fecha de registro hasta</label>
                 <input type="date" id="registered_date_to" name="registered_date_to" value="<?php echo htmlspecialchars($registeredDateTo ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
-            <div class="flex gap-3">
+            <div class="xl:col-span-2 flex justify-end gap-3">
                 <button type="submit" aria-label="Consultar" title="Consultar" class="inline-flex h-12 w-12 flex-none items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                     <i class="fas fa-search" aria-hidden="true"></i>
                 </button>
