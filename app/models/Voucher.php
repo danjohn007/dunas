@@ -938,6 +938,22 @@ class Voucher {
             $sql .= " AND COALESCE(v.related_at, v.updated_at, v.created_at) <= ?";
             $params[] = $dateTo . ' 23:59:59';
         }
+
+        $registeredDateFrom = $filters['registered_date_from'] ?? null;
+        $registeredDateTo = $filters['registered_date_to'] ?? null;
+        if ($registeredDateFrom || $registeredDateTo) {
+            $sql .= " AND v.status = 'registered'";
+
+            if ($registeredDateFrom) {
+                $sql .= " AND v.used_at >= ?";
+                $params[] = $registeredDateFrom . ' 00:00:00';
+            }
+
+            if ($registeredDateTo) {
+                $sql .= " AND v.used_at <= ?";
+                $params[] = $registeredDateTo . ' 23:59:59';
+            }
+        }
         
         // Add additional filters
         if (!empty($filters['search'])) {

@@ -5,7 +5,7 @@
     </div>
 
     <form method="GET" action="<?php echo BASE_URL; ?>/vouchers/clientReport" class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 items-end">
             <div class="md:col-span-2 xl:col-span-1">
                 <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
                 <select id="client_id" name="client_id" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
@@ -25,18 +25,26 @@
                 <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">Fecha de relación hasta</label>
                 <input type="date" id="date_to" name="date_to" value="<?php echo htmlspecialchars($dateTo ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             </div>
+            <div>
+                <label for="registered_date_from" class="block text-sm font-medium text-gray-700 mb-2">Fecha de registro desde</label>
+                <input type="date" id="registered_date_from" name="registered_date_from" value="<?php echo htmlspecialchars($registeredDateFrom ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="registered_date_to" class="block text-sm font-medium text-gray-700 mb-2">Fecha de registro hasta</label>
+                <input type="date" id="registered_date_to" name="registered_date_to" value="<?php echo htmlspecialchars($registeredDateTo ?? ''); ?>" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+            </div>
             <div class="flex gap-3">
                 <button type="submit" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
                     <i class="fas fa-search mr-2"></i>Consultar
                 </button>
-                <?php if ($selectedClient && ($dateFrom || $dateTo)): ?>
+                <?php if ($selectedClient && ($dateFrom || $dateTo || $registeredDateFrom || $registeredDateTo)): ?>
                 <a href="<?php echo BASE_URL; ?>/vouchers/clientReport?client_id=<?php echo (int)$selectedClient['id']; ?>" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-colors">
                     Limpiar fechas
                 </a>
                 <?php endif; ?>
             </div>
         </div>
-        <p class="mt-3 text-xs text-gray-500">En vales históricos sin fecha de relación guardada se usa la última actualización disponible como referencia.</p>
+        <p class="mt-3 text-xs text-gray-500">En vales históricos sin fecha de relación guardada se usa la última actualización disponible como referencia. El rango de registro muestra únicamente vales con estado Registrado.</p>
     </form>
 
     <?php if (!$selectedClient): ?>
@@ -143,6 +151,8 @@
                 <input type="hidden" name="client_id" value="<?php echo (int)$selectedClient['id']; ?>">
                 <input type="hidden" name="date_from" value="<?php echo htmlspecialchars($dateFrom ?? ''); ?>">
                 <input type="hidden" name="date_to" value="<?php echo htmlspecialchars($dateTo ?? ''); ?>">
+                <input type="hidden" name="registered_date_from" value="<?php echo htmlspecialchars($registeredDateFrom ?? ''); ?>">
+                <input type="hidden" name="registered_date_to" value="<?php echo htmlspecialchars($registeredDateTo ?? ''); ?>">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-gray-200">
                     <p class="text-sm text-gray-600" aria-live="polite">
                         <span id="selectedVoucherCount">0</span> vales seleccionados

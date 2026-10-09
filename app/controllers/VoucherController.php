@@ -71,15 +71,24 @@ class VoucherController extends BaseController {
         $clientId = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;
         $dateFromInput = $_GET['date_from'] ?? '';
         $dateToInput = $_GET['date_to'] ?? '';
+        $registeredDateFromInput = $_GET['registered_date_from'] ?? '';
+        $registeredDateToInput = $_GET['registered_date_to'] ?? '';
         $dateFrom = is_string($dateFromInput) ? trim($dateFromInput) : '';
         $dateTo = is_string($dateToInput) ? trim($dateToInput) : '';
+        $registeredDateFrom = is_string($registeredDateFromInput) ? trim($registeredDateFromInput) : '';
+        $registeredDateTo = is_string($registeredDateToInput) ? trim($registeredDateToInput) : '';
 
         if (
             (!is_string($dateFromInput))
             || (!is_string($dateToInput))
+            || (!is_string($registeredDateFromInput))
+            || (!is_string($registeredDateToInput))
             || (!$this->isValidClientReportDate($dateFrom))
             || (!$this->isValidClientReportDate($dateTo))
             || ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo)
+            || (!$this->isValidClientReportDate($registeredDateFrom))
+            || (!$this->isValidClientReportDate($registeredDateTo))
+            || ($registeredDateFrom !== '' && $registeredDateTo !== '' && $registeredDateFrom > $registeredDateTo)
         ) {
             $this->setFlash('error', 'El rango de fechas no es válido.');
             $query = $clientId > 0 ? '?client_id=' . $clientId : '';
@@ -105,7 +114,15 @@ class VoucherController extends BaseController {
         }
 
         $vouchers = $client
-            ? $this->voucherModel->getVoucherDetailsByCompany($clientId, $dateFrom ?: null, $dateTo ?: null)
+            ? $this->voucherModel->getVoucherDetailsByCompany(
+                $clientId,
+                $dateFrom ?: null,
+                $dateTo ?: null,
+                [
+                    'registered_date_from' => $registeredDateFrom ?: null,
+                    'registered_date_to' => $registeredDateTo ?: null
+                ]
+            )
             : [];
         $registeredCount = 0;
 
@@ -124,6 +141,8 @@ class VoucherController extends BaseController {
             'vouchers' => $vouchers,
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
+            'registeredDateFrom' => $registeredDateFrom,
+            'registeredDateTo' => $registeredDateTo,
             'registeredCount' => $registeredCount,
             'notRegisteredCount' => count($vouchers) - $registeredCount,
             'showNav' => true
@@ -153,7 +172,7 @@ class VoucherController extends BaseController {
         $clientId = filter_var($_POST['client_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $voucherIds = $_POST['voucher_ids'] ?? [];
         $reportFilters = ['client_id' => $clientId ? (int)$clientId : null];
-        foreach (['date_from', 'date_to'] as $dateFilter) {
+        foreach (['date_from', 'date_to', 'registered_date_from', 'registered_date_to'] as $dateFilter) {
             $dateInput = $_POST[$dateFilter] ?? '';
             $dateValue = is_string($dateInput) ? trim($dateInput) : '';
             if ($dateValue !== '') {
