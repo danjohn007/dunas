@@ -86,6 +86,188 @@
         </div>
     </div>
     
+    <!-- Reporte de Vales -->
+    <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-ticket-alt text-teal-600 mr-2"></i>Reportes de Vales
+                </h3>
+                <p class="text-gray-600 text-sm mt-1">
+                    Vales en estado <span class="font-semibold text-green-600">Activo</span> y 
+                    <span class="font-semibold text-blue-600">Registrado</span>, 
+                    filtrables por estado y rango de fechas.
+                </p>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <form method="GET" action="<?php echo BASE_URL; ?>/reports" class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado del Vale</label>
+                    <select name="status" class="w-full rounded-lg border-gray-300 focus:border-teal-500 focus:ring-teal-500">
+                        <option value="all" <?php echo ($status === 'all') ? 'selected' : ''; ?>>Todos (Activos y Registrados)</option>
+                        <option value="active" <?php echo ($status === 'active') ? 'selected' : ''; ?>>Solo Activos</option>
+                        <option value="registered" <?php echo ($status === 'registered') ? 'selected' : ''; ?>>Solo Registrados</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                    <input type="date" name="date_from" value="<?php echo htmlspecialchars($dateFrom ?? ''); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-teal-500 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                    <input type="date" name="date_to" value="<?php echo htmlspecialchars($dateTo ?? ''); ?>"
+                           class="w-full rounded-lg border-gray-300 focus:border-teal-500 focus:ring-teal-500">
+                </div>
+                <div class="lg:col-span-2 flex gap-2">
+                    <button type="submit" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg">
+                        <i class="fas fa-filter mr-2"></i>Filtrar
+                    </button>
+                    <a href="<?php echo BASE_URL; ?>/reports" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg">
+                        <i class="fas fa-undo mr-2"></i>Limpiar
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Estadísticas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-teal-500 rounded-lg p-4 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-1">Total de Vales</div>
+                <div class="text-3xl font-bold"><?php echo number_format($voucherStats['total']); ?></div>
+            </div>
+            <div class="bg-green-500 rounded-lg p-4 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-1">Vales Activos</div>
+                <div class="text-3xl font-bold"><?php echo number_format($voucherStats['active']); ?></div>
+            </div>
+            <div class="bg-blue-500 rounded-lg p-4 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-1">Vales Registrados</div>
+                <div class="text-3xl font-bold"><?php echo number_format($voucherStats['registered']); ?></div>
+            </div>
+            <div class="bg-indigo-500 rounded-lg p-4 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-1">Capacidad Total</div>
+                <div class="text-3xl font-bold"><?php echo number_format($voucherStats['capacity']); ?><span class="text-lg ml-1">L</span></div>
+            </div>
+        </div>
+
+        <?php if (!empty($vouchers)): ?>
+        <!-- Tabla de vales -->
+        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Código Vale</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Cliente/Empresa</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">Capacidad</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">Costo</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">Estado Vale</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">Fecha Creación</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">Fecha Registro</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php foreach ($vouchers as $voucher): ?>
+                    <tr class="hover:bg-teal-50 transition-colors duration-200">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-qrcode text-teal-600 mr-2"></i>
+                                <span class="font-mono font-bold text-teal-700">
+                                    <?php echo htmlspecialchars($voucher['qr_code']); ?>
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Serie: <?php echo htmlspecialchars($voucher['serie']); ?> | 
+                                Folio: <?php echo str_pad($voucher['folio'], 4, '0', STR_PAD_LEFT); ?>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="font-medium text-gray-900">
+                                <?php echo htmlspecialchars($voucher['client_name'] ?? 'Sin asignar'); ?>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                <?php echo number_format($voucher['capacity']); ?> L
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center font-bold text-gray-900">
+                            $<?php echo number_format($voucher['cost'], 2); ?>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <?php
+                            if ($voucher['status'] == 'active') {
+                                $claseEstado = 'bg-green-100 text-green-800 border-green-300';
+                                $iconoEstado = 'fa-check-circle';
+                                $textoEstado = 'Activo';
+                            } else {
+                                $claseEstado = 'bg-blue-100 text-blue-800 border-blue-300';
+                                $iconoEstado = 'fa-clipboard-check';
+                                $textoEstado = 'Registrado';
+                            }
+                            ?>
+                            <span class="inline-flex items-center <?php echo $claseEstado; ?> border px-3 py-1 rounded-full text-xs font-bold">
+                                <i class="fas <?php echo $iconoEstado; ?> mr-1"></i>
+                                <?php echo $textoEstado; ?>
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm text-gray-600">
+                            <?php echo date('d/m/Y', strtotime($voucher['created_at'])); ?>
+                            <div class="text-xs text-gray-400"><?php echo date('H:i', strtotime($voucher['created_at'])); ?></div>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm text-gray-600">
+                            <?php if ($voucher['used_at']): ?>
+                                <?php echo date('d/m/Y', strtotime($voucher['used_at'])); ?>
+                                <div class="text-xs text-gray-400"><?php echo date('H:i', strtotime($voucher['used_at'])); ?></div>
+                            <?php else: ?>
+                                <span class="text-gray-400">-</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <?php if ($totalPages > 1): ?>
+        <div class="px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg mt-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="text-sm text-gray-700">
+                    Mostrando página <span class="font-medium"><?php echo $currentPage; ?></span> 
+                    de <span class="font-medium"><?php echo $totalPages; ?></span>
+                    (<?php echo number_format($totalVouchers); ?> vales en total)
+                </div>
+                <div class="flex space-x-2">
+                    <?php if ($currentPage > 1): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $currentPage - 1])); ?>" 
+                       class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left mr-1"></i> Anterior
+                    </a>
+                    <?php endif; ?>
+                    <?php if ($currentPage < $totalPages): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $currentPage + 1])); ?>" 
+                       class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        <?php else: ?>
+        <div class="bg-gray-50 rounded-lg p-12 text-center border border-dashed border-gray-300">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin resultados</h3>
+            <p class="text-gray-500">No hay vales activos o registrados en el período seleccionado</p>
+        </div>
+        <?php endif; ?>
+    </div>
+
+
+
     <!-- Información adicional -->
     <div class="mt-8 bg-white rounded-lg shadow-md p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">

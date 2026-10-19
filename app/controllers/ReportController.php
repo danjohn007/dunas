@@ -34,9 +34,56 @@ class ReportController extends BaseController {
     public function index() {
         Auth::requireRole(['admin', 'supervisor']);
         
+        // Filtros del Reporte de Vales (sección en la vista de reportes)
+        $status = $_GET['status'] ?? 'all';
+        if (!in_array($status, ['all', 'active', 'registered'], true)) {
+            $status = 'all';
+        }
+
+        // Fechas: si se envían vacías o inválidas, no se filtra por fecha (se muestran todos)
+        $dateFrom = date('Y-m-01');
+        $dateTo = date('Y-m-d');
+        if (isset($_GET['date_from'])) {
+            $dateFrom = ($_GET['date_from'] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_from']))
+                ? $_GET['date_from'] : null;
+        }
+        if (isset($_GET['date_to'])) {
+            $dateTo = ($_GET['date_to'] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_to']))
+                ? $_GET['date_to'] : null;
+        }
+        if ($dateFrom && $dateTo && strtotime($dateTo) < strtotime($dateFrom)) {
+            $dateTo = $dateFrom;
+        }
+
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 50;
+        $offset = ($page - 1) * $perPage;
+
+        $filters = [
+            'status' => $status,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'limit' => $perPage,
+            'offset' => $offset
+        ];
+
+        $vouchers = $this->voucherModel->getVouchersReport($filters);
+        $voucherStats = $this->voucherModel->getVouchersReportStats($filters);
+        $totalPages = max(1, (int)ceil($voucherStats['total'] / $perPage));
+
+
         $data = [
             'title' => 'Reportes',
-            'showNav' => true
+            'showNav' => true,
+            // Datos de la sección "Reportes de Vales"
+            'vouchers' => $vouchers,
+            'voucherStats' => $voucherStats,
+            'totalVouchers' => $voucherStats['total'],
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'status' => $status,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo
         ];
         
         $this->view('reports/index', $data);

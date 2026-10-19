@@ -94,6 +94,146 @@ class Voucher {
     }
     
     /**
+     * Construye la cláusula WHERE (y sus parámetros) para el "Reporte de Vales".
+     * Incluye únicamente vales en estado 'active' y 'registered'.
+     *
+     * Rango de fechas:
+     *  - Vales activos     -> se filtran por created_at (fecha de generación)
+     *  - Vales registrados -> se filtran por used_at (fecha de registro)
+     *
+     * @param string $status   'all' (ambos estados), 'active' o 'registered'
+     * @param string|null $dateFrom Fecha inicial (YYYY-MM-DD) o null para sin filtro
+     * @param string|null $dateTo   Fecha final (YYYY-MM-DD) o null para sin filtro
+     * @return array [string $sql, array $params]
+     */
+    private function buildVouchersReportWhere($status, $dateFrom, $dateTo) {
+        $statuses = ['active', 'registered'];
+        if (in_array($status, $statuses, true)) {
+            $statuses = [$status];
+        }
+
+        $sql = "v.status IN (" . implode(',', array_fill(0, count($statuses), '?')) . ")";
+        $params = $statuses;
+
+        if ($dateFrom || $dateTo) {
+            $dateConditions = [];
+
+            if (in_array('active', $statuses, true)) {
+                $cond = "(v.status = 'active'";
+                if ($dateFrom) {
+                    $cond .= " AND v.created_at >= ?";
+                    $params[] = $dateFrom . ' 00:00:00';
+                }
+                if ($dateTo) {
+                    $cond .= " AND v.created_at <= ?";
+                    $params[] = $dateTo . ' 23:59:59';
+                }
+                $dateConditions[] = $cond . ")";
+            }
+
+            if (in_array('registered', $statuses, true)) {
+                $cond = "(v.status = 'registered'";
+                if ($dateFrom) {
+                    $cond .= " AND v.used_at >= ?";
+                    $params[] = $dateFrom . ' 00:00:00';
+                }
+                if ($dateTo) {
+                    $cond .= " AND v.used_at <= ?";
+                    $params[] = $dateTo . ' 23:59:59';
+                }
+                $dateConditions[] = $cond . ")";
+            }
+
+            if ($dateConditions) {
+                $sql .= " AND (" . implode(' OR ', $dateConditions) . ")";
+            }
+        }
+
+        return [$sql, $params];
+    }
+
+    /**
+     * Obtiene los vales para el "Reporte de Vales".
+     * Muestra únicamente vales en estado 'active' y 'registered'.
+     *
+     * Filtros:
+     *   - status: 'all' (ambos estados) | 'active' | 'registered'
+     *   - date_from / date_to: rango de fechas (ver buildVouchersReportWhere)
+     *   - search / serie: filtros opcionales
+     *   - limit / offset: paginación
+     */
+    public function getVouchersReport($filters = []) {
+        list($whereSql, $params) = $this->buildVouchersReportWhere(
+            $filters['status'] ?? 'all',
+            $filters['date_from'] ?? null,
+            $filters['date_to'] ?? null
+        );
+
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
+                FROM vouchers v 
+                LEFT JOIN users u ON v.created_by = u.id 
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE {$whereSql}";
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (v.serie LIKE ? OR v.folio LIKE ? OR v.qr_code LIKE ?)";
+            $search = '%' . $filters['search'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+
+        if (!empty($filters['serie'])) {
+            $sql .= " AND v.serie = ?";
+            $params[] = $filters['serie'];
+        }
+
+        $sql .= " ORDER BY v.created_at DESC, v.serie ASC, v.folio ASC";
+
+        if (isset($filters['limit'])) {
+            $sql .= " LIMIT ?";
+            $params[] = (int)$filters['limit'];
+
+            if (isset($filters['offset'])) {
+                $sql .= " OFFSET ?";
+                $params[] = (int)$filters['offset'];
+            }
+        }
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    /**
+     * Obtiene estadísticas del "Reporte de Vales" aplicando los mismos filtros.
+     * Devuelve el total, los conteos por estado (active/registered) y la
+     * capacidad total (litros) de los vales incluidos.
+     */
+    public function getVouchersReportStats($filters = []) {
+        list($whereSql, $params) = $this->buildVouchersReportWhere(
+            $filters['status'] ?? 'all',
+            $filters['date_from'] ?? null,
+            $filters['date_to'] ?? null
+        );
+
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    COALESCE(SUM(CASE WHEN v.status = 'active' THEN 1 ELSE 0 END), 0) as active,
+                    COALESCE(SUM(CASE WHEN v.status = 'registered' THEN 1 ELSE 0 END), 0) as registered,
+                    COALESCE(SUM(v.capacity), 0) as capacity
+                FROM vouchers v
+                WHERE {$whereSql}";
+
+        $result = $this->db->fetchOne($sql, $params);
+
+        return [
+            'total' => (int)($result['total'] ?? 0),
+            'active' => (int)($result['active'] ?? 0),
+            'registered' => (int)($result['registered'] ?? 0),
+            'capacity' => (float)($result['capacity'] ?? 0)
+        ];
+    }
+
+    /**
      * Obtiene un vale por su ID
      */
     public function getById($id) {
