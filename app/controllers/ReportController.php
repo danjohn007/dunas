@@ -1153,4 +1153,251 @@ class ReportController extends BaseController {
         <?php
         exit();
     }
+
+    /**
+     * Exporta el "Reporte de Vales" (sección de la vista de reportes) a Excel (CSV)
+     * o PDF, usando los mismos filtros de la vista (status, date_from, date_to).
+     * Si se reciben IDs de vales seleccionados (ids), solo exporta esos vales;
+     * de lo contrario exporta todos los que coinciden con los filtros aplicados.
+     */
+    public function exportVouchersReport() {
+        Auth::requireRole(['admin', 'supervisor']);
+
+        $format = $_GET['format'] ?? 'excel';
+        if (!in_array($format, ['excel', 'pdf'], true)) {
+            $format = 'excel';
+        }
+
+        // Filtros del Reporte de Vales (idénticos a los del index)
+        $status = $_GET['status'] ?? 'all';
+        if (!in_array($status, ['all', 'active', 'registered'], true)) {
+            $status = 'all';
+        }
+
+        $dateFrom = date('Y-m-01');
+        $dateTo = date('Y-m-d');
+        if (isset($_GET['date_from'])) {
+            $dateFrom = ($_GET['date_from'] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_from']))
+                ? $_GET['date_from'] : null;
+        }
+        if (isset($_GET['date_to'])) {
+            $dateTo = ($_GET['date_to'] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_to']))
+                ? $_GET['date_to'] : null;
+        }
+        if ($dateFrom && $dateTo && strtotime($dateTo) < strtotime($dateFrom)) {
+            $dateTo = $dateFrom;
+        }
+
+        // Vales seleccionados en la vista (IDs separados por coma)
+        $ids = [];
+        if (!empty($_GET['ids'])) {
+            foreach (explode(',', $_GET['ids']) as $rawId) {
+                $rawId = trim($rawId);
+                if ($rawId !== '' && ctype_digit($rawId)) {
+                    $ids[] = (int)$rawId;
+                }
+            }
+            $ids = array_values(array_unique($ids));
+        }
+
+        $filters = [
+            'status' => $status,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'ids' => $ids
+        ];
+
+        $vouchers = $this->voucherModel->getVouchersForExport($filters);
+
+        if ($format === 'pdf') {
+            $this->printVouchersReportPDF($vouchers, $dateFrom, $dateTo);
+        } else {
+            $this->printVouchersReportCSV($vouchers, $dateFrom, $dateTo);
+        }
+    }
+
+    /**
+     * Imprime el "Reporte de Vales" en formato CSV (compatible con Excel).
+     */
+    private function printVouchersReportCSV($vouchers, $dateFrom, $dateTo) {
+        $filename = "reporte_vales_{$dateFrom}_a_{$dateTo}.csv";
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+
+        // BOM (Byte Order Mark) para que Excel detecte UTF-8 y muestre bien
+        // caracteres especiales (ñ, á, é, etc.)
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        $headers = [
+            'Código Vale',
+            'Serie',
+            'Folio',
+            'Cliente/Empresa',
+            'Capacidad (L)',
+            'Costo ($)',
+            'Estado',
+            'Fecha Creación',
+            'Hora Creación',
+            'Fecha Registro',
+            'Hora Registro'
+        ];
+        fputcsv($output, $headers);
+
+        foreach ($vouchers as $voucher) {
+            $estado = ($voucher['status'] === 'active') ? 'Activo' : 'Registrado';
+            fputcsv($output, [
+                $voucher['qr_code'],
+                $voucher['serie'],
+                str_pad($voucher['folio'], 4, '0', STR_PAD_LEFT),
+                $voucher['client_name'] ?? 'Sin asignar',
+                number_format($voucher['capacity'], 0, '.', ''),
+                number_format($voucher['cost'], 2, '.', ''),
+                $estado,
+                date('d/m/Y', strtotime($voucher['created_at'])),
+                date('H:i', strtotime($voucher['created_at'])),
+                $voucher['used_at'] ? date('d/m/Y', strtotime($voucher['used_at'])) : '-',
+                $voucher['used_at'] ? date('H:i', strtotime($voucher['used_at'])) : '-'
+            ]);
+        }
+
+        // Totales
+        $totalCapacity = array_sum(array_column($vouchers, 'capacity'));
+        $totalCost = array_sum(array_column($vouchers, 'cost'));
+        fputcsv($output, [
+            'TOTAL GENERAL',
+            '',
+            '',
+            '',
+            number_format($totalCapacity, 0, '.', ''),
+            number_format($totalCost, 2, '.', ''),
+            '',
+            '',
+            '',
+            '',
+            ''
+        ]);
+        fputcsv($output, ['Total de vales', count($vouchers)]);
+
+        fclose($output);
+        exit();
+    }
+
+    /**
+     * Imprime el "Reporte de Vales" como HTML imprimible (para guardar en PDF).
+     */
+    private function printVouchersReportPDF($vouchers, $dateFrom, $dateTo) {
+        $filename = "reporte_vales_{$dateFrom}_a_{$dateTo}.pdf";
+
+        $totalCapacity = array_sum(array_column($vouchers, 'capacity'));
+        $totalCost = array_sum(array_column($vouchers, 'cost'));
+        $totalActivos = count(array_filter($vouchers, function ($v) {
+            return $v['status'] === 'active';
+        }));
+        $totalRegistrados = count($vouchers) - $totalActivos;
+
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title><?php echo $filename; ?></title>
+            <style>
+                @page { size: A4 landscape; margin: 1cm; }
+                body { font-family: Arial, sans-serif; font-size: 10px; }
+                h1 { text-align: center; color: #4F46E5; margin-bottom: 5px; }
+                .subtitle { text-align: center; color: #666; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #4F46E5; color: white; font-weight: bold; }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                .total-row { background-color: #E0E7FF !important; font-weight: bold; }
+                .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 9px; }
+                .badge-green { background-color: #D1FAE5; color: #065F46; }
+                .badge-blue { background-color: #DBEAFE; color: #1E40AF; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom: 20px; text-align: center;">
+                <button onclick="window.print()" style="background-color: #4F46E5; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                    Imprimir / Guardar como PDF
+                </button>
+                <button onclick="window.close()" style="background-color: #6B7280; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                    Cerrar
+                </button>
+            </div>
+
+            <h1>Reporte de Vales</h1>
+            <div class="subtitle">
+                Período: 
+                <?php echo $dateFrom ? date('d/m/Y', strtotime($dateFrom)) : 'Todos'; ?> - 
+                <?php echo $dateTo ? date('d/m/Y', strtotime($dateTo)) : 'Todos'; ?>
+                | Total de vales: <?php echo count($vouchers); ?>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código Vale</th>
+                        <th class="text-center">Serie/Folio</th>
+                        <th>Cliente/Empresa</th>
+                        <th class="text-center">Capacidad</th>
+                        <th class="text-right">Costo</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-center">Fecha Creación</th>
+                        <th class="text-center">Fecha Registro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($vouchers as $voucher): ?>
+                    <tr>
+                        <td style="font-family: monospace;"><?php echo htmlspecialchars($voucher['qr_code']); ?></td>
+                        <td class="text-center" style="font-family: monospace;">
+                            <?php echo htmlspecialchars($voucher['serie']); ?>-<?php echo str_pad($voucher['folio'], 4, '0', STR_PAD_LEFT); ?>
+                        </td>
+                        <td><?php echo htmlspecialchars($voucher['client_name'] ?? 'Sin asignar'); ?></td>
+                        <td class="text-center"><?php echo number_format($voucher['capacity']); ?> L</td>
+                        <td class="text-right">$<?php echo number_format($voucher['cost'], 2); ?></td>
+                        <td class="text-center">
+                            <?php if ($voucher['status'] === 'active'): ?>
+                                <span class="badge badge-green">Activo</span>
+                            <?php else: ?>
+                                <span class="badge badge-blue">Registrado</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center"><?php echo date('d/m/Y H:i', strtotime($voucher['created_at'])); ?></td>
+                        <td class="text-center">
+                            <?php echo $voucher['used_at'] ? date('d/m/Y H:i', strtotime($voucher['used_at'])) : '-'; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <tr class="total-row">
+                        <td colspan="3">TOTAL GENERAL</td>
+                        <td class="text-center"><?php echo number_format($totalCapacity); ?> L</td>
+                        <td class="text-right">$<?php echo number_format($totalCost, 2); ?></td>
+                        <td class="text-center">
+                            <?php echo $totalActivos; ?> Activos / <?php echo $totalRegistrados; ?> Registrados
+                        </td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top: 20px; font-size: 9px; color: #666;">
+                <p><strong>Generado:</strong> <?php echo date('d/m/Y H:i:s'); ?></p>
+                <p><strong>Usuario:</strong> <?php echo htmlspecialchars(Auth::user()['full_name']); ?></p>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit();
+    }
 }

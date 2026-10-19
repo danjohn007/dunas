@@ -234,6 +234,42 @@ class Voucher {
     }
 
     /**
+     * Obtiene todos los vales para el "Reporte de Vales" sin paginación,
+     * usado en la exportación a Excel/PDF.
+     *
+     * Filtros:
+     *   - status: 'all' (ambos estados) | 'active' | 'registered'
+     *   - date_from / date_to: rango de fechas (ver buildVouchersReportWhere)
+     *   - ids: array opcional de IDs de vales seleccionados (si está vacío,
+     *          devuelve todos los que coinciden con los filtros aplicados)
+     */
+    public function getVouchersForExport($filters = []) {
+        list($whereSql, $params) = $this->buildVouchersReportWhere(
+            $filters['status'] ?? 'all',
+            $filters['date_from'] ?? null,
+            $filters['date_to'] ?? null
+        );
+
+        $sql = "SELECT v.*, u.full_name as created_by_name, c.business_name as client_name
+                FROM vouchers v 
+                LEFT JOIN users u ON v.created_by = u.id 
+                LEFT JOIN clients c ON v.client_id = c.id
+                WHERE {$whereSql}";
+
+        if (!empty($filters['ids']) && is_array($filters['ids'])) {
+            $placeholders = implode(',', array_fill(0, count($filters['ids']), '?'));
+            $sql .= " AND v.id IN ({$placeholders})";
+            foreach ($filters['ids'] as $voucherId) {
+                $params[] = (int)$voucherId;
+            }
+        }
+
+        $sql .= " ORDER BY v.created_at DESC, v.serie ASC, v.folio ASC";
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    /**
      * Obtiene un vale por su ID
      */
     public function getById($id) {

@@ -153,12 +153,42 @@
             </div>
         </div>
 
+        <!-- Barra de acciones: selección y exportación -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-3 text-sm text-gray-700">
+                <label class="inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="selectAllVouchers" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500 mr-2">
+                    <span class="font-medium">Seleccionar página</span>
+                </label>
+                <span id="selectedVouchersCount" class="bg-teal-100 text-teal-800 px-3 py-1 rounded-full font-semibold">0 vales seleccionados</span>
+            </div>
+            <div>
+                <form method="GET" action="<?php echo BASE_URL; ?>/reports/exportVouchersReport" id="exportVouchersForm" class="flex flex-wrap gap-2">
+                    <input type="hidden" name="status" value="<?php echo htmlspecialchars($status); ?>">
+                    <input type="hidden" name="date_from" value="<?php echo htmlspecialchars($dateFrom ?? ''); ?>">
+                    <input type="hidden" name="date_to" value="<?php echo htmlspecialchars($dateTo ?? ''); ?>">
+                    <input type="hidden" name="ids" id="exportSelectedIds" value="">
+                    <button type="submit" name="format" value="excel"
+                            class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg inline-flex items-center"
+                            title="Exportar a Excel (CSV)">
+                        <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                    </button>
+                    <button type="submit" name="format" value="pdf"
+                            class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg inline-flex items-center"
+                            title="Exportar a PDF">
+                        <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <?php if (!empty($vouchers)): ?>
         <!-- Tabla de vales -->
         <div class="overflow-x-auto border border-gray-200 rounded-lg">
             <table class="min-w-full">
                 <thead>
                     <tr class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+                        <th class="px-4 py-3 text-left text-sm font-semibold w-10"><i class="fas fa-check-square"></i></th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Código Vale</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Cliente/Empresa</th>
                         <th class="px-4 py-3 text-center text-sm font-semibold">Capacidad</th>
@@ -171,6 +201,10 @@
                 <tbody class="divide-y divide-gray-200">
                     <?php foreach ($vouchers as $voucher): ?>
                     <tr class="hover:bg-teal-50 transition-colors duration-200">
+                        <td class="px-4 py-3 text-center">
+                            <input type="checkbox" class="voucher-checkbox rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                   value="<?php echo (int)$voucher['id']; ?>">
+                        </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center">
                                 <i class="fas fa-qrcode text-teal-600 mr-2"></i>
@@ -264,6 +298,51 @@
             <p class="text-gray-500">No hay vales activos o registrados en el período seleccionado</p>
         </div>
         <?php endif; ?>
+
+        <script>
+        (function() {
+            "use strict";
+            var masterCheck = document.getElementById('selectAllVouchers');
+            var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.voucher-checkbox'));
+            var countBadge = document.getElementById('selectedVouchersCount');
+            var exportForm = document.getElementById('exportVouchersForm');
+            var exportIdsField = document.getElementById('exportSelectedIds');
+
+            function updateCount() {
+                var checked = checkboxes.filter(function (cb) { return cb.checked; });
+                var total = checked.length;
+                countBadge.textContent = total === 1 ? '1 vale seleccionado' : total + ' vales seleccionados';
+                if (masterCheck) {
+                    masterCheck.checked = checkboxes.length > 0 && total === checkboxes.length;
+                    masterCheck.indeterminate = total > 0 && total < checkboxes.length;
+                }
+            }
+
+            if (masterCheck) {
+                masterCheck.addEventListener('change', function () {
+                    checkboxes.forEach(function (cb) { cb.checked = masterCheck.checked; });
+                    updateCount();
+                });
+            }
+            checkboxes.forEach(function (cb) { cb.addEventListener('change', updateCount); });
+
+            if (exportForm) {
+                exportForm.addEventListener('submit', function (e) {
+                    var ids = checkboxes
+                        .filter(function (cb) { return cb.checked; })
+                        .map(function (cb) { return cb.value; });
+                    exportIdsField.value = ids.join(',');
+                    if (ids.length === 0) {
+                        var proceed = window.confirm(
+                            'No hay vales seleccionados en esta página. ¿Desea exportar todo el reporte de vales según los filtros aplicados?');
+                        if (!proceed) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            }
+        })();
+        </script>
     </div>
 
 
