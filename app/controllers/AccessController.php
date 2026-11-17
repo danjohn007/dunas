@@ -146,6 +146,12 @@ class AccessController extends BaseController {
                             $this->redirect('/access/create');
                             return;
                         }
+
+                        if ($this->voucherModel->getExitValidityMinutes() === null) {
+                            $this->setFlash('error', 'El administrador debe configurar el tiempo de validez de los vales.');
+                            $this->redirect('/access/create');
+                            return;
+                        }
                         
                     }
                     
@@ -479,6 +485,12 @@ class AccessController extends BaseController {
                     $this->redirect('/access/quickRegistration');
                     return;
                 }
+
+                if ($this->voucherModel->getExitValidityMinutes() === null) {
+                    $this->setFlash('error', 'El administrador debe configurar el tiempo de validez de los vales.');
+                    $this->redirect('/access/quickRegistration');
+                    return;
+                }
                 
                 if (empty($voucher['client_id'])) {
                     $this->setFlash('error', 'El vale no está relacionado a un cliente. Es necesario relacionar el vale con un cliente antes de continuar.');
@@ -683,6 +695,62 @@ class AccessController extends BaseController {
             $this->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
         }
     }
+
+    public function processVoucherExit() {
+        Auth::requireRole(['admin', 'supervisor', 'operator']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+
+        $barcode = trim((string)($_POST['barcode'] ?? ''));
+        if ($barcode === '') {
+            $this->json(['success' => false, 'message' => 'Código QR del vale requerido'], 400);
+            return;
+        }
+
+        try {
+            $result = $this->openVoucherExit($barcode);
+            $this->json($result, $result['success'] ? 200 : 400);
+        } catch (Exception $e) {
+            error_log('Error al abrir salida con vale: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Error al procesar el vale: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function openVoucherExit($barcode) {
+        $voucher = $this->voucherModel->getByCode($barcode);
+        if (!$voucher) {
+            return ['success' => false, 'message' => 'Vale no encontrado'];
+        }
+
+        if (!in_array($voucher['status'], ['used', 'registered'], true) || empty($voucher['used_by_access_log_id'])) {
+            return ['success' => false, 'message' => 'El vale no está asociado a un acceso vigente'];
+        }
+
+        if (!$this->voucherModel->hasActiveExitValidity($voucher['id'])) {
+            return ['success' => false, 'message' => 'La vigencia del vale expiró'];
+        }
+
+        $access = $this->accessModel->getById($voucher['used_by_access_log_id']);
+        if (!$access || $access['status'] !== 'in_progress') {
+            return ['success' => false, 'message' => 'El acceso asociado al vale ya no está en curso'];
+        }
+
+        $shellyResult = $this->executeShellyAction('abrir_cerrar', 'open');
+        if (empty($shellyResult['success'])) {
+            return ['success' => false, 'message' => 'No se pudo abrir la pluma. ' . ($shellyResult['error'] ?? 'Verifique el dispositivo.')];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Vale vigente. Pluma de salida abierta.',
+            'action' => 'voucher_exit',
+            'barrier_opened' => true,
+            'access' => $access
+        ];
+    }
     
     public function printTicket($id) {
         Auth::requireRole(['admin', 'supervisor', 'operator']);
@@ -743,6 +811,13 @@ class AccessController extends BaseController {
             $access = $this->accessModel->getByTicket($barcode);
             
             if (!$access) {
+                $voucher = $this->voucherModel->getByCode($barcode);
+                if ($voucher) {
+                    $result = $this->openVoucherExit($barcode);
+                    $this->json($result, $result['success'] ? 200 : 400);
+                    return;
+                }
+
                 $this->json([
                     'success' => false,
                     'message' => 'Código de barras no válido o no encontrado',

@@ -61,6 +61,61 @@ class VoucherController extends BaseController {
         $this->view('vouchers/index', $data);
     }
 
+    public function validity() {
+        Auth::requireRole(['admin']);
+
+        $data = [
+            'title' => 'Tiempo de vales',
+            'validityMinutes' => $this->voucherModel->getExitValidityMinutes(),
+            'showNav' => true
+        ];
+
+        $this->view('vouchers/validity', $data);
+    }
+
+    public function saveValidity() {
+        Auth::requireRole(['admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers/validity');
+            return;
+        }
+
+        $minutes = filter_var($_POST['validity_minutes'] ?? null, FILTER_VALIDATE_INT);
+        if ($minutes === false || $minutes < 1) {
+            $this->setFlash('error', 'El tiempo de validez debe ser un número entero de minutos mayor que cero.');
+            $this->redirect('/vouchers/validity');
+            return;
+        }
+
+        try {
+            $this->voucherModel->saveExitValidityMinutes($minutes);
+            $this->setFlash('success', 'Tiempo de validez actualizado. Se aplicará a los vales que se registren a partir de ahora.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'No se pudo guardar el tiempo de validez: ' . $e->getMessage());
+        }
+
+        $this->redirect('/vouchers/validity');
+    }
+
+    public function deleteValidity() {
+        Auth::requireRole(['admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/vouchers/validity');
+            return;
+        }
+
+        try {
+            $this->voucherModel->deleteExitValidityMinutes();
+            $this->setFlash('success', 'Se eliminó la configuración. Los vales nuevos no podrán registrarse hasta definir otra vigencia.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'No se pudo eliminar el tiempo de validez: ' . $e->getMessage());
+        }
+
+        $this->redirect('/vouchers/validity');
+    }
+
     public function clientReport() {
         Auth::requireLogin();
         Auth::requireRole(['admin', 'supervisor', 'operator']);
@@ -893,6 +948,14 @@ class VoucherController extends BaseController {
                         'status' => $voucher['status'],
                         'used_at' => $voucher['used_at']
                     ]
+                ]);
+                return;
+            }
+
+            if ($this->voucherModel->getExitValidityMinutes() === null) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'El administrador debe configurar el tiempo de validez de los vales antes de usarlos.'
                 ]);
                 return;
             }

@@ -226,6 +226,14 @@
                             </a>
                         </li>
                         <?php endif; ?>
+                        <?php if (Auth::hasRole(['admin'])): ?>
+                        <li>
+                            <a href="<?php echo BASE_URL; ?>/vouchers/validity"
+                               class="sidebar-nav-item flex items-center text-white/90 px-4 py-2 text-sm">
+                                <i class="fas fa-clock w-5 mr-3"></i>Tiempo de vales
+                            </a>
+                        </li>
+                        <?php endif; ?>
                     </ul>
                 </li>
                 <li>

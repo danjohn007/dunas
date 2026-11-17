@@ -38,8 +38,29 @@
         </div>
     </div>
     
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="text-center mb-5">
+            <div class="inline-block bg-green-100 rounded-full p-4 mb-3">
+                <i class="fas fa-ticket-alt text-green-600 text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Abrir pluma con vale</h2>
+            <p class="text-gray-600">Escanee nuevamente el QR del vale. Solo funcionará mientras su vigencia siga activa y el acceso esté en curso.</p>
+        </div>
+        <form id="voucherScanForm" class="max-w-md mx-auto">
+            <label for="voucherBarcodeInput" class="block text-sm font-medium text-gray-700 mb-2">Código QR del vale</label>
+            <input type="text" id="voucherBarcodeInput" autocomplete="off"
+                   class="w-full text-center font-mono rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 mb-4"
+                   placeholder="Escanear o ingresar QR del vale">
+            <button type="submit" id="voucherProcessBtn"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg">
+                <i class="fas fa-door-open mr-2"></i>Abrir pluma de salida
+            </button>
+        </form>
+    </div>
+
     <!-- Resultado -->
     <div id="result" class="hidden"></div>
+    <div id="voucherResult" class="hidden"></div>
     
     <!-- Historial de Salidas Recientes -->
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -59,8 +80,65 @@ document.addEventListener('DOMContentLoaded', function() {
     const processBtn = document.getElementById('processBtn');
     const resultDiv = document.getElementById('result');
     const recentExits = document.getElementById('recentExits');
+    const voucherScanForm = document.getElementById('voucherScanForm');
+    const voucherBarcodeInput = document.getElementById('voucherBarcodeInput');
+    const voucherProcessBtn = document.getElementById('voucherProcessBtn');
+    const voucherResult = document.getElementById('voucherResult');
     
     let recentExitsList = [];
+
+    voucherScanForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const barcode = voucherBarcodeInput.value.trim();
+        if (!barcode) {
+            showVoucherError('Ingrese o escanee el código QR del vale');
+            return;
+        }
+
+        voucherProcessBtn.disabled = true;
+        voucherProcessBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
+
+        try {
+            const formData = new FormData();
+            formData.append('barcode', barcode);
+            const response = await fetch('<?php echo BASE_URL; ?>/access/processVoucherExit', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showVoucherResult(data.message, true);
+                voucherBarcodeInput.value = '';
+                playSuccessSound();
+            } else {
+                showVoucherError(data.message);
+            }
+        } catch (error) {
+            showVoucherError('Error al procesar el vale: ' + error.message);
+        } finally {
+            voucherProcessBtn.disabled = false;
+            voucherProcessBtn.innerHTML = '<i class="fas fa-door-open mr-2"></i>Abrir pluma de salida';
+            voucherBarcodeInput.focus();
+        }
+    });
+
+    function showVoucherResult(message, success) {
+        voucherResult.className = success
+            ? 'bg-green-50 border-2 border-green-500 rounded-lg p-6 mb-6'
+            : 'bg-red-50 border-2 border-red-500 rounded-lg p-6 mb-6';
+        voucherResult.innerHTML = '<p class="' + (success ? 'text-green-800' : 'text-red-800') + '">' +
+            message.replace(/[&<>"']/g, function(character) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[character];
+            }) + '</p>';
+        voucherResult.classList.remove('hidden');
+        setTimeout(() => voucherResult.classList.add('hidden'), 5000);
+    }
+
+    function showVoucherError(message) {
+        showVoucherResult(message, false);
+    }
     
     // Auto-submit cuando se ingresan 4 dígitos
     barcodeInput.addEventListener('input', function() {
@@ -235,7 +313,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Mantener el foco en el input
     setInterval(() => {
-        if (document.activeElement !== barcodeInput && !processBtn.disabled) {
+        if (document.activeElement !== barcodeInput &&
+            document.activeElement !== voucherBarcodeInput &&
+            !processBtn.disabled &&
+            !voucherProcessBtn.disabled) {
             barcodeInput.focus();
         }
     }, 1000);

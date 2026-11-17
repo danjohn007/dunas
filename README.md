@@ -11,6 +11,7 @@ Sistema integral para gestionar el acceso de pipas de agua a tomas autorizadas, 
 - ✅ **Control de Acceso** con tickets QR y códigos de barras
 - ✅ **Registro Rápido** con búsqueda de unidad y creación automática de registros
 - ✅ **Escaneo de Código de Barras** para salida automática con capacidad máxima
+- ✅ **Vigencia configurable de vales** y reapertura de la pluma al volver a escanearlos
 - ✅ **Integración IoT** con Shelly Relay SHELLPRO4PM para control de barreras vehiculares
 - ✅ **Transacciones y Pagos** (Efectivo, Vales, Transferencias)
 - ✅ **Reportes** con exportación a Excel y PDF
@@ -86,6 +87,14 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'dunas_access_control');
 define('DB_USER', 'root');           // Cambiar según su configuración
 define('DB_PASS', '');               // Cambiar según su configuración
+```
+
+#### Aplicar migración de vigencia de vales
+
+Después de crear o actualizar la base de datos, ejecute esta migración y configure los minutos desde **Vales → Tiempo de vales** con una cuenta administradora:
+
+```bash
+mysql -u usuario -p nombre_bd < migrations/2026_11_17_voucher_validity.sql
 ```
 
 ### 4. Configurar permisos de directorios
@@ -231,6 +240,7 @@ El sistema implementa las siguientes medidas de seguridad:
 ### 6. Control de Acceso
 - Registro de entradas/salidas
 - Generación de tickets con QR y códigos de barras
+- Reescaneo del QR de un vale para abrir la pluma mientras la vigencia configurada siga activa
 - Control de barreras con Shelly Relay
 - Validación de accesos autorizados
 

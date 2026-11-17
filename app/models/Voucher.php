@@ -36,6 +36,38 @@ class Voucher {
     public function formatAccessPin($folio) {
         return str_pad((string)$folio, 4, '0', STR_PAD_LEFT);
     }
+
+    public function getExitValidityMinutes() {
+        $setting = $this->db->fetchOne(
+            "SELECT validity_minutes FROM voucher_validity_settings WHERE id = 1"
+        );
+
+        return $setting ? (int)$setting['validity_minutes'] : null;
+    }
+
+    public function saveExitValidityMinutes($minutes) {
+        $this->db->execute(
+            "INSERT INTO voucher_validity_settings (id, validity_minutes)
+             VALUES (1, ?)
+             ON DUPLICATE KEY UPDATE validity_minutes = VALUES(validity_minutes)",
+            [(int)$minutes]
+        );
+    }
+
+    public function deleteExitValidityMinutes() {
+        $this->db->execute("DELETE FROM voucher_validity_settings WHERE id = 1");
+    }
+
+    public function hasActiveExitValidity($id) {
+        $result = $this->db->fetchOne(
+            "SELECT CASE WHEN valid_until IS NOT NULL AND valid_until >= NOW() THEN 1 ELSE 0 END AS is_valid
+             FROM vouchers
+             WHERE id = ?",
+            [(int)$id]
+        );
+
+        return $result && (int)$result['is_valid'] === 1;
+    }
     
     /**
      * Obtiene todos los vales con filtros opcionales
@@ -701,13 +733,19 @@ class Voucher {
      * Marca un vale como usado
      */
     public function markAsUsed($id, $accessLogId) {
+        $validityMinutes = $this->getExitValidityMinutes();
+        if ($validityMinutes === null) {
+            throw new Exception("Debe configurar el tiempo de validez de los vales antes de registrar uno.");
+        }
+
         $sql = "UPDATE vouchers 
                 SET status = 'used', 
                     used_at = NOW(), 
+                    valid_until = DATE_ADD(NOW(), INTERVAL ? MINUTE),
                     used_by_access_log_id = ?
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$accessLogId, $id])->rowCount();
+        $affectedRows = $this->db->execute($sql, [$validityMinutes, $accessLogId, $id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo marcar el vale como usado. El vale puede estar ya usado o cancelado.");
@@ -720,13 +758,19 @@ class Voucher {
      * Marca un vale como registrado (cuando se usa para acceso)
      */
     public function markAsRegistered($id, $accessLogId) {
+        $validityMinutes = $this->getExitValidityMinutes();
+        if ($validityMinutes === null) {
+            throw new Exception("Debe configurar el tiempo de validez de los vales antes de registrar uno.");
+        }
+
         $sql = "UPDATE vouchers 
                 SET status = 'registered', 
                     used_at = NOW(), 
+                    valid_until = DATE_ADD(NOW(), INTERVAL ? MINUTE),
                     used_by_access_log_id = ?
                 WHERE id = ? AND status = 'active'";
         
-        $affectedRows = $this->db->execute($sql, [$accessLogId, $id])->rowCount();
+        $affectedRows = $this->db->execute($sql, [$validityMinutes, $accessLogId, $id])->rowCount();
         
         if ($affectedRows === 0) {
             throw new Exception("No se pudo registrar el vale. El vale puede estar ya usado, registrado o cancelado.");
