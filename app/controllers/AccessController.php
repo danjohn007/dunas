@@ -704,37 +704,36 @@ class AccessController extends BaseController {
             return;
         }
 
-        $barcode = trim((string)($_POST['barcode'] ?? ''));
-        if ($barcode === '') {
-            $this->json(['success' => false, 'message' => 'Código QR del vale requerido'], 400);
+        $ticketCode = trim((string)($_POST['ticket_code'] ?? ''));
+        if (!preg_match('/^\d{4}$/', $ticketCode)) {
+            $this->json(['success' => false, 'message' => 'Ingrese el código numérico de 4 dígitos del ticket'], 400);
             return;
         }
 
         try {
-            $result = $this->openVoucherExit($barcode);
+            $result = $this->openVoucherExit($ticketCode);
             $this->json($result, $result['success'] ? 200 : 400);
         } catch (Exception $e) {
-            error_log('Error al abrir salida con vale: ' . $e->getMessage());
-            $this->json(['success' => false, 'message' => 'Error al procesar el vale: ' . $e->getMessage()], 500);
+            error_log('Error al abrir salida con el código del ticket: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Error al procesar el código del ticket: ' . $e->getMessage()], 500);
         }
     }
 
-    private function openVoucherExit($barcode) {
-        $voucher = $this->voucherModel->getByCode($barcode);
-        if (!$voucher) {
-            return ['success' => false, 'message' => 'Vale no encontrado'];
+    private function openVoucherExit($ticketCode) {
+        $access = $this->accessModel->getByTicket($ticketCode);
+        if (!$access) {
+            return ['success' => false, 'message' => 'Ticket no encontrado'];
         }
 
-        if (!in_array($voucher['status'], ['used', 'registered'], true) || empty($voucher['used_by_access_log_id'])) {
-            return ['success' => false, 'message' => 'El vale no está asociado a un acceso vigente'];
+        if (empty($access['voucher_id']) || !in_array($access['voucher_status'], ['used', 'registered'], true)) {
+            return ['success' => false, 'message' => 'Este ticket no está asociado a un vale vigente'];
         }
 
-        if (!$this->voucherModel->hasActiveExitValidity($voucher['id'])) {
-            return ['success' => false, 'message' => 'La vigencia del vale expiró'];
+        if (!$this->voucherModel->hasActiveExitValidity($access['voucher_id'])) {
+            return ['success' => false, 'message' => 'La vigencia del ticket expiró'];
         }
 
-        $access = $this->accessModel->getById($voucher['used_by_access_log_id']);
-        if (!$access || $access['status'] !== 'in_progress') {
+        if ($access['status'] !== 'in_progress') {
             return ['success' => false, 'message' => 'El acceso asociado al vale ya no está en curso'];
         }
 
@@ -745,7 +744,7 @@ class AccessController extends BaseController {
 
         return [
             'success' => true,
-            'message' => 'Vale vigente. Pluma de salida abierta.',
+            'message' => 'Ticket vigente. Pluma de salida abierta.',
             'action' => 'voucher_exit',
             'barrier_opened' => true,
             'access' => $access
@@ -811,13 +810,6 @@ class AccessController extends BaseController {
             $access = $this->accessModel->getByTicket($barcode);
             
             if (!$access) {
-                $voucher = $this->voucherModel->getByCode($barcode);
-                if ($voucher) {
-                    $result = $this->openVoucherExit($barcode);
-                    $this->json($result, $result['success'] ? 200 : 400);
-                    return;
-                }
-
                 $this->json([
                     'success' => false,
                     'message' => 'Código de barras no válido o no encontrado',

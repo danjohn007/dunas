@@ -43,24 +43,24 @@
             <div class="inline-block bg-green-100 rounded-full p-4 mb-3">
                 <i class="fas fa-ticket-alt text-green-600 text-4xl"></i>
             </div>
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">Abrir pluma con vale</h2>
-            <p class="text-gray-600">Escanee nuevamente el QR del vale. Solo funcionará mientras su vigencia siga activa y el acceso esté en curso.</p>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Abrir pluma con el código del ticket</h2>
+            <p class="text-gray-600">Ingrese el número de 4 dígitos impreso en el ticket generado al registrar un vale. El código funciona durante el tiempo de vigencia configurado y mientras el acceso siga en curso.</p>
         </div>
-        <form id="voucherScanForm" class="max-w-md mx-auto">
-            <label for="voucherBarcodeInput" class="block text-sm font-medium text-gray-700 mb-2">Código QR del vale</label>
-            <input type="text" id="voucherBarcodeInput" autocomplete="off"
+        <form id="ticketCodeForm" class="max-w-md mx-auto">
+            <label for="ticketCodeInput" class="block text-sm font-medium text-gray-700 mb-2">Código numérico del ticket (4 dígitos)</label>
+            <input type="text" id="ticketCodeInput" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" required
                    class="w-full text-center font-mono rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500 mb-4"
-                   placeholder="Escanear o ingresar QR del vale">
-            <button type="submit" id="voucherProcessBtn"
+                   placeholder="0000">
+            <button type="submit" id="ticketCodeProcessBtn"
                     class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg">
-                <i class="fas fa-door-open mr-2"></i>Abrir pluma de salida
+                <i class="fas fa-door-open mr-2"></i>Abrir pluma
             </button>
         </form>
     </div>
 
     <!-- Resultado -->
     <div id="result" class="hidden"></div>
-    <div id="voucherResult" class="hidden"></div>
+    <div id="ticketCodeResult" class="hidden"></div>
     
     <!-- Historial de Salidas Recientes -->
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -80,28 +80,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const processBtn = document.getElementById('processBtn');
     const resultDiv = document.getElementById('result');
     const recentExits = document.getElementById('recentExits');
-    const voucherScanForm = document.getElementById('voucherScanForm');
-    const voucherBarcodeInput = document.getElementById('voucherBarcodeInput');
-    const voucherProcessBtn = document.getElementById('voucherProcessBtn');
-    const voucherResult = document.getElementById('voucherResult');
+    const ticketCodeForm = document.getElementById('ticketCodeForm');
+    const ticketCodeInput = document.getElementById('ticketCodeInput');
+    const ticketCodeProcessBtn = document.getElementById('ticketCodeProcessBtn');
+    const ticketCodeResult = document.getElementById('ticketCodeResult');
     
     let recentExitsList = [];
 
-    voucherScanForm.addEventListener('submit', async function(e) {
+    ticketCodeInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+    });
+
+    ticketCodeForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const barcode = voucherBarcodeInput.value.trim();
-        if (!barcode) {
-            showVoucherError('Ingrese o escanee el código QR del vale');
+        const ticketCode = ticketCodeInput.value.trim();
+        if (!/^[0-9]{4}$/.test(ticketCode)) {
+            showTicketCodeError('Ingrese el código numérico de 4 dígitos del ticket');
             return;
         }
 
-        voucherProcessBtn.disabled = true;
-        voucherProcessBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
+        ticketCodeProcessBtn.disabled = true;
+        ticketCodeProcessBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
 
         try {
             const formData = new FormData();
-            formData.append('barcode', barcode);
+            formData.append('ticket_code', ticketCode);
             const response = await fetch('<?php echo BASE_URL; ?>/access/processVoucherExit', {
                 method: 'POST',
                 body: formData
@@ -109,35 +113,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                showVoucherResult(data.message, true);
-                voucherBarcodeInput.value = '';
+                showTicketCodeResult(data.message, true);
+                ticketCodeInput.value = '';
                 playSuccessSound();
             } else {
-                showVoucherError(data.message);
+                showTicketCodeError(data.message);
             }
         } catch (error) {
-            showVoucherError('Error al procesar el vale: ' + error.message);
+            showTicketCodeError('Error al procesar el código del ticket: ' + error.message);
         } finally {
-            voucherProcessBtn.disabled = false;
-            voucherProcessBtn.innerHTML = '<i class="fas fa-door-open mr-2"></i>Abrir pluma de salida';
-            voucherBarcodeInput.focus();
+            ticketCodeProcessBtn.disabled = false;
+            ticketCodeProcessBtn.innerHTML = '<i class="fas fa-door-open mr-2"></i>Abrir pluma';
+            ticketCodeInput.focus();
         }
     });
 
-    function showVoucherResult(message, success) {
-        voucherResult.className = success
+    function showTicketCodeResult(message, success) {
+        ticketCodeResult.className = success
             ? 'bg-green-50 border-2 border-green-500 rounded-lg p-6 mb-6'
             : 'bg-red-50 border-2 border-red-500 rounded-lg p-6 mb-6';
-        voucherResult.innerHTML = '<p class="' + (success ? 'text-green-800' : 'text-red-800') + '">' +
+        ticketCodeResult.innerHTML = '<p class="' + (success ? 'text-green-800' : 'text-red-800') + '">' +
             message.replace(/[&<>"']/g, function(character) {
                 return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[character];
             }) + '</p>';
-        voucherResult.classList.remove('hidden');
-        setTimeout(() => voucherResult.classList.add('hidden'), 5000);
+        ticketCodeResult.classList.remove('hidden');
+        setTimeout(() => ticketCodeResult.classList.add('hidden'), 5000);
     }
 
-    function showVoucherError(message) {
-        showVoucherResult(message, false);
+    function showTicketCodeError(message) {
+        showTicketCodeResult(message, false);
     }
     
     // Auto-submit cuando se ingresan 4 dígitos
@@ -314,9 +318,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mantener el foco en el input
     setInterval(() => {
         if (document.activeElement !== barcodeInput &&
-            document.activeElement !== voucherBarcodeInput &&
+            document.activeElement !== ticketCodeInput &&
             !processBtn.disabled &&
-            !voucherProcessBtn.disabled) {
+            !ticketCodeProcessBtn.disabled) {
             barcodeInput.focus();
         }
     }, 1000);

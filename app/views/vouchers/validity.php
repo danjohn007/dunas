@@ -1,7 +1,7 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Tiempo de vales</h1>
-        <p class="text-gray-600">Define cuánto tiempo puede reutilizarse un vale escaneado para abrir la pluma de salida.</p>
+        <p class="text-gray-600">Define cuánto tiempo será válido el código numérico del ticket generado al registrar un vale para abrir la pluma de salida.</p>
     </div>
 
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -9,7 +9,7 @@
         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
             <p class="text-blue-800">
                 Vigencia actual: <strong><?php echo number_format($validityMinutes); ?> minutos</strong>.
-                El tiempo se guarda en cada vale al registrarlo; los cambios aplican a los vales nuevos.
+                El tiempo se guarda en cada vale asociado a su ticket al registrarlo; los cambios aplican a los vales nuevos.
             </p>
         </div>
         <?php else: ?>

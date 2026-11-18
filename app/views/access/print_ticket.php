@@ -140,8 +140,12 @@
             </h3>
             <ul class="text-sm text-blue-800 space-y-1">
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Entrada registrada exitosamente</li>
-                <li><i class="fas fa-check text-blue-600 mr-2"></i>Código QR: <strong><?php echo $access['ticket_code']; ?></strong></li>
+                <li><i class="fas fa-check text-blue-600 mr-2"></i>Número del ticket: <strong><?php echo $access['ticket_code']; ?></strong></li>
+                <?php if (($access['payment_method'] ?? '') === 'voucher'): ?>
+                <li><i class="fas fa-check text-blue-600 mr-2"></i>Para abrir la pluma de salida, ingrese el código numérico de este ticket durante su vigencia</li>
+                <?php else: ?>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Al salir, escanee el código para registrar automáticamente</li>
+                <?php endif; ?>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Se registrará con la capacidad máxima de <?php echo number_format(!empty($access['voucher_capacity']) ? $access['voucher_capacity'] : $access['capacity_liters']); ?> litros</li>
                 <?php if (!empty($access['cost'])): ?>
                 <li><i class="fas fa-check text-blue-600 mr-2"></i>Costo: <strong>$<?php echo number_format($access['cost'], 2); ?></strong></li>

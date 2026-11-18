@@ -118,10 +118,12 @@ class AccessLog {
     }
     
     public function getByTicket($ticketCode) {
-        $sql = "SELECT al.*, d.full_name as driver_name, u.plate_number, c.business_name as client_name
+        $sql = "SELECT al.*, d.full_name as driver_name, u.plate_number, c.business_name as client_name,
+                       v.id as voucher_id, v.status as voucher_status
                 FROM access_logs al
                 LEFT JOIN drivers d ON al.driver_id = d.id
                 LEFT JOIN units u ON al.unit_id = u.id
+                LEFT JOIN vouchers v ON v.used_by_access_log_id = al.id
                 JOIN clients c ON al.client_id = c.id
                 WHERE al.ticket_code = ?";
         
